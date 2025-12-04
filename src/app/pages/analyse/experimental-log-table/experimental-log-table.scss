@@ -1,13 +1,16 @@
 :root {
   --search-width: 420px;
+  --timestamp-width: 180px;
+  --small-col-width: 80px;
+  --gap: 8px;
 }
 
 .experimental-log-table {
   .toolbar {
     display: flex;
-    gap: var(--space-3, 16px);
+    gap: var(--gap);
     align-items: center;
-    margin-bottom: var(--space-2, 12px);
+    margin-bottom: 12px;
   }
 
   .search-field {
@@ -15,44 +18,86 @@
   }
 
   .counts {
-    color: var(--muted-foreground, rgba(0, 0, 0, 0.6));
+    color: rgba(0, 0, 0, 0.6);
     font-size: 0.9rem;
-  }
-
-  .empty {
-    padding: var(--space-3, 16px);
-    color: var(--muted-foreground, rgba(0, 0, 0, 0.6));
   }
 
   .table-wrapper {
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 6px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* shared grid for header and rows */
+  .table-header,
+  .row {
+    display: grid;
+    grid-template-columns: var(--timestamp-width) var(--small-col-width) var(--small-col-width) var(
+        --small-col-width
+      ) 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    height: 48px; /* fixed row height to match virtual scroll itemSize */
+  }
+
+  .table-header {
+    background: var(--surface-2, #fafafa);
+    font-weight: 600;
+  }
+
+  .row {
+    border-top: 1px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cell.message {
+    white-space: nowrap;
+  }
+
+  .small {
+    width: var(--small-col-width);
+  }
+
+  .col {
   }
 
   .viewport {
-    min-height: 360px; /* reasonable default height */
-    height: 100%;
-    max-height: 720px;
+    height: 460px; /* larger default to accommodate more rows */
     width: 100%;
-    display: block;
+    box-sizing: border-box;
   }
 
-  .log-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  th.mat-header-cell {
+  /* header button styles and aria-sort indicators */
+  .header {
+    background: transparent;
+    border: 0;
+    padding: 0;
     text-align: left;
-    padding: 8px 12px;
+    font: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  td.mat-cell {
-    padding: 8px 12px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .header[aria-sort='ascending']::after {
+    content: '▲';
+    font-size: 0.7em;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .header[aria-sort='descending']::after {
+    content: '▼';
+    font-size: 0.7em;
+    color: rgba(0, 0, 0, 0.6);
   }
 }
 
