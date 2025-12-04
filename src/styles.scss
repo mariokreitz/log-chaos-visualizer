@@ -54,6 +54,9 @@
   --shadow-low: 0 0 0 1px rgba(15, 23, 42, 0.6);
   --shadow-mid: 0 18px 45px rgba(15, 23, 42, 0.7);
   --shadow-high: 0 24px 60px rgba(15, 23, 42, 0.85);
+
+  --mat-dialog-container-color: var(--color-surface-high);
+  --mat-table-background-color: var(--color-surface-mid);
 }
 
 html,
@@ -63,7 +66,7 @@ body {
 
 body {
   margin: 0;
-  font-family: var(--app-font-family);
+  font-family: var(--app-font-family), sans-serif;
   color: var(--color-text-primary);
   background: var(--color-bg-scrim);
   -webkit-font-smoothing: antialiased;
@@ -150,7 +153,7 @@ body {
 
 /* Material dialog containers - dark, card-like modals tuned to project theme */
 .mdc-dialog__surface {
-  background-color: var(--color-surface-high);
+  background-color: var(--mat-dialog-container-color);
   color: var(--color-text-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-high);
