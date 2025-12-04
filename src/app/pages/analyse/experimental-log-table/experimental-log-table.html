@@ -1,0 +1,69 @@
+<section aria-label="Experimental log table" class="experimental-log-table">
+  <div class="toolbar">
+    <label class="visually-hidden" for="log-search">Search logs</label>
+    <mat-form-field appearance="outline" class="search-field">
+      <input
+        [formControl]="search"
+        aria-label="Search logs"
+        id="log-search"
+        matInput
+        placeholder="Search logs (message, kind, meta...)"
+      />
+      <button
+        (click)="search.setValue('')"
+        *ngIf="search.value"
+        aria-label="Clear search"
+        mat-icon-button
+        matSuffix
+        type="button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <div aria-live="polite" class="counts">
+      <span *ngIf="matchedCount() < totalCount(); else allCount"
+        >Showing {{ matchedCount() }} of {{ totalCount() }} entries</span
+      >
+      <ng-template #allCount
+        ><span>{{ totalCount() }} entries</span></ng-template
+      >
+    </div>
+  </div>
+
+  <div *ngIf="totalCount() === 0; else tableBlock">
+    <div class="empty" role="status">No parsed entries yet. Start parsing a log file to see entries here.</div>
+  </div>
+
+  <ng-template #tableBlock>
+    <table [dataSource]="filteredEntries()" aria-label="Parsed log entries" class="log-table" mat-table role="table">
+      <ng-container matColumnDef="timestamp">
+        <th *matHeaderCellDef mat-header-cell>Timestamp</th>
+        <td *matCellDef="let row" mat-cell>{{ formatTimestamp(row) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="level">
+        <th *matHeaderCellDef mat-header-cell>Level</th>
+        <td *matCellDef="let row" mat-cell>{{ formatLevel(row) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="environment">
+        <th *matHeaderCellDef mat-header-cell>Env</th>
+        <td *matCellDef="let row" mat-cell>{{ formatEnvironment(row) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="kind">
+        <th *matHeaderCellDef mat-header-cell>Kind</th>
+        <td *matCellDef="let row" mat-cell>{{ row.kind }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="message">
+        <th *matHeaderCellDef mat-header-cell>Message</th>
+        <td *matCellDef="let row" mat-cell>{{ getMessagePreview(row) }}</td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="columns" mat-header-row></tr>
+      <tr *matRowDef="let row; columns: columns" mat-row tabindex="0"></tr>
+    </table>
+  </ng-template>
+</section>

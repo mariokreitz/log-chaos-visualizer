@@ -1,0 +1,52 @@
+:root {
+  --search-width: 420px;
+}
+
+.experimental-log-table {
+  .toolbar {
+    display: flex;
+    gap: var(--space-3, 16px);
+    align-items: center;
+    margin-bottom: var(--space-2, 12px);
+  }
+
+  .search-field {
+    width: var(--search-width);
+  }
+
+  .counts {
+    color: var(--muted-foreground, rgba(0, 0, 0, 0.6));
+    font-size: 0.9rem;
+  }
+
+  .empty {
+    padding: var(--space-3, 16px);
+    color: var(--muted-foreground, rgba(0, 0, 0, 0.6));
+  }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th.mat-header-cell {
+    text-align: left;
+    padding: 8px 12px;
+  }
+
+  td.mat-cell {
+    padding: 8px 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.visually-hidden {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
