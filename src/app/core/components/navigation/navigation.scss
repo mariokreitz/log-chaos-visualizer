@@ -1,12 +1,44 @@
 mat-nav-list {
-  padding: 8px 0;
+  padding: var(--space-2);
 }
 
-a.mat-mdc-list-item.active {
-  background: rgba(0, 0, 0, 0.06);
+a.mat-mdc-list-item {
+  position: relative;
+  margin-bottom: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
 }
 
 a.mat-mdc-list-item mat-icon {
-  margin-right: 12px;
+  margin-right: var(--space-2);
+  color: var(--color-text-muted);
 }
 
+a.mat-mdc-list-item:hover {
+  background-color: rgba(148, 163, 184, 0.12);
+}
+
+a.mat-mdc-list-item.active {
+  background: linear-gradient(90deg, var(--color-accent-soft), transparent);
+  color: var(--color-text-primary);
+}
+
+a.mat-mdc-list-item.active mat-icon {
+  color: var(--color-accent);
+}
+
+a.mat-mdc-list-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--color-accent);
+}
+
+a.mat-mdc-list-item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}

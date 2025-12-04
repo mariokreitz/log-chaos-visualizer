@@ -1,6 +1,6 @@
 .file-selector {
   display: grid;
-  gap: .5rem;
+  gap: 0.5rem;
 }
 
 .file-label {
@@ -8,19 +8,18 @@
 }
 
 .help {
-  color: #555;
+  color: var(--color-text-muted);
 }
 
 .selected {
-  color: #222;
+  color: var(--color-text-secondary);
 }
 
 .error {
-  color: #b00020; /* meets contrast requirements on light bg */
+  color: #ff6b6b;
 }
 
 input[type="file"]:focus-visible {
-  outline: 2px solid #1a73e8;
+  outline: var(--focus-ring);
   outline-offset: 2px;
 }
-

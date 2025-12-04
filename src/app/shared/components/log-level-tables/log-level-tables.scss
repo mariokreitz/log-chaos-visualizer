@@ -1,13 +1,13 @@
 .log-level-tables {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-3);
 }
 
 .log-level-tables__tab-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-2);
 }
 
 .log-level-tables__filter {
@@ -38,5 +38,5 @@
 
 .log-level-tables__empty {
   font-style: italic;
+  color: var(--color-text-muted);
 }
-

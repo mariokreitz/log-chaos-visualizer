@@ -11,14 +11,16 @@
 
   .chart-title {
     margin: 0;
-    font-size: 1rem;
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
     font-weight: 600;
   }
 
   .chart-meta {
     margin: 0;
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-size-meta);
+    line-height: var(--line-height-meta);
+    color: var(--color-text-muted);
 
     &__malformed {
       margin-left: 0.5rem;
@@ -42,7 +44,7 @@
   }
 
   .chart-summary {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--color-border-subtle);
     padding-top: 0.5rem;
   }
 
@@ -59,7 +61,7 @@
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--font-size-meta);
   }
 
   .chart-summary__label {
@@ -73,13 +75,12 @@
 
   .chart-summary__percentage {
     margin-left: 0.25rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--color-text-muted);
   }
 
   .chart-summary__empty {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: var(--font-size-meta);
     font-style: italic;
   }
 }
-

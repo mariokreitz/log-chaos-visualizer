@@ -16,13 +16,16 @@
 
 .error-fatal-timeline-chart__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-weight: 500;
 }
 
 .error-fatal-timeline-chart__meta {
   margin: 0;
-  font-size: 0.875rem;
-  color: #b0bec5;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  color: var(--color-text-muted);
 }
 
 .error-fatal-timeline-chart__chart {
@@ -33,6 +36,8 @@
 
 .error-fatal-timeline-chart__placeholder {
   margin: 0;
-  font-size: 0.875rem;
-  color: #b0bec5;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  color: var(--color-text-muted);
+  font-style: italic;
 }
