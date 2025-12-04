@@ -1,10 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SettingsService } from '../../shared/services/settings.service';
 
 @Component({
     selector: 'app-settings',
-    imports: [ MatRadioModule ],
+    imports: [
+        MatRadioModule,
+        MatSlideToggleModule,
+    ],
     templateUrl: './settings.html',
     styleUrl: './settings.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,11 +22,22 @@ export default class Settings {
     });
     private readonly settings = inject(SettingsService);
     readonly speed = this.settings.parsingSpeed;
+    readonly progressBarSettings = this.settings.progressBarSettings;
 
     onSpeedChange(value: string | null): void {
         if (value === 'slow' || value === 'normal' || value === 'fast') {
             this.settings.setParsingSpeed(value);
         }
     }
-}
 
+    onToggleProgressBar(enabled: boolean | null): void {
+        if (enabled === null) return;
+        this.settings.setProgressBarSettings({ enabled });
+    }
+
+    onProgressBarSizeChange(value: string | null): void {
+        if (value === 'thin' || value === 'normal') {
+            this.settings.setProgressBarSettings({ size: value });
+        }
+    }
+}

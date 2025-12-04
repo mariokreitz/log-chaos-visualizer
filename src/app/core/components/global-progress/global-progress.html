@@ -1,5 +1,11 @@
-@if (isParsing()) {
-	<div aria-label="Parsing log file in progress" aria-live="polite" class="global-progress" role="status">
+@if (shouldShow()) {
+	<div
+				[class.global-progress-thin]="progressBarSettings().size === 'thin'"
+				aria-label="Parsing log file in progress"
+				aria-live="polite"
+				class="global-progress"
+				role="status"
+	>
 		<mat-progress-bar
 					[bufferValue]="bufferValue()"
 					[value]="value()"

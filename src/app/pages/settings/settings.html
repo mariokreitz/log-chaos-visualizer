@@ -6,7 +6,7 @@
 		<p>Adjust how quickly the log parsing runs for demo purposes.</p>
 
 		<mat-radio-group
-					(change)="onSpeedChange($any($event.value))"
+					(change)="onSpeedChange($event.value)"
 					[value]="speed()"
 					aria-label="Select parsing speed"
 		>
@@ -17,5 +17,30 @@
 
 		<p class="current">Current: {{ speedLabel() }}</p>
 	</section>
-</section>
 
+	<section aria-labelledby="progress-bar-heading">
+		<h2 id="progress-bar-heading">Global progress bar</h2>
+		<p>Control the visibility and appearance of the global parsing progress bar.</p>
+
+		<mat-slide-toggle
+					(change)="onToggleProgressBar($event.checked)"
+					[checked]="progressBarSettings().enabled"
+		>
+			Show global progress bar
+		</mat-slide-toggle>
+
+		@if (progressBarSettings().enabled) {
+			<div class="progress-size">
+				<label>Bar thickness:</label>
+				<mat-radio-group
+							(change)="onProgressBarSizeChange($event.value)"
+							[value]="progressBarSettings().size"
+							aria-label="Select progress bar thickness"
+				>
+					<mat-radio-button value="thin">Thin</mat-radio-button>
+					<mat-radio-button value="normal">Normal</mat-radio-button>
+				</mat-radio-group>
+			</div>
+		}
+	</section>
+</section>
