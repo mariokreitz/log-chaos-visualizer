@@ -37,6 +37,7 @@ interface WorkerStartMessage {
     type: 'start';
     file: File;
     chunkSize: number;
+    delayMs?: number;
 }
 
 type WorkerMessage =
@@ -134,7 +135,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
         return;
     }
 
-    const { file, chunkSize } = msg;
+    const { file, chunkSize, delayMs = 0 } = msg;
     const total = file.size;
 
     let processed = 0;
@@ -220,6 +221,10 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
                 percent: total === 0 ? 100 : Math.round((processed / total) * 100),
             };
             postMessage({ type: 'progress', progress } satisfies WorkerMessage);
+
+            if (delayMs > 0) {
+                await sleep(delayMs);
+            }
         }
 
         if (remainder.trim()) {
@@ -269,4 +274,8 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
 
 async function readSliceAsText(blob: Blob, _decoder: TextDecoder): Promise<string> {
     return await blob.text();
+}
+
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }

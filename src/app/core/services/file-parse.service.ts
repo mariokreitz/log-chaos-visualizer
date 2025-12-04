@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { NotificationService } from '../../shared/services/notification.service';
+import { ParsingSpeed, SettingsService } from '../../shared/services/settings.service';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
 
 export type ParseProgress = {
@@ -44,6 +45,7 @@ export class FileParseService {
 
     private worker: Worker | null = null;
     private readonly notifications = inject(NotificationService);
+    private readonly settings = inject(SettingsService);
 
     setFile(file: File | null): void {
         this.reset();
@@ -52,7 +54,7 @@ export class FileParseService {
         }
     }
 
-    startParse(chunkSize = 2 * 1024 * 1024): void { // 2MB default
+    startParse(): void {
         const file = this.selectedFile();
         if (!file) {
             this.error.set('No file selected.');
@@ -76,6 +78,9 @@ export class FileParseService {
             },
         });
         this.latestBatch.set(null);
+
+        const speed = this.settings.parsingSpeed();
+        const { chunkSize, delayMs } = getParsingParameters(speed);
 
         this.worker?.terminate();
         this.worker = new Worker(new URL('../workers/parse-logs.worker', import.meta.url), { type: 'module' });
@@ -114,6 +119,7 @@ export class FileParseService {
             type: 'start',
             file,
             chunkSize,
+            delayMs,
         };
         this.worker.postMessage(startMsg);
     }
@@ -129,10 +135,21 @@ export class FileParseService {
     }
 }
 
+export function getParsingParameters(speed: ParsingSpeed): { chunkSize: number; delayMs: number } {
+    if (speed === 'slow') {
+        return { chunkSize: 256 * 1024, delayMs: 300 };
+    }
+    if (speed === 'normal') {
+        return { chunkSize: 512 * 1024, delayMs: 100 };
+    }
+    return { chunkSize: 2 * 1024 * 1024, delayMs: 0 };
+}
+
 export type WorkerStartMessage = {
     type: 'start';
     file: File;
     chunkSize: number;
+    delayMs: number;
 };
 
 export type WorkerMessage =

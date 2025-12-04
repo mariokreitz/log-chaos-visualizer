@@ -13,6 +13,10 @@ export const routes: Routes = [
                 path: 'analyse',
                 loadComponent: () => import('./pages/analyse/analyse'),
             },
+            {
+                path: 'settings',
+                loadComponent: () => import('./pages/settings/settings'),
+            },
         ],
     },
 ];

@@ -1,0 +1,17 @@
+.settings {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+mat-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.current {
+  margin-top: 1rem;
+  font-weight: 500;
+}
+

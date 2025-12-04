@@ -1,0 +1,21 @@
+<section class="settings">
+	<h1>Settings</h1>
+
+	<section aria-labelledby="parsing-speed-heading">
+		<h2 id="parsing-speed-heading">Parsing speed</h2>
+		<p>Adjust how quickly the log parsing runs for demo purposes.</p>
+
+		<mat-radio-group
+					(change)="onSpeedChange($any($event.value))"
+					[value]="speed()"
+					aria-label="Select parsing speed"
+		>
+			<mat-radio-button value="slow">Slow</mat-radio-button>
+			<mat-radio-button value="normal">Normal</mat-radio-button>
+			<mat-radio-button value="fast">Fast</mat-radio-button>
+		</mat-radio-group>
+
+		<p class="current">Current: {{ speedLabel() }}</p>
+	</section>
+</section>
+
