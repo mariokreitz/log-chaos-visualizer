@@ -1,0 +1,47 @@
+<section class="chart-container">
+	<header class="chart-header">
+		<h3 class="chart-title">{{ title() }}</h3>
+		@if (hasData()) {
+			<p class="chart-meta">
+				Total lines: {{ totalCount() }}
+				@if (malformedCount() > 0) {
+					<span class="chart-meta__malformed">(Malformed: {{ malformedCount() }})</span>
+				}
+			</p>
+		} @else {
+			<p class="chart-meta chart-meta--empty">No parsed log entries yet.</p>
+		}
+	</header>
+
+	<div aria-hidden="true" class="chart-body">
+		<div class="chart-canvas-wrapper">
+			<canvas
+						[data]="chartData()"
+						[options]="chartOptions"
+						[type]="'doughnut'"
+						baseChart
+			></canvas>
+		</div>
+	</div>
+
+	<section aria-label="Log kind summary" class="chart-summary">
+		@if (entries().length > 0) {
+			<ul class="chart-summary__list">
+				@for (entry of entries(); track entry.kind) {
+					<li class="chart-summary__item">
+						<span class="chart-summary__label">{{ entry.label }}</span>
+						<span class="chart-summary__value">
+              {{ entry.count }}
+							@if (totalCount() > 0) {
+								<span class="chart-summary__percentage">({{ entry.percentage | number:'1.0-1' }}%)</span>
+							}
+            </span>
+					</li>
+				}
+			</ul>
+		} @else {
+			<p class="chart-summary__empty">Start parsing a log file to see log kinds here.</p>
+		}
+	</section>
+</section>
+
