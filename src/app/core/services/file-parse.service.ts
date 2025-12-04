@@ -213,6 +213,28 @@ function normalizeLogLevel(entry: ParsedLogEntry): NormalizedLogLevel {
         return 'unknown';
     }
 
+    if (entry.kind === 'text') {
+        const raw = entry.entry.line;
+        if (!raw) {
+            return 'unknown';
+        }
+        const firstToken = raw.split(/\s+/, 1)[0];
+        switch (firstToken) {
+            case 'TRACE':
+                return 'trace';
+            case 'DEBUG':
+                return 'debug';
+            case 'INFO':
+                return 'info';
+            case 'WARN':
+                return 'warn';
+            case 'ERROR':
+                return 'error';
+            default:
+                return 'unknown';
+        }
+    }
+
     return 'unknown';
 }
 
@@ -222,6 +244,46 @@ function normalizeEnvironment(entry: ParsedLogEntry): NormalizedEnvironment {
         if (env === 'dev' || env === 'staging' || env === 'prod') {
             return env;
         }
+        return 'unknown';
     }
+
+    if (entry.kind === 'pino' && entry.entry.meta) {
+        const env = (entry.entry.meta as Record<string, unknown>)['environment'];
+        if (env === 'dev' || env === 'staging' || env === 'prod') {
+            return env;
+        }
+    }
+
+    if (entry.kind === 'winston' && entry.entry.meta) {
+        const env = (entry.entry.meta as Record<string, unknown>)['environment'];
+        if (env === 'dev' || env === 'staging' || env === 'prod') {
+            return env;
+        }
+    }
+
+    if (entry.kind === 'promtail') {
+        const anyEntry = entry.entry as unknown as { environment?: string };
+        const env = anyEntry.environment;
+        if (env === 'dev' || env === 'staging' || env === 'prod') {
+            return env;
+        }
+    }
+
+    if (entry.kind === 'docker') {
+        const log = entry.entry.log ?? '';
+        const match = /env=(dev|staging|prod)\b/.exec(log);
+        if (match) {
+            return match[1] as NormalizedEnvironment;
+        }
+    }
+
+    if (entry.kind === 'text') {
+        const line = entry.entry.line ?? '';
+        const match = /env=(dev|staging|prod)\b/.exec(line);
+        if (match) {
+            return match[1] as NormalizedEnvironment;
+        }
+    }
+
     return 'unknown';
 }

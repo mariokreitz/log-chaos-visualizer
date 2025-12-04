@@ -33,8 +33,21 @@ function isWinstonEntry(candidate: unknown): candidate is WinstonEntry {
     if (!isRecord(candidate)) return false;
     const level = candidate['level'];
     const message = candidate['message'];
-    if (typeof message !== 'string' || typeof level !== 'string') return false;
-    return level === 'silly' || level === 'debug' || level === 'verbose' || level === 'info' || level === 'warn' || level === 'error';
+    const timestamp = candidate['timestamp'];
+    if (typeof timestamp !== 'string' || typeof message !== 'string' || typeof level !== 'string') {
+        return false;
+    }
+    if (typeof (candidate as Record<string, unknown>)['ts'] === 'string') {
+        return false;
+    }
+    return (
+      level === 'silly'
+      || level === 'debug'
+      || level === 'verbose'
+      || level === 'info'
+      || level === 'warn'
+      || level === 'error'
+    );
 }
 
 function isLokiEntry(candidate: unknown): candidate is LokiEntry {
@@ -72,14 +85,16 @@ function mapJsonObjectToParsed(candidate: unknown): ParsedLogEntry {
     if (isDockerLogLine(candidate)) {
         return { kind: 'docker', entry: candidate };
     }
+    // Promtail entries are a subset of what Winston accepts (level+message) but
+    // additionally have 'ts', so check Promtail before Winston.
+    if (isPromtailTextLine(candidate)) {
+        return { kind: 'promtail', entry: candidate };
+    }
     if (isWinstonEntry(candidate)) {
         return { kind: 'winston', entry: candidate };
     }
     if (isLokiEntry(candidate)) {
         return { kind: 'loki', entry: candidate };
-    }
-    if (isPromtailTextLine(candidate)) {
-        return { kind: 'promtail', entry: candidate };
     }
     return { kind: 'unknown-json', entry: candidate };
 }

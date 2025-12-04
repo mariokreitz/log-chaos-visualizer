@@ -44,6 +44,11 @@ def _rand_environment() -> str:
     return random.choice(["dev", "staging", "prod"])
 
 
+def _rand_optional_environment() -> str | None:
+    # 70% chance to attach an environment to non-Loki logs
+    return _rand_environment() if random.random() < 0.7 else None
+
+
 def _rand_pino_level() -> int:
     return random.choice([10, 20, 30, 40, 50, 60])
 
@@ -128,26 +133,34 @@ def generate_pino_line() -> str:
             "responseTimeMs": random.randint(1, 500),
         }
 
-    if random.random() < 0.4:
-        entry["meta"] = {
+    env = _rand_optional_environment()
+    if random.random() < 0.4 or env is not None:
+        meta: dict[str, object] = {
             "traceId": f"trace-{random.randint(1_000_000, 9_999_999)}",
             "spanId": f"span-{random.randint(1_000_000, 9_999_999)}",
         }
+        if env is not None:
+            meta["environment"] = env
+        entry["meta"] = meta
 
     return json.dumps(entry, separators=(",", ":"))
 
 
 def generate_winston_line() -> str:
-    entry = {
+    entry: dict[str, object] = {
         "timestamp": _rand_iso_timestamp(),
         "level": _rand_winston_level(),
         "message": _rand_message(),
     }
-    if random.random() < 0.5:
-        entry["meta"] = {
+    if random.random() < 0.7:
+        meta: dict[str, object] = {
             "requestId": f"req-{random.randint(1_000_000, 9_999_999)}",
             "userId": random.randint(1, 1000),
         }
+        env = _rand_optional_environment()
+        if env is not None:
+            meta["environment"] = env
+        entry["meta"] = meta
     return json.dumps(entry, separators=(",", ":"))
 
 
@@ -166,17 +179,24 @@ def generate_loki_line() -> str:
 
 
 def generate_promtail_line() -> str:
-    entry = {
+    entry: dict[str, object] = {
         "ts": _rand_iso_timestamp(),
         "level": _rand_promtail_level(),
         "message": _rand_message(),
     }
+    env = _rand_optional_environment()
+    if env is not None:
+        entry["environment"] = env
     return json.dumps(entry, separators=(",", ":"))
 
 
 def generate_docker_line() -> str:
+    env = _rand_optional_environment()
+    log_msg = _rand_message()
+    if env is not None:
+        log_msg = f"env={env} {log_msg}"
     entry = {
-        "log": _rand_message() + "\n",
+        "log": log_msg + "\n",
         "stream": random.choice(["stdout", "stderr"]),
         "time": _rand_iso_timestamp(),
     }
@@ -185,12 +205,15 @@ def generate_docker_line() -> str:
 
 def generate_text_line() -> str:
     level = random.choice(["INFO", "WARN", "ERROR", "DEBUG", "TRACE"])
+    env = _rand_optional_environment()
     parts = [
         level,
         datetime.now(timezone.utc).isoformat(),
         _rand_service_name() + ":",
-        _rand_message(),
     ]
+    if env is not None:
+        parts.append(f"env={env}")
+    parts.append(_rand_message())
     return " ".join(parts)
 
 
