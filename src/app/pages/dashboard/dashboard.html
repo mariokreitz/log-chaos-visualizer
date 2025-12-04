@@ -11,6 +11,12 @@
 		<section aria-label="Error and fatal events timeline" class="dashboard__timeline">
 			<app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
 		</section>
+		<section aria-label="Error and fatal log details" class="dashboard__log-details">
+			<app-log-level-tables
+						[errorEntries]="errorEntries()"
+						[fatalEntries]="fatalEntries()"
+			/>
+		</section>
 	} @else {
 		<p class="dashboard__placeholder">Start parsing a log file to see analysis charts.</p>
 	}

@@ -1,0 +1,42 @@
+.log-level-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.log-level-tables__tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.log-level-tables__filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.log-level-tables__filter-label {
+  font-weight: 500;
+}
+
+.log-level-tables__filter-field {
+  max-width: 24rem;
+}
+
+.log-level-tables__table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.log-level-tables__message-cell {
+  max-width: 40rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.log-level-tables__empty {
+  font-style: italic;
+}
+
