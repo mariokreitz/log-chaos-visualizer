@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FileParseService } from '../../services/file-parse.service';
 
@@ -10,8 +10,15 @@ import { FileParseService } from '../../services/file-parse.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GlobalProgress {
+    readonly value = computed(() => {
+        const p = this.progress();
+        return p ? p.percent : 0;
+    });
+    readonly bufferValue = computed(() => {
+        const p = this.progress();
+        return p ? p.percent : 0;
+    });
     private readonly parse = inject(FileParseService);
-
     readonly isParsing = this.parse.isParsing;
+    readonly progress = this.parse.progress;
 }
-

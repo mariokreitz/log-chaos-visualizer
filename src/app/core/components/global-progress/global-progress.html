@@ -1,5 +1,10 @@
 @if (isParsing()) {
 	<div aria-label="Parsing log file in progress" aria-live="polite" class="global-progress" role="status">
-		<mat-progress-bar color="accent" mode="indeterminate"></mat-progress-bar>
+		<mat-progress-bar
+					[bufferValue]="bufferValue()"
+					[value]="value()"
+					color="accent"
+					mode="buffer"
+		></mat-progress-bar>
 	</div>
 }
