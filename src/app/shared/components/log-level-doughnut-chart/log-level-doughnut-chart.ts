@@ -46,12 +46,9 @@ export class LogLevelDoughnutChartComponent {
 
   readonly entries = computed<LevelCountEntry[]>(() => {
     const summary = this.summary();
-    if (!summary) {
-      return [];
-    }
+    const total = summary?.total ?? 0;
 
-    const total = summary.total || 0;
-    if (total === 0) {
+    if (!summary || total === 0) {
       return LEVELS.map((level) => ({
         level,
         label: LEVEL_LABELS[level],
@@ -71,8 +68,6 @@ export class LogLevelDoughnutChartComponent {
       };
     });
   });
-
-  readonly hasData = computed(() => this.totalCount() > 0);
 
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();

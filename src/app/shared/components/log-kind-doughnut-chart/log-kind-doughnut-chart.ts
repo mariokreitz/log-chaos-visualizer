@@ -52,12 +52,9 @@ export class LogKindDoughnutChartComponent {
 
   readonly entries = computed<ParsedKindCountEntry[]>(() => {
     const summary = this.summary();
-    if (!summary) {
-      return [];
-    }
+    const total = summary?.totalLines ?? 0;
 
-    const total = summary.totalLines || 0;
-    if (total === 0) {
+    if (!summary || total === 0) {
       return PARSED_KINDS.map((kind) => ({
         kind,
         label: PARSED_KIND_LABELS[kind],

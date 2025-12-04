@@ -34,25 +34,24 @@ export class LogEnvironmentDoughnutChartComponent {
 
   readonly entries = computed<EnvironmentCountEntry[]>(() => {
     const summary = this.summary();
-    if (!summary) {
-      return [];
-    }
-
-    const total = summary.total || 0;
-    const entries: EnvironmentCountEntry[] = [];
+    const total = summary?.total ?? 0;
 
     const environments: NormalizedEnvironment[] = ['dev', 'staging', 'prod', 'unknown'];
-    for (const env of environments) {
+
+    if (!summary || total === 0) {
+      return environments.map((env) => {
+        const label = env === 'unknown' ? 'Unknown' : env.toUpperCase();
+        return { environment: env, label, count: 0, percentage: 0 };
+      });
+    }
+
+    return environments.map((env) => {
       const count = summary.byEnvironment[env] ?? 0;
       const percentage = total === 0 ? 0 : (count / total) * 100;
       const label = env === 'unknown' ? 'Unknown' : env.toUpperCase();
-      entries.push({ environment: env, label, count, percentage });
-    }
-
-    return entries;
+      return { environment: env, label, count, percentage };
+    });
   });
-
-  readonly hasData = computed(() => this.totalCount() > 0);
 
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
