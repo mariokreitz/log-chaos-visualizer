@@ -112,5 +112,6 @@ export class LogLevelDoughnutChartComponent {
       },
     },
     animation: false,
+    cutout: '60%',
   };
 }

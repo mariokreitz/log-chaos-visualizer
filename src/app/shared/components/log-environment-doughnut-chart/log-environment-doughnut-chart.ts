@@ -92,5 +92,6 @@ export class LogEnvironmentDoughnutChartComponent {
       },
     },
     animation: false,
+    cutout: '60%',
   };
 }

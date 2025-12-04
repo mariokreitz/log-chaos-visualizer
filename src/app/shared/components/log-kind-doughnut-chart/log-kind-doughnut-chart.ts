@@ -78,8 +78,6 @@ export class LogKindDoughnutChartComponent {
     });
   });
 
-  readonly hasData = computed(() => this.totalCount() > 0);
-
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
     return {
@@ -118,5 +116,6 @@ export class LogKindDoughnutChartComponent {
       },
     },
     animation: false,
+    cutout: '60%',
   };
 }

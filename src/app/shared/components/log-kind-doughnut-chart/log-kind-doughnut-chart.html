@@ -1,16 +1,16 @@
 <section class="chart-container">
-	<header class="chart-header">
-		<h2 class="chart-title">{{ title() }}</h2>
-		@if (summary()) {
-			<p class="chart-subtitle">Total entries: {{ totalCount() }} · Malformed: {{ malformedCount() }}</p>
-		} @else {
-			<p class="chart-subtitle">No log file has been parsed yet.</p>
-		}
-	</header>
+  <header class="chart-header">
+    <h2 class="chart-title">{{ title() }}</h2>
+    @if (summary()) {
+      <p class="chart-subtitle">Total entries: {{ totalCount() }} · Malformed: {{ malformedCount() }}</p>
+    } @else {
+      <p class="chart-subtitle">No log file has been parsed yet.</p>
+    }
+  </header>
 
-	<div aria-hidden="true" class="chart-body">
-		<div class="chart-canvas-wrapper">
-			<canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
-		</div>
-	</div>
+  <div aria-hidden="true" class="chart-body">
+    <div class="chart-canvas-wrapper">
+      <canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
+    </div>
+  </div>
 </section>
