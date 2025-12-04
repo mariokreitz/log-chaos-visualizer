@@ -28,34 +28,51 @@
   @if (totalCount() === 0) {
     <div class="empty" role="status">No parsed entries yet. Start parsing a log file to see entries here.</div>
   } @else {
-    <table [dataSource]="filteredEntries()" aria-label="Parsed log entries" class="log-table" mat-table role="table">
-      <ng-container matColumnDef="timestamp">
-        <th *matHeaderCellDef mat-header-cell>Timestamp</th>
-        <td *matCellDef="let row" mat-cell>{{ formatTimestamp(row) }}</td>
-      </ng-container>
+    <div class="table-wrapper">
+      <table aria-label="Parsed log entries - headers" class="log-table" mat-table matSort>
+        <ng-container matColumnDef="timestamp">
+          <th *matHeaderCellDef mat-header-cell mat-sort-header="timestamp">Timestamp</th>
+        </ng-container>
 
-      <ng-container matColumnDef="level">
-        <th *matHeaderCellDef mat-header-cell>Level</th>
-        <td *matCellDef="let row" mat-cell>{{ formatLevel(row) }}</td>
-      </ng-container>
+        <ng-container matColumnDef="level">
+          <th *matHeaderCellDef mat-header-cell mat-sort-header="level">Level</th>
+        </ng-container>
 
-      <ng-container matColumnDef="environment">
-        <th *matHeaderCellDef mat-header-cell>Env</th>
-        <td *matCellDef="let row" mat-cell>{{ formatEnvironment(row) }}</td>
-      </ng-container>
+        <ng-container matColumnDef="environment">
+          <th *matHeaderCellDef mat-header-cell mat-sort-header="environment">Env</th>
+        </ng-container>
 
-      <ng-container matColumnDef="kind">
-        <th *matHeaderCellDef mat-header-cell>Kind</th>
-        <td *matCellDef="let row" mat-cell>{{ row.kind }}</td>
-      </ng-container>
+        <ng-container matColumnDef="kind">
+          <th *matHeaderCellDef mat-header-cell mat-sort-header="kind">Kind</th>
+        </ng-container>
 
-      <ng-container matColumnDef="message">
-        <th *matHeaderCellDef mat-header-cell>Message</th>
-        <td *matCellDef="let row" mat-cell>{{ getMessagePreview(row) }}</td>
-      </ng-container>
+        <ng-container matColumnDef="message">
+          <th *matHeaderCellDef mat-header-cell mat-sort-header="message">Message</th>
+        </ng-container>
 
-      <tr *matHeaderRowDef="columns" mat-header-row></tr>
-      <tr *matRowDef="let row; columns: columns" mat-row tabindex="0"></tr>
-    </table>
+        <tr *matHeaderRowDef="columns" mat-header-row></tr>
+      </table>
+
+      <cdk-virtual-scroll-viewport class="viewport" itemSize="48">
+        <table aria-label="Parsed log entries - rows" class="log-table" role="table">
+          <tbody>
+            <tr *cdkVirtualFor="let row of paginatedEntries(); let i = index" tabindex="0">
+              <td>{{ formatTimestamp(row) }}</td>
+              <td>{{ formatLevel(row) }}</td>
+              <td>{{ formatEnvironment(row) }}</td>
+              <td>{{ row.kind }}</td>
+              <td>{{ getMessagePreview(row) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </cdk-virtual-scroll-viewport>
+
+      <mat-paginator
+        [length]="filteredEntries().length"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[25, 50, 100, 200]"
+        [pageSize]="pageSize()"
+      ></mat-paginator>
+    </div>
   }
 </section>
