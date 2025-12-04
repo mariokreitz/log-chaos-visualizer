@@ -28,9 +28,14 @@ export type FeatureFlagsConfig = {
     debugParsing: boolean;
 };
 
+export type StorageConfig = {
+    userPreferencesKey: string;
+};
+
 export type CoreAppConfig = {
     metadata: AppMetadataConfig;
     parsing: ParsingConfig;
+    storage: StorageConfig;
     navigation: NavigationSectionConfig;
     featureFlags: FeatureFlagsConfig;
 };

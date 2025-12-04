@@ -9,6 +9,9 @@ export const APP_CONFIG: CoreAppConfig = {
         version: environment.app.version,
         repositoryUrl: environment.app.repositoryUrl,
     },
+    storage: {
+        userPreferencesKey: environment.storage.userPreferencesKey,
+    },
     parsing: {
         defaultSpeed: 'slow',
         presets: {
