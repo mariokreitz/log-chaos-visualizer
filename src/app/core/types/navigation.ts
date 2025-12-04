@@ -8,5 +8,4 @@ export interface NavItem {
     visible?: boolean;
 }
 
-export type NavItems = ReadonlyArray<NavItem>;
-
+export type NavItems = readonly NavItem[];
