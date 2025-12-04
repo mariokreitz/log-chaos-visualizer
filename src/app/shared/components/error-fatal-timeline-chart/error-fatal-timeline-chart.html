@@ -15,8 +15,8 @@
 		<div class="error-fatal-timeline-chart__chart" role="img">
 			<canvas [data]="chartData()"
 							[options]="chartOptions"
-							baseChart
-							type="bar">
+							[type]="'bar'"
+							baseChart>
 			</canvas>
 		</div>
 	} @else {

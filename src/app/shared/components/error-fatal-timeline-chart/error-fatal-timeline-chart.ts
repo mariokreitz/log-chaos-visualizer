@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import type { ChartConfiguration, ChartData } from 'chart.js';
+import type { ChartConfiguration, ChartData, ChartDataset } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ErrorFatalTimelineSummary } from '../../../core/types/file-parse.types';
 
@@ -32,6 +32,7 @@ export class ErrorFatalTimelineChartComponent {
         }
         return summary.buckets.some(bucket => bucket.total > 0);
     });
+
     readonly chartData = computed<ChartData<'bar'>>(() => {
         const summary = this.summary();
         if (!summary || summary.buckets.length === 0) {
@@ -43,31 +44,50 @@ export class ErrorFatalTimelineChartComponent {
 
         const buckets = this.reBucketToFiveMinutes(summary as ErrorFatalTimelineSummary);
 
-        const labels = buckets.map((b: any) => this.formatBucketLabel(b.start, b.end));
-        const errorData = buckets.map((b: any) => b.error);
-        const fatalData = buckets.map((b: any) => b.fatal);
+        // Build categorical labels (formatted midpoint strings) and numeric arrays for datasets —
+        // this is reliable without a time adapter and ensures bars render.
+        const midpoints = buckets.map((b: any) => Math.floor((b.start + b.end) / 2));
+        const labels = midpoints.map((ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+
+        const errorData = buckets.map((b) => b.error);
+        const fatalData = buckets.map((b) => b.fatal);
+
+        const errorDataset: ChartDataset<'bar'> = {
+            label: 'Error',
+            data: errorData as any,
+            backgroundColor: '#E53935',
+            borderColor: '#B71C1C',
+            borderWidth: 1,
+            barPercentage: 0.9,
+            categoryPercentage: 0.9,
+        };
+
+        const fatalDataset: ChartDataset<'bar'> = {
+            label: 'Fatal',
+            data: fatalData as any,
+            backgroundColor: '#8E24AA',
+            borderColor: '#6A1B9A',
+            borderWidth: 1,
+            barPercentage: 0.9,
+            categoryPercentage: 0.9,
+        };
 
         return {
             labels,
             datasets: [
-                {
-                    label: 'Error',
-                    data: errorData,
-                    backgroundColor: '#E53935',
-                    borderColor: '#B71C1C',
-                    borderWidth: 1,
-                },
-                {
-                    label: 'Fatal',
-                    data: fatalData,
-                    backgroundColor: '#8E24AA',
-                    borderColor: '#6A1B9A',
-                    borderWidth: 1,
-                },
+                errorDataset,
+                fatalDataset,
             ],
         };
     });
+
     readonly chartOptions: ChartConfiguration<'bar'>['options'] = {
+        // ensure bar charts on numeric axes get a reasonable max pixel width
+        datasets: {
+            bar: {
+                maxBarThickness: 20,
+            },
+        },
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -81,18 +101,21 @@ export class ErrorFatalTimelineChartComponent {
                 callbacks: {
                     title: items => {
                         if (!items.length) return '';
-                        return String(items[0].label ?? '');
+                        const px = (items[0].parsed as any).x ?? items[0].label;
+                        const ms = typeof px === 'number' ? px : Number(px);
+                        if (!Number.isNaN(ms)) return new Date(ms).toLocaleString();
+                        return String(px ?? '');
                     },
                     label: context => {
                         const label = context.dataset.label ?? '';
-                        // parsed.y works for bar chart as well
-                        const value = (context.parsed as any).y ?? (context.parsed as any).v ?? 0;
+                        const value = (context.parsed as any).y ?? 0;
                         return `${label}: ${value}`;
                     },
                 },
             },
         },
         scales: {
+            // use default category x-axis (labels) so Chart.js positions bars reliably
             x: {
                 title: {
                     display: true,
@@ -122,13 +145,17 @@ export class ErrorFatalTimelineChartComponent {
     private reBucketToFiveMinutes(summary: ErrorFatalTimelineSummary) {
         if (summary.bucketSizeMs === FIVE_MIN_MS) {
             // Already in required bucket size — return mapped buckets
-            return summary.buckets.map(b => ({
-                start: b.bucketStartMs,
-                end: b.bucketEndMs,
-                error: b.errorCount,
-                fatal: b.fatalCount,
-                total: b.total,
-            }));
+            // ensure buckets are sorted by start time
+            return summary.buckets
+              .slice()
+              .sort((a, b) => a.bucketStartMs - b.bucketStartMs)
+              .map(b => ({
+                  start: b.bucketStartMs,
+                  end: b.bucketEndMs,
+                  error: b.errorCount,
+                  fatal: b.fatalCount,
+                  total: b.total,
+              }));
         }
 
         // Determine overall time range
@@ -158,23 +185,5 @@ export class ErrorFatalTimelineChartComponent {
         }
 
         return buckets;
-    }
-
-    private formatBucketLabel(startMs: number, endMs: number): string {
-        const start = new Date(startMs);
-        const end = new Date(endMs);
-
-        const startTime = start.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
-        const endTime = end.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-        });
-
-        return `${startTime} – ${endTime}`;
     }
 }

@@ -13,7 +13,7 @@ export const APP_CONFIG: CoreAppConfig = {
         userPreferencesKey: environment.storage.userPreferencesKey,
     },
     parsing: {
-        defaultSpeed: 'slow',
+        defaultSpeed: 'normal',
         presets: {
             slow: {
                 chunkSize: 256 * 1024,
