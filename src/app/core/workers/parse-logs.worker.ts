@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
+import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 
 interface ParseProgress {
     processedBytes: number;

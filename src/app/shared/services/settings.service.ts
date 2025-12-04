@@ -1,21 +1,11 @@
 import { Injectable, signal } from '@angular/core';
-
-export type ParsingSpeed = 'slow' | 'normal' | 'fast';
-
-export type ProgressBarSize = 'thin' | 'normal';
-
-export type ProgressBarSettings = {
-    enabled: boolean;
-    size: ProgressBarSize;
-};
+import { SETTINGS_DEFAULTS } from '../config/settings-config';
+import type { ParsingSpeed, ProgressBarSettings } from '../config/settings-config.types';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
-    readonly parsingSpeed = signal<ParsingSpeed>('slow');
-    readonly progressBarSettings = signal<ProgressBarSettings>({
-        enabled: true,
-        size: 'normal',
-    });
+    readonly parsingSpeed = signal<ParsingSpeed>(SETTINGS_DEFAULTS.parsingSpeed);
+    readonly progressBarSettings = signal<ProgressBarSettings>(SETTINGS_DEFAULTS.progressBar);
 
     setParsingSpeed(value: ParsingSpeed): void {
         this.parsingSpeed.set(value);

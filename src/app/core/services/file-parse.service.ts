@@ -1,7 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
+import type { ParsingSpeed } from '../../shared/config/settings-config.types';
 import { NotificationService } from '../../shared/services/notification.service';
-import { ParsingSpeed, SettingsService } from '../../shared/services/settings.service';
-import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
+import { SettingsService } from '../../shared/services/settings.service';
+import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 
 export type ParseProgress = {
     processedBytes: number;
@@ -135,14 +136,14 @@ export class FileParseService {
     }
 }
 
+const PARSING_PRESETS: Record<ParsingSpeed, { chunkSize: number; delayMs: number }> = {
+    slow: { chunkSize: 256 * 1024, delayMs: 300 },
+    normal: { chunkSize: 512 * 1024, delayMs: 100 },
+    fast: { chunkSize: 2 * 1024 * 1024, delayMs: 0 },
+};
+
 export function getParsingParameters(speed: ParsingSpeed): { chunkSize: number; delayMs: number } {
-    if (speed === 'slow') {
-        return { chunkSize: 256 * 1024, delayMs: 300 };
-    }
-    if (speed === 'normal') {
-        return { chunkSize: 512 * 1024, delayMs: 100 };
-    }
-    return { chunkSize: 2 * 1024 * 1024, delayMs: 0 };
+    return PARSING_PRESETS[speed] ?? PARSING_PRESETS.slow;
 }
 
 export type WorkerStartMessage = {

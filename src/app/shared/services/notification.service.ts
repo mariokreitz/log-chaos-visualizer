@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
+import { UI_CONFIG } from '../config/ui-config';
 
 export type NotificationType = 'info' | 'success' | 'error';
 
@@ -20,10 +21,11 @@ export class NotificationService {
     }
 
     private open(message: string, type: NotificationType): void {
+        const snackbarConfig = UI_CONFIG.snackbar;
         const config: MatSnackBarConfig = {
-            duration: 4000,
-            horizontalPosition: 'end',
-            verticalPosition: 'bottom',
+            duration: snackbarConfig.durationMs,
+            horizontalPosition: snackbarConfig.horizontalPosition,
+            verticalPosition: snackbarConfig.verticalPosition,
             panelClass: [
                 'app-snackbar',
                 `app-snackbar-${type}`,
