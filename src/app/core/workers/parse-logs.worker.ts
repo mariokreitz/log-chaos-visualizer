@@ -227,6 +227,27 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
             totalLines,
             malformedCount,
             counts,
+            levelSummary: {
+                total: 0,
+                byLevel: {
+                    trace: 0,
+                    debug: 0,
+                    info: 0,
+                    warn: 0,
+                    error: 0,
+                    fatal: 0,
+                    unknown: 0,
+                },
+            },
+            environmentSummary: {
+                total: 0,
+                byEnvironment: {
+                    dev: 0,
+                    staging: 0,
+                    prod: 0,
+                    unknown: 0,
+                },
+            },
         };
         postMessage({ type: 'summary', summary } satisfies WorkerMessage);
         postMessage({ type: 'done' } satisfies WorkerMessage);

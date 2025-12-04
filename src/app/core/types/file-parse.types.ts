@@ -18,10 +18,33 @@ export type ParsedLogEntry =
   | { kind: 'unknown-json'; entry: unknown }
   | { kind: 'text'; entry: { line: string } };
 
+export type NormalizedLogLevel =
+  | 'trace'
+  | 'debug'
+  | 'info'
+  | 'warn'
+  | 'error'
+  | 'fatal'
+  | 'unknown';
+
+export type LevelSummary = {
+    total: number;
+    byLevel: Record<NormalizedLogLevel, number>;
+};
+
+export type NormalizedEnvironment = 'dev' | 'staging' | 'prod' | 'unknown';
+
+export type EnvironmentSummary = {
+    total: number;
+    byEnvironment: Record<NormalizedEnvironment, number>;
+};
+
 export type ExtendedParseSummary = {
     totalLines: number;
     malformedCount: number;
     counts: Record<ParsedKind, number>;
+    levelSummary: LevelSummary;
+    environmentSummary: EnvironmentSummary;
 };
 
 export type ParsedBatch = {
@@ -47,4 +70,3 @@ export type WorkerMessage =
   | { type: 'error'; error: string };
 
 export type GetParsingParametersFn = (speed: ParsingSpeed) => { chunkSize: number; delayMs: number };
-
