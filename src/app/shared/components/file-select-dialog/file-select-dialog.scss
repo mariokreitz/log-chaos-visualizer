@@ -2,7 +2,25 @@
   display: block;
 }
 
+[mat-dialog-title] {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-title);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
 [mat-dialog-content] {
   display: grid;
   gap: var(--space-3);
+  padding-top: 0;
+  color: var(--color-text-secondary);
+}
+
+#file-dialog-description {
+  margin: 0;
+}
+
+[mat-dialog-actions] {
+  margin-top: var(--space-3);
 }

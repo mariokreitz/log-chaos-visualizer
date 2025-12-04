@@ -148,3 +148,10 @@ body {
   border-radius: 999px;
 }
 
+/* Material dialog containers - dark, card-like modals */
+.mdc-dialog__surface {
+  background-color: var(--color-surface-high);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-high);
+}
