@@ -1,59 +1,129 @@
 # LogChaosVisualizer
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.1.
+A small demo Angular application to visualize synthetic log files and explore different log formats and distributions.
 
-## Development server
+This repository contains a single-page Angular app that was created for the mini hackathon 3.0 by Kevin Chromik. It is a
+demo project and is not intended for production use.
 
-To start a local development server, run:
+Quick links
+
+- Project: log-chaos-visualizer
+- Author / Hackathon: Kevin Chromik (mini hackathon 3.0)
+- Demo / Not for production: This project is a demo only — do not use it in production.
+
+What it does
+
+- Visualizes log files (Pino, Winston, Loki/Promtail, Docker JSON, and plain text).
+- Provides charts and tables to explore log levels, kinds, and timelines.
+- Supports loading large sample logs (20k — 200k lines) located in `public/data`.
+- Comes with a Python helper (`generate_logs.py`) to generate synthetic logs for testing.
+
+Prerequisites
+
+- Node.js (recommended: a recent LTS; the project uses npm@11.6.1 via `packageManager` in package.json)
+- npm (comes with Node.js)
+- Python 3 (for the log generator script) if you want to generate sample logs
+- Docker & Docker Compose (optional, to run the app inside a container)
+
+Repository layout (high-level)
+
+- src/ — Angular application source
+- public/data/ — pre-generated example log files (generated-20k/50k/100k/200k)
+- generate_logs.py — script to create synthetic log files
+- Dockerfile, compose.yaml — container images and compose setup for running the built app behind nginx
+
+Quick development run
+
+1. Install dependencies
 
 ```bash
+npm ci
+```
+
+2. Start development server (live-reload)
+
+```bash
+npm start
+# or
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open http://localhost:4200/ in your browser.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Build for production
 
 ```bash
-ng generate component component-name
+npm run build
+# The built files are placed into dist/log-chaos-visualizer/browser
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Run in Docker (build + run)
+
+Note: `compose.yaml` references an external Docker network named `webproxy`. If you do not have this network locally,
+either create it or remove/adjust the network section in `compose.yaml` before using Docker Compose locally.
+
+Build the image locally with Docker (example):
 
 ```bash
-ng generate --help
+# build image (uses the Dockerfile and sets default BASE_HREF to '/')
+docker build -t log-chaos-visualizer:local .
+
+# run container exposing port 80 (adjust as needed)
+docker run --rm -p 8080:80 log-chaos-visualizer:local
 ```
 
-## Building
-
-To build the project run:
+Using Docker Compose (may require an existing `webproxy` network):
 
 ```bash
-ng build
+docker compose up --build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+If Compose fails because the external network `webproxy` doesn't exist, create it or remove the network stanza in
+`compose.yaml` for local testing:
 
 ```bash
-ng test
+# create the external network expected by compose.yaml
+docker network create webproxy
 ```
 
-## Running end-to-end tests
+Log generation
 
-For end-to-end (e2e) testing, run:
+This project includes `generate_logs.py`, a Python 3 script that produces synthetic logs in several formats. The
+package.json exposes convenient npm scripts to create sample files:
+
+Available npm scripts (log generation)
+
+- npm run gen:logs:20k — generate 20k lines -> public/data/generated-20000.log
+- npm run gen:logs:50k — generate 50k lines -> public/data/generated-50000.log
+- npm run gen:logs:100k — generate 100k lines -> public/data/generated-100000.log
+- npm run gen:logs:200k — generate 200k lines -> public/data/generated-200000.log
+- npm run gen:logs:all — run all of the above sequentially
+
+Manually using the generator:
 
 ```bash
-ng e2e
+# generate 50k mixed logs
+python3 generate_logs.py --lines 50000 --output public/data/generated-50000.log
+
+# specify a mix of formats and a reproducible seed
+python3 generate_logs.py --lines 20000 --output public/data/generated-20000.log --mix pino,winston,text --seed 42
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Notes and caveats
 
-## Additional Resources
+- The app was developed as a hackathon demo and lacks production hardening (security, authentication, rate limiting,
+  rigorous tests, etc.).
+- `compose.yaml` expects an external Docker network `webproxy`; adapt it for your environment.
+- The project is private in package.json. There is no LICENSE file included — add a license if you plan to publish.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Contact / Author
+
+- Kevin Chromik (author of the hackathon demo)
+
+Acknowledgements
+
+- Built with Angular and ng2-charts / Chart.js
+
+Disclaimer (important)
+This repository was created as a demo for the mini hackathon 3.0 by Kevin Chromik. It is provided "as-is" for
+demonstration purposes only and is not intended for production use.
