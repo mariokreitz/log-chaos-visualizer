@@ -3,14 +3,17 @@
 	<p>Use the floating action button to pick a log file and start parsing it.</p>
 
 	@if (hasSummary()) {
-		<app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
-		<section aria-label="Log analysis charts" class="analysis-charts">
+		<section aria-label="Error and fatal events timeline" class="dashboard__timeline">
+			<app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
+		</section>
+
+		<section aria-label="Log distribution charts" class="dashboard__doughnut-grid">
 			<app-log-kind-doughnut-chart [summary]="summary()" />
 			<app-log-level-doughnut-chart [summary]="levelSummary()" />
 			<app-log-environment-doughnut-chart [summary]="environmentSummary()" />
 		</section>
 	} @else {
-		<p class="analysis-charts__placeholder">Start parsing a log file to see analysis charts.</p>
+		<p class="dashboard__placeholder">Start parsing a log file to see analysis charts.</p>
 	}
 
 	<button

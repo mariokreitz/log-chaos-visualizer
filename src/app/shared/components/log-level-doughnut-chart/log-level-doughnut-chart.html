@@ -1,13 +1,4 @@
 <section class="chart-container">
-	<header class="chart-header">
-		<h3 class="chart-title">{{ title() }}</h3>
-		@if (hasData()) {
-			<p class="chart-meta">Total lines: {{ totalCount() }}</p>
-		} @else {
-			<p class="chart-meta chart-meta--empty">No log level data yet.</p>
-		}
-	</header>
-
 	<div aria-hidden="true" class="chart-body">
 		<div class="chart-canvas-wrapper">
 			<canvas
@@ -39,4 +30,3 @@
 		}
 	</section>
 </section>
-

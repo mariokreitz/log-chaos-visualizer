@@ -1,18 +1,4 @@
 <section class="chart-container">
-	<header class="chart-header">
-		<h3 class="chart-title">{{ title() }}</h3>
-		@if (hasData()) {
-			<p class="chart-meta">
-				Total lines: {{ totalCount() }}
-				@if (malformedCount() > 0) {
-					<span class="chart-meta__malformed">(Malformed: {{ malformedCount() }})</span>
-				}
-			</p>
-		} @else {
-			<p class="chart-meta chart-meta--empty">No parsed log entries yet.</p>
-		}
-	</header>
-
 	<div aria-hidden="true" class="chart-body">
 		<div class="chart-canvas-wrapper">
 			<canvas
@@ -44,4 +30,3 @@
 		}
 	</section>
 </section>
-
