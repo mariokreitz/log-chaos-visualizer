@@ -1,6 +1,30 @@
-<header>
-	<app-header/>
-</header>
-<main>
-	<ng-content/>
-</main>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="app-shell">
+	<header class="app-header" role="banner">
+		<app-header (toggleSidebar)="setSidebar($event)"></app-header>
+	</header>
+
+	<div class="app-content">
+		<aside
+					[attr.aria-hidden]="!isSidebarOpen()"
+					[class.open]="isSidebarOpen()"
+					class="app-sidebar"
+					id="sidebar"
+		>
+			<nav aria-label="Primary navigation">
+				<ul class="nav-list">
+					<li><a href="#">Dashboard</a></li>
+					<!-- Add additional nav links here -->
+				</ul>
+			</nav>
+		</aside>
+
+		<main class="app-main" id="main-content" role="main" tabindex="-1">
+			<ng-content></ng-content>
+		</main>
+
+		@if (isSidebarOpen()) {
+			<div (click)="setSidebar(false)" aria-hidden="true" class="backdrop"></div>
+		}
+	</div>
+</div>

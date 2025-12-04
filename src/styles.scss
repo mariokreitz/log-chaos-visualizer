@@ -1,1 +1,27 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+  --app-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--app-font-family), serif;
+  margin: 0;
+  color: var(--color-text, #0f172a);
+  background: var(--color-bg, #fff);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring, 3px solid rgba(14, 165, 163, 0.15));
+  outline-offset: 2px;
+}

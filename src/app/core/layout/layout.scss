@@ -1,0 +1,137 @@
+:root {
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --sidebar-width: 260px;
+  --header-height: 56px;
+  --color-bg: #ffffff;
+  --color-surface: #f7fafc;
+  --color-text: #0f172a;
+  --color-accent: #0ea5a3; /* teal-ish */
+  --focus-ring: 3px solid rgba(14, 165, 163, 0.15);
+}
+
+/* App shell uses flexbox: header on top, content row below */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.app-header {
+  height: var(--header-height);
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* Content row holds the sidebar (left) and main (right) */
+.app-content {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: calc(100vh - var(--header-height));
+  align-items: stretch;
+}
+
+/* Sidebar: overlay on mobile, persistent on wide screens */
+.app-sidebar {
+  width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
+  background: var(--color-surface);
+  padding: var(--space-3);
+  border-right: 1px solid rgba(15, 23, 42, 0.04);
+  box-sizing: border-box;
+
+  /* Mobile: hide off-canvas by default */
+  position: fixed;
+  left: 0;
+  top: var(--header-height);
+  height: calc(100vh - var(--header-height));
+  transform: translateX(-110%);
+  transition: transform 240ms ease-in-out, box-shadow 240ms ease-in-out;
+  z-index: 70;
+  box-shadow: none;
+}
+
+/* When open on mobile, slide in */
+.app-sidebar.open {
+  transform: translateX(0);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+/* Main area grows to fill remaining space */
+.app-main {
+  flex: 1 1 0;
+  padding: var(--space-4);
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* Wide screens: place sidebar in-flow, not fixed */
+@media (min-width: 900px) {
+  .app-content {
+    align-items: start;
+  }
+
+  .app-sidebar {
+    position: relative;
+    transform: none;
+    top: 0;
+    height: auto;
+    box-shadow: none;
+  }
+
+  .app-main {
+    padding: calc(var(--space-4) * 1.25);
+  }
+}
+
+/* Accessibility helpers */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus,
+.skip-link:active {
+  left: var(--space-2);
+  top: var(--space-2);
+  width: auto;
+  height: auto;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent);
+  color: white;
+  z-index: 1000;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .app-sidebar.open {
+    transition: none;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: var(--header-height) 0 0 0;
+  background: rgba(2, 6, 23, 0.4);
+  z-index: 60;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    transition: none;
+  }
+}

@@ -1,1 +1,15 @@
-<p>header works!</p>
+<div class="header-inner">
+	<div aria-hidden="false" class="brand">Log Chaos</div>
+	<button
+				(click)="toggle()"
+				[attr.aria-expanded]="mobileNavOpen()"
+				aria-controls="sidebar"
+				class="menu-toggle"
+				type="button"
+	>
+		<span class="visually-hidden">Toggle navigation</span>
+		<svg aria-hidden="true" focusable="false" height="24" viewBox="0 0 24 24" width="24">
+			<path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+		</svg>
+	</button>
+</div>
