@@ -1,40 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
 import { APP_CONFIG } from '../config/app-config';
-import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
+import type { ExtendedParseSummary, ParsedBatch, ParseProgress, WorkerMessage, WorkerStartMessage } from '../types/file-parse.types';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
-
-export type ParseProgress = {
-    processedBytes: number;
-    totalBytes: number;
-    percent: number; // 0-100
-};
-
-export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
-
-export type ParsedLogEntry =
-  | { kind: 'pino'; entry: PinoEntry }
-  | { kind: 'winston'; entry: WinstonEntry }
-  | { kind: 'loki'; entry: LokiEntry }
-  | { kind: 'promtail'; entry: PromtailTextLine }
-  | { kind: 'docker'; entry: DockerLogLine }
-  | { kind: 'unknown-json'; entry: unknown }
-  | { kind: 'text'; entry: { line: string } };
-
-export type ExtendedParseSummary = {
-    totalLines: number;
-    malformedCount: number;
-    counts: Record<ParsedKind, number>;
-};
-
-export type ParsedBatch = {
-    entries: ParsedLogEntry[];
-    rawCount: number;
-    malformedCount: number;
-    chunkStartOffset: number;
-    chunkEndOffset: number;
-};
 
 @Injectable({ providedIn: 'root' })
 export class FileParseService {
@@ -142,17 +111,3 @@ export function getParsingParameters(speed: ParsingSpeed): { chunkSize: number; 
     const fallback = presets[APP_CONFIG.parsing.defaultSpeed];
     return presets[speed] ?? fallback;
 }
-
-export type WorkerStartMessage = {
-    type: 'start';
-    file: File;
-    chunkSize: number;
-    delayMs: number;
-};
-
-export type WorkerMessage =
-  | { type: 'progress'; progress: ParseProgress }
-  | { type: 'batch'; batch: ParsedBatch }
-  | { type: 'summary'; summary: ExtendedParseSummary }
-  | { type: 'done' }
-  | { type: 'error'; error: string };

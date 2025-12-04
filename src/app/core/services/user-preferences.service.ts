@@ -1,13 +1,6 @@
 import { Injectable, signal } from '@angular/core';
-import type { ParsingSpeed, ProgressBarSettings } from '../../shared/config/settings-config.types';
 import { APP_CONFIG } from '../config/app-config';
-import type { FeatureFlagsState } from './feature-flags.service';
-
-export type StoredSettings = {
-    parsingSpeed?: ParsingSpeed;
-    progressBarSettings?: ProgressBarSettings;
-    featureFlags?: Partial<FeatureFlagsState>;
-};
+import type { StoredSettings } from '../types/user-preferences.types';
 
 const STORAGE_KEY = APP_CONFIG.storage.userPreferencesKey;
 

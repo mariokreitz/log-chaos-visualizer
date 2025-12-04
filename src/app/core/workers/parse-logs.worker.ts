@@ -1,51 +1,15 @@
 /// <reference lib="webworker" />
 
+import type {
+    ExtendedParseSummary,
+    ParsedBatch,
+    ParsedKind,
+    ParsedLogEntry,
+    ParseProgress,
+    WorkerMessage,
+    WorkerStartMessage,
+} from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
-
-interface ParseProgress {
-    processedBytes: number;
-    totalBytes: number;
-    percent: number;
-}
-
-export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
-
-export type ParsedLogEntry =
-  | { kind: 'pino'; entry: PinoEntry }
-  | { kind: 'winston'; entry: WinstonEntry }
-  | { kind: 'loki'; entry: LokiEntry }
-  | { kind: 'promtail'; entry: PromtailTextLine }
-  | { kind: 'docker'; entry: DockerLogLine }
-  | { kind: 'unknown-json'; entry: unknown }
-  | { kind: 'text'; entry: { line: string } };
-
-interface ParsedBatch {
-    entries: ParsedLogEntry[];
-    rawCount: number;
-    malformedCount: number;
-    chunkStartOffset: number;
-    chunkEndOffset: number;
-}
-
-interface ExtendedParseSummary {
-    totalLines: number;
-    malformedCount: number;
-    counts: Record<ParsedKind, number>;
-}
-
-interface WorkerStartMessage {
-    type: 'start';
-    file: File;
-    chunkSize: number;
-    delayMs?: number;
-}
-
-type WorkerMessage =
-  | { type: 'progress'; progress: ParseProgress }
-  | { type: 'batch'; batch: ParsedBatch }
-  | { type: 'summary'; summary: ExtendedParseSummary }
-  | { type: 'done' }
-  | { type: 'error'; error: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;

@@ -1,12 +1,8 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { APP_CONFIG } from '../config/app-config';
+import type { FeatureFlagsState } from '../types/feature-flags.types';
 import { UserPreferencesService } from './user-preferences.service';
-
-export type FeatureFlagsState = {
-    experimentalAnalysis: boolean;
-    debugParsing: boolean;
-};
 
 @Injectable({ providedIn: 'root' })
 export class FeatureFlagsService {

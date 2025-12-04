@@ -1,6 +1,6 @@
 import { environment } from '../../../environments/environment';
 import { NAV_ITEMS } from '../constants/navigation';
-import type { CoreAppConfig } from './app-config.types';
+import { CoreAppConfig } from '../types/app-config.types';
 
 export const APP_CONFIG: CoreAppConfig = {
     metadata: {

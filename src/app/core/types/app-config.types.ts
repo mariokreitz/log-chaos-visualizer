@@ -1,5 +1,5 @@
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
-import type { NavItems } from '../types/navigation';
+import type { NavItems } from './navigation';
 
 export type AppMetadataConfig = {
     title: string;
