@@ -11,10 +11,8 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-    ports:
-      - '4200:80'
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
+      test: [ 'CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1' ]
       interval: 10s
       timeout: 5s
       retries: 3
