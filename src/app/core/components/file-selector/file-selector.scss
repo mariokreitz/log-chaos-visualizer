@@ -34,6 +34,15 @@
   box-shadow: 0 0 0 1px var(--color-accent);
 }
 
+.file-selector__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+  font-size: 1.75rem;
+  color: var(--color-accent);
+}
+
 .file-selector__drop-title {
   margin: 0;
   font-size: var(--font-size-body);
