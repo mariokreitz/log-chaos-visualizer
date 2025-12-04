@@ -73,6 +73,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+a:visited {
+  color: var(--color-accent);
+}
+
 :focus {
   outline: none;
 }
