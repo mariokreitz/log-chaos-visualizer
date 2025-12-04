@@ -1,6 +1,19 @@
 <section class="settings">
 	<h1>Settings</h1>
 
+	<section aria-labelledby="about-heading">
+		<h2 id="about-heading">About</h2>
+		<p><strong>{{ appMetadata.title }}</strong> (version {{ appMetadata.version }})</p>
+		<p>{{ appMetadata.description }}</p>
+		@if (appMetadata.repositoryUrl) {
+			<p>
+				<a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank">
+					View project repository
+				</a>
+			</p>
+		}
+	</section>
+
 	<section aria-labelledby="parsing-speed-heading">
 		<h2 id="parsing-speed-heading">Parsing speed</h2>
 		<p>Adjust how quickly the log parsing runs for demo purposes.</p>

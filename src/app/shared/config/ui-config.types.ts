@@ -9,7 +9,12 @@ export type ProgressUiConfig = {
     ariaLabel: string;
 };
 
+export type DialogConfig = {
+    fileSelectWidth: string;
+};
+
 export type UiConfig = {
     snackbar: SnackbarConfig;
     progress: ProgressUiConfig;
+    dialog: DialogConfig;
 };

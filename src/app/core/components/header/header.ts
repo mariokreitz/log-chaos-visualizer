@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, output, signal } from '@a
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { APP_CONFIG } from '../../config/app-config';
 
 @Component({
     selector: 'app-header',
@@ -20,7 +21,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 export class Header {
     menuToggle = output<void>();
 
-    readonly brand = signal('Log Chaos Visualizer');
+    readonly brand = signal(APP_CONFIG.metadata.title);
     readonly brandUpper = computed(() => this.brand().toUpperCase());
 
     onToggleMenu(): void {

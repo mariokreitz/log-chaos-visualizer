@@ -10,4 +10,7 @@ export const UI_CONFIG: UiConfig = {
     progress: {
         ariaLabel: 'Global log parsing progress',
     },
+    dialog: {
+        fileSelectWidth: '400px',
+    },
 };

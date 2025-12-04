@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FileSelector } from '../../core/components/file-selector/file-selector';
+import { APP_CONFIG } from '../../core/config/app-config';
 import { FileParseService } from '../../core/services/file-parse.service';
 
 @Component({
@@ -10,6 +11,8 @@ import { FileParseService } from '../../core/services/file-parse.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Analyse {
+    readonly featureFlags = APP_CONFIG.featureFlags;
+
     private readonly parse = inject(FileParseService);
 
     readonly progress = this.parse.progress;

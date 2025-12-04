@@ -1,12 +1,13 @@
+import { environment } from '../../../environments/environment';
 import { NAV_ITEMS } from '../constants/navigation';
 import type { CoreAppConfig } from './app-config.types';
 
 export const APP_CONFIG: CoreAppConfig = {
     metadata: {
-        title: 'Log Chaos Visualizer',
-        description: 'Visualize and analyse logs from various formats.',
-        version: '0.0.0-dev',
-        repositoryUrl: 'https://github.com/mariokreitz/log-chaos-visualizer',
+        title: environment.app.name,
+        description: environment.app.description,
+        version: environment.app.version,
+        repositoryUrl: environment.app.repositoryUrl,
     },
     parsing: {
         defaultSpeed: 'slow',
@@ -30,8 +31,7 @@ export const APP_CONFIG: CoreAppConfig = {
         defaultRoute: '/',
     },
     featureFlags: {
-        experimentalAnalysis: false,
-        debugParsing: false,
+        experimentalAnalysis: environment.featureFlags.experimentalAnalysis,
+        debugParsing: environment.featureFlags.debugParsing,
     },
 };
-
