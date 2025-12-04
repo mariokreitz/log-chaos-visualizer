@@ -7,10 +7,15 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "gen:logs:20k": "python3 generate_logs.py --lines 20000 --output ./public/data/generated-20000.log",
+    "gen:logs:50k": "python3 generate_logs.py --lines 50000 --output ./public/data/generated-50000.log",
+    "gen:logs:100k": "python3 generate_logs.py --lines 100000 --output ./public/data/generated-100000.log",
+    "gen:logs:200k": "python3 generate_logs.py --lines 200000 --output ./public/data/generated-200000.log",
+    "gen:logs:all": "npm run gen:logs:20k && npm run gen:logs:50k && npm run gen:logs:100k && npm run gen:logs:200k"
   },
   "prettier": {
-    "printWidth": 100,
+    "printWidth": 120,
     "singleQuote": true,
     "overrides": [
       {

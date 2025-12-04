@@ -2,7 +2,7 @@
 """Generate synthetic log files compatible with log-chaos-visualizer.
 
 Supports Pino, Winston, Loki, Promtail, Docker JSON logs, and plain text lines.
-Useful for generating large test files (e.g. 20k, 50k, 100k lines).
+Useful for generating large test files (e.g. 20k, 50k, 100k, 200k lines).
 
 Usage examples:
 
@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Iterable, List, Tuple
+from typing import Callable, Iterable, Tuple
 
 LOG_KINDS: Tuple[str, ...] = ("pino", "winston", "loki", "promtail", "docker", "text")
 
@@ -28,6 +29,7 @@ class GeneratorConfig:
     kinds: Tuple[str, ...]
     total_lines: int
     seed: int | None
+    auto_seed: bool
 
 
 def _rand_hostname() -> str:
@@ -202,21 +204,6 @@ GENERATOR_BY_KIND: dict[str, Callable[[], str]] = {
 }
 
 
-def plan_distribution(total_lines: int, kinds: Tuple[str, ...]) -> List[str]:
-    """Return a list of kinds of length total_lines in roughly even distribution."""
-    n_kinds = len(kinds)
-    base = total_lines // n_kinds
-    remainder = total_lines % n_kinds
-
-    distribution: List[str] = []
-    for idx, kind in enumerate(kinds):
-        count = base + (1 if idx < remainder else 0)
-        distribution.extend([kind] * count)
-
-    random.shuffle(distribution)
-    return distribution
-
-
 def generate_logs(config: GeneratorConfig, output_path: Path) -> None:
     for kind in config.kinds:
         if kind not in GENERATOR_BY_KIND:
@@ -224,19 +211,25 @@ def generate_logs(config: GeneratorConfig, output_path: Path) -> None:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Seeding strategy:
+    # - If seed is provided, use it (reproducible but still random-looking).
+    # - Else if auto_seed is True, seed from OS randomness.
+    # - Else, leave RNG state as-is (caller/environment controls it).
     if config.seed is not None:
         random.seed(config.seed)
-
-    distribution = plan_distribution(config.total_lines, config.kinds)
+    elif config.auto_seed:
+        random.seed(os.urandom(32))
 
     with output_path.open("w", encoding="utf-8") as f:
-        for idx, kind in enumerate(distribution, start=1):
+        for idx in range(1, config.total_lines + 1):
+            kind = random.choice(config.kinds)
             line = GENERATOR_BY_KIND[kind]()
             if line.endswith("\n"):
                 line = line.rstrip("\n")
             f.write(line + "\n")
 
             if idx % 10000 == 0:
+                import sys
                 print(f"... generated {idx} lines", file=sys.stderr)
 
 
@@ -258,7 +251,23 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
             "Supported kinds: pino,winston,loki,promtail,docker,text. Default: all kinds."
         ),
     )
-    parser.add_argument("--seed", type=int, default=None, help="Optional random seed for reproducible output.")
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional random seed for reproducible output. "
+            "If omitted, a random seed from the OS is used unless --no-auto-seed is set."
+        ),
+    )
+    parser.add_argument(
+        "--no-auto-seed",
+        action="store_true",
+        help=(
+            "Do not automatically seed the RNG from OS randomness when --seed is omitted. "
+            "Use the current interpreter RNG state instead."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -276,12 +285,17 @@ def main(argv: Iterable[str] | None = None) -> int:
         print("No log kinds specified in --mix", file=sys.stderr)
         return 1
 
-    config = GeneratorConfig(kinds=kinds, total_lines=args.lines, seed=args.seed)
+    config = GeneratorConfig(
+        kinds=kinds,
+        total_lines=args.lines,
+        seed=args.seed,
+        auto_seed=not args.no_auto_seed,
+    )
     output_path = Path(args.output)
 
     print(
         f"Generating {config.total_lines} lines into {output_path} "
-        f"with mix={','.join(config.kinds)} seed={config.seed}",
+        f"with mix={','.join(config.kinds)} seed={config.seed} auto_seed={config.auto_seed}",
         file=sys.stderr,
     )
 
@@ -295,4 +309,3 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     raise SystemExit(main(sys.argv[1:]))
-
