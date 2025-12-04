@@ -1,0 +1,42 @@
+<section class="chart-container">
+	<header class="chart-header">
+		<h3 class="chart-title">{{ title() }}</h3>
+		@if (hasData()) {
+			<p class="chart-meta">Total lines: {{ totalCount() }}</p>
+		} @else {
+			<p class="chart-meta chart-meta--empty">No log level data yet.</p>
+		}
+	</header>
+
+	<div aria-hidden="true" class="chart-body">
+		<div class="chart-canvas-wrapper">
+			<canvas
+						[data]="chartData()"
+						[options]="chartOptions"
+						[type]="'doughnut'"
+						baseChart
+			></canvas>
+		</div>
+	</div>
+
+	<section aria-label="Log level summary" class="chart-summary">
+		@if (entries().length > 0) {
+			<ul class="chart-summary__list">
+				@for (entry of entries(); track entry.level) {
+					<li class="chart-summary__item">
+						<span class="chart-summary__label">{{ entry.label }}</span>
+						<span class="chart-summary__value">
+            {{ entry.count }}
+							@if (totalCount() > 0) {
+								<span class="chart-summary__percentage">({{ entry.percentage | number:'1.0-1' }}%)</span>
+							}
+          </span>
+					</li>
+				}
+			</ul>
+		} @else {
+			<p class="chart-summary__empty">Start parsing a log file to see log levels here.</p>
+		}
+	</section>
+</section>
+
