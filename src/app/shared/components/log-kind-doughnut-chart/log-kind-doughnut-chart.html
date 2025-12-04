@@ -1,7 +1,20 @@
 <section class="chart-container">
+  <header class="chart-header">
+    <h2 class="chart-title">{{ title() }}</h2>
+    @if (summary()) {
+      <p class="chart-subtitle">Total entries: {{ totalCount() }} · Malformed: {{ malformedCount() }}</p>
+    } @else {
+      <p class="chart-subtitle">No log file has been parsed yet.</p>
+    }
+  </header>
+
   <div aria-hidden="true" class="chart-body">
-    <div class="chart-canvas-wrapper">
-      <canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
-    </div>
+    @if (hasData()) {
+      <div class="chart-canvas-wrapper">
+        <canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
+      </div>
+    } @else {
+      <p class="chart-placeholder">No log kind data available yet. Parse a log file to see log kinds.</p>
+    }
   </div>
 </section>
