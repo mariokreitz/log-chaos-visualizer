@@ -1,0 +1,18 @@
+<div class="file-selector">
+	<label class="file-label" for="log-file">Select a log file</label>
+	<input
+				(change)="onFileChange($event)"
+				accept=".txt,.log,.json"
+				aria-describedby="file-help"
+				id="log-file"
+				type="file"
+	/>
+	<p class="help" id="file-help">Accepted formats: .txt, .log, .json</p>
+	@if (fileName()) {
+		<p aria-live="polite" class="selected">Selected: {{ fileName() }}</p>
+	}
+	@if (error()) {
+		<p class="error" role="alert">{{ error() }}</p>
+	}
+</div>
+

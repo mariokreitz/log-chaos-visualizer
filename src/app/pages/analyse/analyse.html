@@ -1,3 +1,27 @@
 <h1>Analyse</h1>
 <p>Analyse page (placeholder)</p>
 
+<section class="analyse">
+	<h1>Analyse Logs</h1>
+	<app-file-selector (fileSelected)="onFileSelected($event)"></app-file-selector>
+
+	<div class="actions">
+		<button (click)="startParse()" [disabled]="isParsing() || !hasFile()" type="button">Parse file</button>
+		@if (isParsing()) {
+			<span aria-live="polite">Parsing…</span>
+		}
+	</div>
+
+	@if (progress()) {
+		<p>Progress: {{ progress()!.percent }}% ({{ progress()!.processedBytes }} / {{ progress()!.totalBytes }} bytes)</p>
+	}
+
+	@if (summary()) {
+		<p>Lines: {{ summary()!.lines }}</p>
+		<p>JSON objects: {{ summary()!.jsonObjects }}</p>
+	}
+
+	@if (error()) {
+		<p class="error" role="alert">{{ error() }}</p>
+	}
+</section>

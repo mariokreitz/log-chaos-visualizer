@@ -1,0 +1,26 @@
+.file-selector {
+  display: grid;
+  gap: .5rem;
+}
+
+.file-label {
+  font-weight: 600;
+}
+
+.help {
+  color: #555;
+}
+
+.selected {
+  color: #222;
+}
+
+.error {
+  color: #b00020; /* meets contrast requirements on light bg */
+}
+
+input[type="file"]:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
