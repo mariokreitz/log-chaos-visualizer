@@ -1,13 +1,26 @@
+version: '3.8'
 services:
-  server:
+  log-chaos-visualizer:
     build:
       context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_HREF: '/'
+    image: log-chaos-visualizer:latest
+    container_name: log-chaos-visualizer
+    restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
     ports:
-      - "4200:80"
+      - '4200:80'
     healthcheck:
-      test: [ 'CMD-SHELL', 'wget -qO- http://localhost:80/ || exit 1' ]
+      test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - webproxy
+
+networks:
+  webproxy:
+    external: true
