@@ -19,9 +19,10 @@
   border: 1px dashed var(--color-border-subtle);
   background-color: var(--color-surface-mid);
   cursor: pointer;
-  transition: background-color 120ms ease-out,
-  border-color 120ms ease-out,
-  box-shadow 120ms ease-out;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
 
 .file-selector__drop-zone:hover {

@@ -1,13 +1,15 @@
-<section class="file-select-dialog">
-	<h2 class="file-select-dialog__title">Select log file</h2>
-	<div class="file-select-dialog__content">
-		<p class="file-select-dialog__description" id="file-dialog-description">
-			Choose a log file to analyse. Accepted formats: .txt, .log, .json.
-		</p>
-		<app-file-selector (fileSelected)="onFileSelected($event)"></app-file-selector>
-	</div>
-	<div class="file-select-dialog__actions">
-		<button (click)="close(null)" class="file-select-dialog__button" type="button">Cancel</button>
-	</div>
-</section>
+<h2 class="file-select-dialog__title" id="file-select-title" mat-dialog-title>Select log file</h2>
 
+<mat-dialog-content aria-describedby="file-dialog-description" class="file-select-dialog__content">
+  <p class="file-select-dialog__description" id="file-dialog-description">
+    Choose a log file to analyse. You can drag and drop a supported file or browse your filesystem.
+  </p>
+
+  <section class="file-select-dialog__selector">
+    <app-file-selector (fileSelected)="onFileSelected($event)"></app-file-selector>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="file-select-dialog__actions">
+  <button (click)="close(null)" mat-stroked-button type="button">Cancel</button>
+</mat-dialog-actions>

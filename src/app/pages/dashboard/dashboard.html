@@ -1,33 +1,30 @@
 <section class="dashboard">
-	<h1 class="app-section-title">Dashboard</h1>
-	<p class="app-section-subtitle">Use the floating action button to pick a log file and start parsing it.</p>
+  <h1 class="app-section-title">Dashboard</h1>
+  <p class="app-section-subtitle">Use the floating action button to pick a log file and start parsing it.</p>
 
-	@if (hasSummary()) {
-		<section aria-label="Log distribution charts" class="dashboard__doughnut-grid app-card">
-			<app-log-kind-doughnut-chart [summary]="summary()" />
-			<app-log-level-doughnut-chart [summary]="levelSummary()" />
-			<app-log-environment-doughnut-chart [summary]="environmentSummary()" />
-		</section>
-		<section aria-label="Error and fatal events timeline" class="dashboard__timeline app-card">
-			<app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
-		</section>
-		<section aria-label="Error and fatal log details" class="dashboard__log-details app-card">
-			<app-log-level-tables
-						[errorEntries]="errorEntries()"
-						[fatalEntries]="fatalEntries()"
-			/>
-		</section>
-	} @else {
-		<p class="dashboard__placeholder">Start parsing a log file to see analysis charts.</p>
-	}
+  @if (hasSummary()) {
+    <section aria-label="Log distribution charts" class="dashboard__doughnut-grid app-card">
+      <app-log-kind-doughnut-chart [summary]="summary()" />
+      <app-log-level-doughnut-chart [summary]="levelSummary()" />
+      <app-log-environment-doughnut-chart [summary]="environmentSummary()" />
+    </section>
+    <section aria-label="Error and fatal events timeline" class="dashboard__timeline app-card">
+      <app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
+    </section>
+    <section aria-label="Error and fatal log details" class="dashboard__log-details app-card">
+      <app-log-level-tables [errorEntries]="errorEntries()" [fatalEntries]="fatalEntries()" />
+    </section>
+  } @else {
+    <p class="dashboard__placeholder">Start parsing a log file to see analysis charts.</p>
+  }
 
-	<button
-				(click)="openFileDialog()"
-				aria-label="Select log file to analyse"
-				class="dashboard-fab"
-				mat-fab
-				type="button"
-	>
-		<span aria-hidden="true" class="material-icons">upload_file</span>
-	</button>
+  <button
+    (click)="openFileDialog()"
+    aria-label="Select log file to analyse"
+    class="dashboard-fab"
+    mat-fab
+    type="button"
+  >
+    <span aria-hidden="true" class="material-icons">upload_file</span>
+  </button>
 </section>

@@ -1,27 +1,21 @@
 <section class="error-fatal-timeline-chart__container">
-	<header class="error-fatal-timeline-chart__header">
-		<h2 class="error-fatal-timeline-chart__title">{{ title() }}</h2>
-		@if (summary()) {
-			<p class="error-fatal-timeline-chart__meta">
-				Total error: {{ summary()!.totalErrorCount }} ·
-				Total fatal: {{ summary()!.totalFatalCount }} ·
-				No-timestamp error: {{ summary()!.noTimestampErrorCount }} ·
-				No-timestamp fatal: {{ summary()!.noTimestampFatalCount }}
-			</p>
-		}
-	</header>
+  <header class="error-fatal-timeline-chart__header">
+    <h2 class="error-fatal-timeline-chart__title">{{ title() }}</h2>
+    @if (summary()) {
+      <p class="error-fatal-timeline-chart__meta">
+        Total error: {{ summary()!.totalErrorCount }} · Total fatal: {{ summary()!.totalFatalCount }} · No-timestamp
+        error: {{ summary()!.noTimestampErrorCount }} · No-timestamp fatal: {{ summary()!.noTimestampFatalCount }}
+      </p>
+    }
+  </header>
 
-	@if (hasData()) {
-		<div class="error-fatal-timeline-chart__chart" role="img">
-			<canvas [data]="chartData()"
-							[options]="chartOptions"
-							[type]="'bar'"
-							baseChart>
-			</canvas>
-		</div>
-	} @else {
-		<p class="error-fatal-timeline-chart__placeholder">
-			No error or fatal log entries with timestamps are available for the selected log file.
-		</p>
-	}
+  @if (hasData()) {
+    <div class="error-fatal-timeline-chart__chart" role="img">
+      <canvas [data]="chartData()" [options]="chartOptions" [type]="'bar'" baseChart> </canvas>
+    </div>
+  } @else {
+    <p class="error-fatal-timeline-chart__placeholder">
+      No error or fatal log entries with timestamps are available for the selected log file.
+    </p>
+  }
 </section>

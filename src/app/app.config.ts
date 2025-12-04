@@ -5,9 +5,5 @@ import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
-    providers: [
-        provideCharts(withDefaultRegisterables()),
-        provideBrowserGlobalErrorListeners(),
-        provideRouter(routes),
-    ],
+  providers: [provideCharts(withDefaultRegisterables()), provideBrowserGlobalErrorListeners(), provideRouter(routes)],
 };

@@ -1,141 +1,113 @@
-<section
-			[attr.aria-label]="ariaLabel()"
-			class="log-level-tables"
-			role="region"
->
-	<mat-tab-group>
-		<mat-tab [label]="errorTabLabel()">
-			<section class="log-level-tables__tab-content">
-				@if (sortedErrorRows().length > 0) {
-					<div class="log-level-tables__table-container">
-						<table
-									[dataSource]="sortedErrorRows()"
-									aria-label="Error log entries table"
-									mat-table
-									matSort
-						>
-							<ng-container matColumnDef="timestamp">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="timestamp">
-									Timestamp
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getTimestampForTemplate(row) | date:'medium' }}
-								</td>
-							</ng-container>
+<section [attr.aria-label]="ariaLabel()" class="log-level-tables" role="region">
+  <mat-tab-group>
+    <mat-tab [label]="errorTabLabel()">
+      <section class="log-level-tables__tab-content">
+        @if (sortedErrorRows().length > 0) {
+          <div class="log-level-tables__table-container">
+            <table [dataSource]="sortedErrorRows()" aria-label="Error log entries table" mat-table matSort>
+              <ng-container matColumnDef="timestamp">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="timestamp">Timestamp</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getTimestampForTemplate(row) | date: 'medium' }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="level">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="level">
-									Level
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getLevelForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="level">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="level">Level</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getLevelForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="environment">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="environment">
-									Environment
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getEnvironmentForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="environment">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="environment">Environment</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getEnvironmentForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="kind">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="kind">
-									Kind
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getKindForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="kind">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="kind">Kind</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getKindForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="message">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="message">
-									Message
-								</th>
-								<td *matCellDef="let row" [title]="getMessageForTemplate(row)" class="log-level-tables__message-cell" mat-cell>
-									{{ getMessageForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="message">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="message">Message</th>
+                <td
+                  *matCellDef="let row"
+                  [title]="getMessageForTemplate(row)"
+                  class="log-level-tables__message-cell"
+                  mat-cell
+                >
+                  {{ getMessageForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-							<tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
-						</table>
-					</div>
-				} @else {
-					<p class="log-level-tables__empty">
-						There are no error log entries in this file.
-					</p>
-				}
-			</section>
-		</mat-tab>
+              <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+              <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+            </table>
+          </div>
+        } @else {
+          <p class="log-level-tables__empty">There are no error log entries in this file.</p>
+        }
+      </section>
+    </mat-tab>
 
-		<mat-tab [label]="fatalTabLabel()">
-			<section class="log-level-tables__tab-content">
-				@if (sortedFatalRows().length > 0) {
-					<div class="log-level-tables__table-container">
-						<table
-									[dataSource]="sortedFatalRows()"
-									aria-label="Fatal log entries table"
-									mat-table
-									matSort
-						>
-							<ng-container matColumnDef="timestamp">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="timestamp">
-									Timestamp
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getTimestampForTemplate(row) | date:'medium' }}
-								</td>
-							</ng-container>
+    <mat-tab [label]="fatalTabLabel()">
+      <section class="log-level-tables__tab-content">
+        @if (sortedFatalRows().length > 0) {
+          <div class="log-level-tables__table-container">
+            <table [dataSource]="sortedFatalRows()" aria-label="Fatal log entries table" mat-table matSort>
+              <ng-container matColumnDef="timestamp">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="timestamp">Timestamp</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getTimestampForTemplate(row) | date: 'medium' }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="level">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="level">
-									Level
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getLevelForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="level">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="level">Level</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getLevelForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="environment">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="environment">
-									Environment
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getEnvironmentForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="environment">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="environment">Environment</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getEnvironmentForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="kind">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="kind">
-									Kind
-								</th>
-								<td *matCellDef="let row" mat-cell>
-									{{ getKindForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="kind">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="kind">Kind</th>
+                <td *matCellDef="let row" mat-cell>
+                  {{ getKindForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<ng-container matColumnDef="message">
-								<th *matHeaderCellDef mat-header-cell mat-sort-header="message">
-									Message
-								</th>
-								<td *matCellDef="let row" [title]="getMessageForTemplate(row)" class="log-level-tables__message-cell" mat-cell>
-									{{ getMessageForTemplate(row) }}
-								</td>
-							</ng-container>
+              <ng-container matColumnDef="message">
+                <th *matHeaderCellDef mat-header-cell mat-sort-header="message">Message</th>
+                <td
+                  *matCellDef="let row"
+                  [title]="getMessageForTemplate(row)"
+                  class="log-level-tables__message-cell"
+                  mat-cell
+                >
+                  {{ getMessageForTemplate(row) }}
+                </td>
+              </ng-container>
 
-							<tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-							<tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
-						</table>
-					</div>
-				} @else {
-					<p class="log-level-tables__empty">
-						There are no fatal log entries in this file.
-					</p>
-				}
-			</section>
-		</mat-tab>
-	</mat-tab-group>
+              <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+              <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+            </table>
+          </div>
+        } @else {
+          <p class="log-level-tables__empty">There are no fatal log entries in this file.</p>
+        }
+      </section>
+    </mat-tab>
+  </mat-tab-group>
 </section>

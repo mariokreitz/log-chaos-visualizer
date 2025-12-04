@@ -1,73 +1,66 @@
 <section class="settings">
-	<h1 class="app-section-title">Settings</h1>
+  <h1 class="app-section-title">Settings</h1>
 
-	<section aria-labelledby="about-heading" class="app-card">
-		<h2 id="about-heading">About</h2>
-		<p><strong>{{ appMetadata.title }}</strong> (version {{ appMetadata.version }})</p>
-		<p>{{ appMetadata.description }}</p>
-		@if (appMetadata.repositoryUrl) {
-			<p>
-				<a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank">
-					View project repository
-				</a>
-			</p>
-		}
-	</section>
+  <section aria-labelledby="about-heading" class="app-card">
+    <h2 id="about-heading">About</h2>
+    <p>
+      <strong>{{ appMetadata.title }}</strong> (version {{ appMetadata.version }})
+    </p>
+    <p>{{ appMetadata.description }}</p>
+    @if (appMetadata.repositoryUrl) {
+      <p>
+        <a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank"> View project repository </a>
+      </p>
+    }
+  </section>
 
-	@if (!isProduction) {
-		<section aria-labelledby="experimental-heading" class="experimental-settings app-card">
-			<h2 id="experimental-heading">Experimental features <span class="badge">Developer only</span></h2>
-			<p>These settings are intended for development and may change or be removed in future versions.</p>
+  @if (!isProduction) {
+    <section aria-labelledby="experimental-heading" class="experimental-settings app-card">
+      <h2 id="experimental-heading">Experimental features <span class="badge">Developer only</span></h2>
+      <p>These settings are intended for development and may change or be removed in future versions.</p>
 
-			<mat-slide-toggle
-						(change)="onToggleExperimentalAnalysis($event.checked)"
-						[checked]="experimentalAnalysisEnabled()"
-			>
-				Enable experimental analysis features
-			</mat-slide-toggle>
-		</section>
-	}
+      <mat-slide-toggle
+        (change)="onToggleExperimentalAnalysis($event.checked)"
+        [checked]="experimentalAnalysisEnabled()"
+      >
+        Enable experimental analysis features
+      </mat-slide-toggle>
+    </section>
+  }
 
-	<section aria-labelledby="parsing-speed-heading" class="app-card">
-		<h2 id="parsing-speed-heading">Parsing speed</h2>
-		<p>Adjust how quickly the log parsing runs for demo purposes.</p>
+  <section aria-labelledby="parsing-speed-heading" class="app-card">
+    <h2 id="parsing-speed-heading">Parsing speed</h2>
+    <p>Adjust how quickly the log parsing runs for demo purposes.</p>
 
-		<mat-radio-group
-					(change)="onSpeedChange($event.value)"
-					[value]="speed()"
-					aria-label="Select parsing speed"
-		>
-			<mat-radio-button value="slow">Slow</mat-radio-button>
-			<mat-radio-button value="normal">Normal</mat-radio-button>
-			<mat-radio-button value="fast">Fast</mat-radio-button>
-		</mat-radio-group>
+    <mat-radio-group (change)="onSpeedChange($event.value)" [value]="speed()" aria-label="Select parsing speed">
+      <mat-radio-button value="slow">Slow</mat-radio-button>
+      <mat-radio-button value="normal">Normal</mat-radio-button>
+      <mat-radio-button value="fast">Fast</mat-radio-button>
+    </mat-radio-group>
 
-		<p class="current">Current: {{ speedLabel() }}</p>
-	</section>
+    <p class="current">Current: {{ speedLabel() }}</p>
+  </section>
 
-	<section aria-labelledby="progress-bar-heading" class="app-card">
-		<h2 id="progress-bar-heading">Global progress bar</h2>
-		<p>Control the visibility and appearance of the global parsing progress bar.</p>
+  <section aria-labelledby="progress-bar-heading" class="app-card">
+    <h2 id="progress-bar-heading">Global progress bar</h2>
+    <p>Control the visibility and appearance of the global parsing progress bar.</p>
 
-		<mat-slide-toggle
-					(change)="onToggleProgressBar($event.checked)"
-					[checked]="progressBarSettings().enabled"
-		>
-			Show global progress bar
-		</mat-slide-toggle>
+    <mat-slide-toggle (change)="onToggleProgressBar($event.checked)" [checked]="progressBarSettings().enabled">
+      Show global progress bar
+    </mat-slide-toggle>
 
-		@if (progressBarSettings().enabled) {
-			<div class="progress-size">
-				<label for="progress-bar-thickness">Bar thickness:</label>
-				<mat-radio-group
-							(change)="onProgressBarSizeChange($event.value)"
-							[value]="progressBarSettings().size"
-							id="progress-bar-thickness"
-				>
-					<mat-radio-button value="thin">Thin</mat-radio-button>
-					<mat-radio-button value="normal">Normal</mat-radio-button>
-				</mat-radio-group>
-			</div>
-		}
-	</section>
+    @if (progressBarSettings().enabled) {
+      <div class="progress-size">
+        <label for="progress-bar-thickness">Bar thickness:</label>
+        <mat-radio-group
+          (change)="onProgressBarSizeChange($event.value)"
+          [value]="progressBarSettings().size"
+          id="progress-bar-thickness"
+        >
+          <mat-radio-button value="thin">Thin</mat-radio-button>
+          <mat-radio-button value="normal">Normal</mat-radio-button>
+        </mat-radio-group>
+      </div>
+    }
+  </section>
 </section>

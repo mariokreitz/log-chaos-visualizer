@@ -5,26 +5,22 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { APP_CONFIG } from '../../config/app-config';
 
 @Component({
-    selector: 'app-header',
-    imports: [
-        MatToolbarModule,
-        MatButtonModule,
-        MatIconModule,
-    ],
-    templateUrl: './header.html',
-    styleUrl: './header.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    host: {
-        role: 'banner',
-    },
+  selector: 'app-header',
+  imports: [MatToolbarModule, MatButtonModule, MatIconModule],
+  templateUrl: './header.html',
+  styleUrl: './header.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    role: 'banner',
+  },
 })
 export class Header {
-    menuToggle = output<void>();
+  menuToggle = output<void>();
 
-    readonly brand = signal(APP_CONFIG.metadata.title);
-    readonly brandUpper = computed(() => this.brand().toUpperCase());
+  readonly brand = signal(APP_CONFIG.metadata.title);
+  readonly brandUpper = computed(() => this.brand().toUpperCase());
 
-    onToggleMenu(): void {
-        this.menuToggle.emit();
-    }
+  onToggleMenu(): void {
+    this.menuToggle.emit();
+  }
 }

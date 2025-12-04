@@ -7,40 +7,32 @@ import { Header } from '../components/header/header';
 import { Navigation } from '../components/navigation/navigation';
 
 @Component({
-    selector: 'app-layout',
-    imports: [
-        RouterOutlet,
-        Header,
-        Navigation,
-        MatSidenavContainer,
-        MatSidenav,
-        MatSidenavContent,
-        GlobalProgress,
-    ],
-    templateUrl: './layout.html',
-    styleUrl: './layout.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    host: {
-        class: 'app-layout',
-    },
+  selector: 'app-layout',
+  imports: [RouterOutlet, Header, Navigation, MatSidenavContainer, MatSidenav, MatSidenavContent, GlobalProgress],
+  templateUrl: './layout.html',
+  styleUrl: './layout.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'app-layout',
+  },
 })
 export class Layout implements OnDestroy {
-    readonly isSidenavOpen = signal(false);
-    readonly isMobile = signal(false);
-    private readonly breakpointObserver = inject(BreakpointObserver);
-    private readonly _sub = this.breakpointObserver.observe([ '(max-width: 899px)' ]).subscribe(state => {
-        const mobile = state.matches;
-        this.isMobile.set(mobile);
-        this.isSidenavOpen.set(!mobile);
-    });
+  readonly isSidenavOpen = signal(false);
+  readonly isMobile = signal(false);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly _sub = this.breakpointObserver.observe(['(max-width: 899px)']).subscribe((state) => {
+    const mobile = state.matches;
+    this.isMobile.set(mobile);
+    this.isSidenavOpen.set(!mobile);
+  });
 
-    ngOnDestroy(): void {
-        this._sub.unsubscribe();
-    }
+  ngOnDestroy(): void {
+    this._sub.unsubscribe();
+  }
 
-    toggleSidenav(): void {
-        if (this.isMobile()) {
-            this.isSidenavOpen.update(v => !v);
-        }
+  toggleSidenav(): void {
+    if (this.isMobile()) {
+      this.isSidenavOpen.update((v) => !v);
     }
+  }
 }

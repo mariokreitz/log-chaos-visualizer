@@ -32,7 +32,9 @@
   color: var(--color-text-primary);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background-color 120ms ease-out, box-shadow 120ms ease-out;
+  transition:
+    background-color 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
 
 .menu-toggle:hover {

@@ -1,12 +1,7 @@
 <section class="chart-container">
-	<div aria-hidden="true" class="chart-body">
-		<div class="chart-canvas-wrapper">
-			<canvas
-						[data]="chartData()"
-						[options]="chartOptions"
-						[type]="'doughnut'"
-						baseChart
-			></canvas>
-		</div>
-	</div>
+  <div aria-hidden="true" class="chart-body">
+    <div class="chart-canvas-wrapper">
+      <canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
+    </div>
+  </div>
 </section>

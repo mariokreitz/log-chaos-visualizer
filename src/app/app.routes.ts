@@ -1,22 +1,22 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-    {
+  {
+    path: '',
+    loadComponent: () => import('./core/layout/layout').then((m) => m.Layout),
+    children: [
+      {
         path: '',
-        loadComponent: () => import('./core/layout/layout').then(m => m.Layout),
-        children: [
-            {
-                path: '',
-                loadComponent: () => import('./pages/dashboard/dashboard'),
-            },
-            {
-                path: 'analyse',
-                loadComponent: () => import('./pages/analyse/analyse'),
-            },
-            {
-                path: 'settings',
-                loadComponent: () => import('./pages/settings/settings'),
-            },
-        ],
-    },
+        loadComponent: () => import('./pages/dashboard/dashboard'),
+      },
+      {
+        path: 'analyse',
+        loadComponent: () => import('./pages/analyse/analyse'),
+      },
+      {
+        path: 'settings',
+        loadComponent: () => import('./pages/settings/settings'),
+      },
+    ],
+  },
 ];

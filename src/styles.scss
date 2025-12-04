@@ -148,10 +148,22 @@ body {
   border-radius: 999px;
 }
 
-/* Material dialog containers - dark, card-like modals */
+/* Material dialog containers - dark, card-like modals tuned to project theme */
 .mdc-dialog__surface {
   background-color: var(--color-surface-high);
   color: var(--color-text-primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-high);
+}
+
+.mdc-dialog .mdc-dialog__content {
+  padding: var(--space-3);
+}
+
+.mdc-dialog .mdc-dialog__title {
+  padding: var(--space-3) var(--space-3) var(--space-1);
+}
+
+.mdc-dialog .mdc-dialog__actions {
+  padding: 0 var(--space-3) var(--space-3);
 }

@@ -5,31 +5,28 @@ import type { NotificationType } from '../types/notification.types';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    private readonly snackBar = inject(MatSnackBar);
+  private readonly snackBar = inject(MatSnackBar);
 
-    info(message: string): void {
-        this.open(message, 'info');
-    }
+  info(message: string): void {
+    this.open(message, 'info');
+  }
 
-    success(message: string): void {
-        this.open(message, 'success');
-    }
+  success(message: string): void {
+    this.open(message, 'success');
+  }
 
-    error(message: string): void {
-        this.open(message, 'error');
-    }
+  error(message: string): void {
+    this.open(message, 'error');
+  }
 
-    private open(message: string, type: NotificationType): void {
-        const snackbarConfig = UI_CONFIG.snackbar;
-        const config: MatSnackBarConfig = {
-            duration: snackbarConfig.durationMs,
-            horizontalPosition: snackbarConfig.horizontalPosition,
-            verticalPosition: snackbarConfig.verticalPosition,
-            panelClass: [
-                'app-snackbar',
-                `app-snackbar-${type}`,
-            ],
-        };
-        this.snackBar.open(message, 'Close', config);
-    }
+  private open(message: string, type: NotificationType): void {
+    const snackbarConfig = UI_CONFIG.snackbar;
+    const config: MatSnackBarConfig = {
+      duration: snackbarConfig.durationMs,
+      horizontalPosition: snackbarConfig.horizontalPosition,
+      verticalPosition: snackbarConfig.verticalPosition,
+      panelClass: ['app-snackbar', `app-snackbar-${type}`],
+    };
+    this.snackBar.open(message, 'Close', config);
+  }
 }

@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "format": "prettier --write .",
     "gen:logs:20k": "python3 generate_logs.py --lines 20000 --output ./public/data/generated-20000.log",
     "gen:logs:50k": "python3 generate_logs.py --lines 50000 --output ./public/data/generated-50000.log",
     "gen:logs:100k": "python3 generate_logs.py --lines 100000 --output ./public/data/generated-100000.log",
@@ -53,6 +54,7 @@
     "jsdom": "^27.1.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.46.4",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "prettier": "^3.4.2"
   }
 }

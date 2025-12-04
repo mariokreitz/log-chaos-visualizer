@@ -1,4 +1,4 @@
 export interface FeatureFlagsState {
-    experimentalAnalysis: boolean;
-    debugParsing: boolean;
+  experimentalAnalysis: boolean;
+  debugParsing: boolean;
 }

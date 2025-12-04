@@ -1,8 +1,15 @@
 <mat-toolbar class="header-inner" color="primary">
-	<div [attr.aria-label]="brandUpper()" class="brand">{{ brand() }}</div>
-	<div aria-hidden="true" class="spacer" style="flex:1"></div>
-	<button (click)="onToggleMenu()" aria-controls="app-sidenav" aria-expanded="false" aria-haspopup="true" class="menu-toggle" type="button">
-		<span class="visually-hidden">Toggle navigation</span>
-		<mat-icon aria-hidden="true">menu</mat-icon>
-	</button>
+  <div [attr.aria-label]="brandUpper()" class="brand">{{ brand() }}</div>
+  <div aria-hidden="true" class="spacer" style="flex: 1"></div>
+  <button
+    (click)="onToggleMenu()"
+    aria-controls="app-sidenav"
+    aria-expanded="false"
+    aria-haspopup="true"
+    class="menu-toggle"
+    type="button"
+  >
+    <span class="visually-hidden">Toggle navigation</span>
+    <mat-icon aria-hidden="true">menu</mat-icon>
+  </button>
 </mat-toolbar>
