@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
 
 export type ParseProgress = {
     processedBytes: number;
@@ -6,19 +7,39 @@ export type ParseProgress = {
     percent: number; // 0-100
 };
 
-export type ParseSummary = {
-    lines: number;
-    jsonObjects: number;
+export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
+
+export type ParsedLogEntry =
+  | { kind: 'pino'; entry: PinoEntry }
+  | { kind: 'winston'; entry: WinstonEntry }
+  | { kind: 'loki'; entry: LokiEntry }
+  | { kind: 'promtail'; entry: PromtailTextLine }
+  | { kind: 'docker'; entry: DockerLogLine }
+  | { kind: 'unknown-json'; entry: unknown }
+  | { kind: 'text'; entry: { line: string } };
+
+export type ExtendedParseSummary = {
+    totalLines: number;
+    malformedCount: number;
+    counts: Record<ParsedKind, number>;
+};
+
+export type ParsedBatch = {
+    entries: ParsedLogEntry[];
+    rawCount: number;
+    malformedCount: number;
+    chunkStartOffset: number;
+    chunkEndOffset: number;
 };
 
 @Injectable({ providedIn: 'root' })
 export class FileParseService {
-    // state signals
     readonly selectedFile = signal<File | null>(null);
     readonly progress = signal<ParseProgress | null>(null);
-    readonly summary = signal<ParseSummary | null>(null);
+    readonly summary = signal<ExtendedParseSummary | null>(null);
     readonly error = signal<string | null>(null);
     readonly isParsing = signal(false);
+    readonly latestBatch = signal<ParsedBatch | null>(null);
 
     private worker: Worker | null = null;
 
@@ -38,9 +59,21 @@ export class FileParseService {
         this.error.set(null);
         this.isParsing.set(true);
         this.progress.set({ processedBytes: 0, totalBytes: file.size, percent: 0 });
-        this.summary.set({ lines: 0, jsonObjects: 0 });
+        this.summary.set({
+            totalLines: 0,
+            malformedCount: 0,
+            counts: {
+                pino: 0,
+                winston: 0,
+                loki: 0,
+                promtail: 0,
+                docker: 0,
+                'unknown-json': 0,
+                text: 0,
+            },
+        });
+        this.latestBatch.set(null);
 
-        // init worker
         this.worker?.terminate();
         this.worker = new Worker(new URL('../workers/parse-logs.worker', import.meta.url), { type: 'module' });
 
@@ -48,6 +81,20 @@ export class FileParseService {
             const msg = ev.data as WorkerMessage;
             if (msg.type === 'progress') {
                 this.progress.set(msg.progress);
+            } else if (msg.type === 'batch') {
+                this.latestBatch.set(msg.batch);
+                const current = this.summary();
+                if (current) {
+                    const updated: ExtendedParseSummary = {
+                        totalLines: current.totalLines + msg.batch.rawCount,
+                        malformedCount: current.malformedCount + msg.batch.malformedCount,
+                        counts: { ...current.counts },
+                    };
+                    for (const entry of msg.batch.entries) {
+                        updated.counts[entry.kind] = (updated.counts[entry.kind] ?? 0) + 1;
+                    }
+                    this.summary.set(updated);
+                }
             } else if (msg.type === 'summary') {
                 this.summary.set(msg.summary);
             } else if (msg.type === 'done') {
@@ -73,6 +120,7 @@ export class FileParseService {
         this.summary.set(null);
         this.error.set(null);
         this.isParsing.set(false);
+        this.latestBatch.set(null);
     }
 }
 
@@ -84,7 +132,7 @@ export type WorkerStartMessage = {
 
 export type WorkerMessage =
   | { type: 'progress'; progress: ParseProgress }
-  | { type: 'summary'; summary: ParseSummary }
+  | { type: 'batch'; batch: ParsedBatch }
+  | { type: 'summary'; summary: ExtendedParseSummary }
   | { type: 'done' }
   | { type: 'error'; error: string };
-

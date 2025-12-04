@@ -1,14 +1,36 @@
 /// <reference lib="webworker" />
 
+import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
+
 interface ParseProgress {
     processedBytes: number;
     totalBytes: number;
     percent: number;
 }
 
-interface ParseSummary {
-    lines: number;
-    jsonObjects: number;
+export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
+
+export type ParsedLogEntry =
+  | { kind: 'pino'; entry: PinoEntry }
+  | { kind: 'winston'; entry: WinstonEntry }
+  | { kind: 'loki'; entry: LokiEntry }
+  | { kind: 'promtail'; entry: PromtailTextLine }
+  | { kind: 'docker'; entry: DockerLogLine }
+  | { kind: 'unknown-json'; entry: unknown }
+  | { kind: 'text'; entry: { line: string } };
+
+interface ParsedBatch {
+    entries: ParsedLogEntry[];
+    rawCount: number;
+    malformedCount: number;
+    chunkStartOffset: number;
+    chunkEndOffset: number;
+}
+
+interface ExtendedParseSummary {
+    totalLines: number;
+    malformedCount: number;
+    counts: Record<ParsedKind, number>;
 }
 
 interface WorkerStartMessage {
@@ -19,13 +41,90 @@ interface WorkerStartMessage {
 
 type WorkerMessage =
   | { type: 'progress'; progress: ParseProgress }
-  | { type: 'summary'; summary: ParseSummary }
+  | { type: 'batch'; batch: ParsedBatch }
+  | { type: 'summary'; summary: ExtendedParseSummary }
   | { type: 'done' }
   | { type: 'error'; error: string };
 
-function getExtension(name: string): string {
-    const idx = name.lastIndexOf('.');
-    return idx >= 0 ? name.slice(idx).toLowerCase() : '';
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function isPinoEntry(candidate: unknown): candidate is PinoEntry {
+    if (!isRecord(candidate)) return false;
+    const level = candidate['level'];
+    return (
+      typeof candidate['time'] === 'number'
+      && typeof level === 'number'
+      && (level === 10 || level === 20 || level === 30 || level === 40 || level === 50 || level === 60)
+      && typeof candidate['msg'] === 'string'
+      && typeof candidate['pid'] === 'number'
+      && typeof candidate['hostname'] === 'string'
+      && typeof candidate['name'] === 'string'
+    );
+}
+
+function isWinstonEntry(candidate: unknown): candidate is WinstonEntry {
+    if (!isRecord(candidate)) return false;
+    const level = candidate['level'];
+    const message = candidate['message'];
+    if (typeof message !== 'string' || typeof level !== 'string') return false;
+    return level === 'silly' || level === 'debug' || level === 'verbose' || level === 'info' || level === 'warn' || level === 'error';
+}
+
+function isLokiEntry(candidate: unknown): candidate is LokiEntry {
+    if (!isRecord(candidate)) return false;
+    return typeof candidate['ts'] === 'string' && isRecord(candidate['labels']) && typeof candidate['line'] === 'string';
+}
+
+function isPromtailTextLine(candidate: unknown): candidate is PromtailTextLine {
+    if (!isRecord(candidate)) return false;
+    const level = candidate['level'];
+    const message = candidate['message'];
+    return (
+      typeof candidate['ts'] === 'string'
+      && typeof message === 'string'
+      && typeof level === 'string'
+      && (level === 'debug' || level === 'info' || level === 'warn' || level === 'error')
+    );
+}
+
+function isDockerLogLine(candidate: unknown): candidate is DockerLogLine {
+    if (!isRecord(candidate)) return false;
+    const stream = candidate['stream'];
+    return (
+      typeof candidate['log'] === 'string'
+      && typeof candidate['time'] === 'string'
+      && typeof stream === 'string'
+      && (stream === 'stdout' || stream === 'stderr')
+    );
+}
+
+function mapJsonObjectToParsed(candidate: unknown): ParsedLogEntry {
+    if (isPinoEntry(candidate)) {
+        return { kind: 'pino', entry: candidate };
+    }
+    if (isDockerLogLine(candidate)) {
+        return { kind: 'docker', entry: candidate };
+    }
+    if (isWinstonEntry(candidate)) {
+        return { kind: 'winston', entry: candidate };
+    }
+    if (isLokiEntry(candidate)) {
+        return { kind: 'loki', entry: candidate };
+    }
+    if (isPromtailTextLine(candidate)) {
+        return { kind: 'promtail', entry: candidate };
+    }
+    return { kind: 'unknown-json', entry: candidate };
+}
+
+function mapTextLine(line: string): ParsedLogEntry {
+    const trimmed = line.trim();
+    if (!trimmed) {
+        return { kind: 'text', entry: { line: '' } };
+    }
+    return { kind: 'text', entry: { line: trimmed } };
 }
 
 addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) => {
@@ -37,12 +136,26 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
 
     const { file, chunkSize } = msg;
     const total = file.size;
-    let processed = 0;
-    let lines = 0;
-    let jsonObjects = 0;
 
-    const ext = getExtension(file.name);
+    let processed = 0;
+    let totalLines = 0;
+    let malformedCount = 0;
+    const counts: Record<ParsedKind, number> = {
+        pino: 0,
+        winston: 0,
+        loki: 0,
+        promtail: 0,
+        docker: 0,
+        'unknown-json': 0,
+        text: 0,
+    };
+
     const decoder = new TextDecoder('utf-8');
+
+    const batchEntries: ParsedLogEntry[] = [];
+    let batchRawCount = 0;
+    let batchMalformed = 0;
+    const BATCH_SIZE = 500;
 
     let remainder = '';
 
@@ -57,21 +170,46 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
             const parts = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
             remainder = parts.pop() ?? '';
 
-            if (ext === '.txt' || ext === '.log') {
-                lines += parts.length;
-            }
+            for (const line of parts) {
+                totalLines += 1;
+                const trimmed = line.trim();
+                if (!trimmed) {
+                    continue;
+                }
 
-            if (ext === '.json') {
-                for (const line of parts) {
-                    const trimmed = line.trim();
-                    if (!trimmed) continue;
+                let parsed: ParsedLogEntry;
+                let isJson = false;
+
+                if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
                     try {
-                        const obj = JSON.parse(trimmed);
-                        jsonObjects += 1;
-                        lines += 1;
+                        const obj = JSON.parse(trimmed) as unknown;
+                        parsed = mapJsonObjectToParsed(obj);
+                        isJson = true;
                     } catch {
-                        // ignore malformed JSON line – could be pretty-printed JSON; future improvement: streaming parser
+                        malformedCount += 1;
+                        batchMalformed += 1;
+                        parsed = mapTextLine(trimmed);
                     }
+                } else {
+                    parsed = mapTextLine(trimmed);
+                }
+
+                batchEntries.push(parsed);
+                batchRawCount += 1;
+                counts[parsed.kind] += 1;
+
+                if (batchEntries.length >= BATCH_SIZE) {
+                    const batch: ParsedBatch = {
+                        entries: batchEntries.slice(),
+                        rawCount: batchRawCount,
+                        malformedCount: batchMalformed,
+                        chunkStartOffset: offset,
+                        chunkEndOffset: Math.min(offset + chunkSize, total),
+                    };
+                    postMessage({ type: 'batch', batch } satisfies WorkerMessage);
+                    batchEntries.length = 0;
+                    batchRawCount = 0;
+                    batchMalformed = 0;
                 }
             }
 
@@ -82,22 +220,45 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
                 percent: total === 0 ? 100 : Math.round((processed / total) * 100),
             };
             postMessage({ type: 'progress', progress } satisfies WorkerMessage);
-
         }
 
-        if (remainder) {
-            lines += 1;
-            if (ext === '.json') {
+        if (remainder.trim()) {
+            totalLines += 1;
+            const trimmed = remainder.trim();
+            let parsed: ParsedLogEntry;
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
                 try {
-                    const obj = JSON.parse(remainder.trim());
-                    jsonObjects += 1;
+                    const obj = JSON.parse(trimmed) as unknown;
+                    parsed = mapJsonObjectToParsed(obj);
                 } catch {
-                    // ignore
+                    malformedCount += 1;
+                    batchMalformed += 1;
+                    parsed = mapTextLine(trimmed);
                 }
+            } else {
+                parsed = mapTextLine(trimmed);
             }
+            batchEntries.push(parsed);
+            batchRawCount += 1;
+            counts[parsed.kind] += 1;
         }
 
-        const summary: ParseSummary = { lines, jsonObjects };
+        if (batchEntries.length > 0) {
+            const finalBatch: ParsedBatch = {
+                entries: batchEntries.slice(),
+                rawCount: batchRawCount,
+                malformedCount: batchMalformed,
+                chunkStartOffset: total - (total % chunkSize),
+                chunkEndOffset: total,
+            };
+            postMessage({ type: 'batch', batch: finalBatch } satisfies WorkerMessage);
+        }
+
+        const summary: ExtendedParseSummary = {
+            totalLines,
+            malformedCount,
+            counts,
+        };
         postMessage({ type: 'summary', summary } satisfies WorkerMessage);
         postMessage({ type: 'done' } satisfies WorkerMessage);
     } catch (e) {
@@ -106,6 +267,6 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
     }
 });
 
-function readSliceAsText(blob: Blob, decoder: TextDecoder): Promise<string> {
-    return blob.text().then(t => t);
+async function readSliceAsText(blob: Blob, _decoder: TextDecoder): Promise<string> {
+    return await blob.text();
 }
