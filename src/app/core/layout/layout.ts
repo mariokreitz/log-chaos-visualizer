@@ -2,6 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, signal } from '@angular/core';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { RouterOutlet } from '@angular/router';
+import { GlobalProgress } from '../components/global-progress/global-progress';
 import { Header } from '../components/header/header';
 import { Navigation } from '../components/navigation/navigation';
 
@@ -14,6 +15,7 @@ import { Navigation } from '../components/navigation/navigation';
         MatSidenavContainer,
         MatSidenav,
         MatSidenavContent,
+        GlobalProgress,
     ],
     templateUrl: './layout.html',
     styleUrl: './layout.scss',
