@@ -77,11 +77,17 @@ export class LogKindDoughnutChartComponent {
 
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
+
+    const rawCounts = entries.map((entry) => entry.count);
+    const absoluteTotal = rawCounts.reduce((acc, value) => acc + value, 0);
+
+    const displayData = absoluteTotal === 0 ? rawCounts.map(() => 1) : rawCounts;
+
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
-          data: entries.map((entry) => entry.count),
+          data: displayData,
           backgroundColor: ['#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#F4511E', '#546E7A'],
           borderColor: '#121212',
           borderWidth: 1,
@@ -104,10 +110,15 @@ export class LogKindDoughnutChartComponent {
         callbacks: {
           label: (context) => {
             const label = context.label ?? '';
-            const value = context.parsed;
+            const index = context.dataIndex ?? 0;
+
+            const entries = this.entries();
+            const entry = entries[index];
+            const trueValue = entry?.count ?? 0;
+
             const total = this.totalCount();
-            const percentage = total === 0 ? 0 : (Number(value) / total) * 100;
-            return `${label}: ${value} (${percentage.toFixed(1)}%)`;
+            const percentage = total === 0 ? 0 : (trueValue / total) * 100;
+            return `${label}: ${trueValue} (${percentage.toFixed(1)}%)`;
           },
         },
       },
