@@ -1,30 +1,18 @@
-<a class="skip-link" href="#main-content">Skip to main content</a>
-<div class="app-shell">
-	<header class="app-header" role="banner">
-		<app-header (toggleSidebar)="setSidebar($event)"></app-header>
-	</header>
+<app-header (menuToggle)="toggleSidenav()" />
 
-	<div class="app-content">
-		<aside
-					[attr.aria-hidden]="!isSidebarOpen()"
-					[class.open]="isSidebarOpen()"
-					class="app-sidebar"
-					id="sidebar"
-		>
-			<nav aria-label="Primary navigation">
-				<ul class="nav-list">
-					<li><a href="#">Dashboard</a></li>
-					<!-- Add additional nav links here -->
-				</ul>
-			</nav>
-		</aside>
+<mat-sidenav-container aria-label="App content" class="sidenav-container" role="region">
+	<mat-sidenav
+				[attr.aria-label]="'Primary navigation'"
+				[mode]="isMobile() ? 'over' : 'side'"
+				[opened]="isSidenavOpen()"
+				class="sidenav"
+				id="app-sidenav">
+		<app-navigation />
+	</mat-sidenav>
 
-		<main class="app-main" id="main-content" role="main" tabindex="-1">
-			<ng-content></ng-content>
+	<mat-sidenav-content class="content">
+		<main class="page" role="main">
+			<router-outlet />
 		</main>
-
-		@if (isSidebarOpen()) {
-			<div (click)="setSidebar(false)" aria-hidden="true" class="backdrop"></div>
-		}
-	</div>
-</div>
+	</mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,28 +1,43 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { RouterOutlet } from '@angular/router';
 import { Header } from '../components/header/header';
+import { Navigation } from '../components/navigation/navigation';
 
 @Component({
     selector: 'app-layout',
     imports: [
+        RouterOutlet,
         Header,
+        Navigation,
+        MatSidenavContainer,
+        MatSidenav,
+        MatSidenavContent,
     ],
     templateUrl: './layout.html',
     styleUrl: './layout.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        class: 'app-layout',
+    },
 })
 export class Layout {
-    protected readonly sidebarOpen = signal(false);
+    readonly isSidenavOpen = signal(false);
+    readonly isMobile = signal(false);
+    private readonly breakpointObserver = inject(BreakpointObserver);
 
-    /** Toggle when no arg passed; set explicit state when boolean provided */
-    protected setSidebar(open?: boolean): void {
-        if (typeof open === 'boolean') {
-            this.sidebarOpen.set(open);
-        } else {
-            this.sidebarOpen.update((v) => !v);
-        }
+    constructor() {
+        const sub = this.breakpointObserver.observe([ '(max-width: 899px)' ]).subscribe(state => {
+            const mobile = !!state.matches;
+            this.isMobile.set(mobile);
+            this.isSidenavOpen.set(!mobile ? true : false);
+        });
     }
 
-    protected isSidebarOpen(): boolean {
-        return this.sidebarOpen();
+    toggleSidenav(): void {
+        if (this.isMobile()) {
+            this.isSidenavOpen.update(v => !v);
+        }
     }
 }
