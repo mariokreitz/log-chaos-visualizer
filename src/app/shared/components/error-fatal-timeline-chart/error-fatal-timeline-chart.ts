@@ -3,6 +3,8 @@ import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ErrorFatalTimelineSummary } from '../../../core/types/file-parse.types';
 
+const FIVE_MIN_MS = 5 * 60 * 1000;
+
 @Component({
     selector: 'app-error-fatal-timeline-chart',
     imports: [
@@ -20,8 +22,8 @@ import type { ErrorFatalTimelineSummary } from '../../../core/types/file-parse.t
 })
 export class ErrorFatalTimelineChartComponent {
     readonly summary = input<ErrorFatalTimelineSummary | null>(null);
-    readonly title = input<string>('Error/Fatal peaks over time');
-    readonly ariaLabel = input<string>('Timeline of error and fatal log entries, highlighting peak periods');
+    readonly title = input<string>('Error/Fatal timeline');
+    readonly ariaLabel = input<string>('Timeline of error and fatal log entries');
 
     readonly hasData = computed(() => {
         const summary = this.summary();
@@ -30,8 +32,7 @@ export class ErrorFatalTimelineChartComponent {
         }
         return summary.buckets.some(bucket => bucket.total > 0);
     });
-
-    readonly chartData = computed<ChartData<'line'>>(() => {
+    readonly chartData = computed<ChartData<'bar'>>(() => {
         const summary = this.summary();
         if (!summary || summary.buckets.length === 0) {
             return {
@@ -40,13 +41,11 @@ export class ErrorFatalTimelineChartComponent {
             };
         }
 
-        const labels = summary.buckets.map(bucket => this.formatBucketLabel(bucket.bucketStartMs, bucket.bucketEndMs));
+        const buckets = this.reBucketToFiveMinutes(summary as ErrorFatalTimelineSummary);
 
-        const errorData = summary.buckets.map(bucket => bucket.errorCount);
-        const fatalData = summary.buckets.map(bucket => bucket.fatalCount);
-
-        const peakMask = new Set(summary.topPeakBucketIndices);
-        const peakMarkerData = summary.buckets.map((bucket, index) => (peakMask.has(index) ? bucket.total : null));
+        const labels = buckets.map((b: any) => this.formatBucketLabel(b.start, b.end));
+        const errorData = buckets.map((b: any) => b.error);
+        const fatalData = buckets.map((b: any) => b.fatal);
 
         return {
             labels,
@@ -54,33 +53,21 @@ export class ErrorFatalTimelineChartComponent {
                 {
                     label: 'Error',
                     data: errorData,
-                    borderColor: '#E53935',
                     backgroundColor: '#E53935',
-                    tension: 0.2,
-                    pointRadius: 2,
+                    borderColor: '#B71C1C',
+                    borderWidth: 1,
                 },
                 {
                     label: 'Fatal',
                     data: fatalData,
-                    borderColor: '#8E24AA',
                     backgroundColor: '#8E24AA',
-                    tension: 0.2,
-                    pointRadius: 2,
-                },
-                {
-                    label: 'Peaks',
-                    data: peakMarkerData,
-                    borderColor: '#FFEB3B',
-                    backgroundColor: '#FFEB3B',
-                    pointRadius: 5,
-                    pointStyle: 'triangle',
-                    showLine: false,
+                    borderColor: '#6A1B9A',
+                    borderWidth: 1,
                 },
             ],
         };
     });
-
-    readonly chartOptions: ChartConfiguration<'line'>['options'] = {
+    readonly chartOptions: ChartConfiguration<'bar'>['options'] = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -93,14 +80,13 @@ export class ErrorFatalTimelineChartComponent {
             tooltip: {
                 callbacks: {
                     title: items => {
-                        if (!items.length) {
-                            return '';
-                        }
+                        if (!items.length) return '';
                         return String(items[0].label ?? '');
                     },
                     label: context => {
                         const label = context.dataset.label ?? '';
-                        const value = context.parsed.y;
+                        // parsed.y works for bar chart as well
+                        const value = (context.parsed as any).y ?? (context.parsed as any).v ?? 0;
                         return `${label}: ${value}`;
                     },
                 },
@@ -111,6 +97,11 @@ export class ErrorFatalTimelineChartComponent {
                 title: {
                     display: true,
                     text: 'Time',
+                },
+                ticks: {
+                    autoSkip: true,
+                    maxRotation: 0,
+                    minRotation: 0,
                 },
             },
             y: {
@@ -123,6 +114,51 @@ export class ErrorFatalTimelineChartComponent {
         },
         animation: false,
     };
+
+    /**
+     * Aggregate incoming summary buckets into fixed 5-minute buckets.
+     * If the incoming summary already uses 5-minute buckets, use them as-is.
+     */
+    private reBucketToFiveMinutes(summary: ErrorFatalTimelineSummary) {
+        if (summary.bucketSizeMs === FIVE_MIN_MS) {
+            // Already in required bucket size — return mapped buckets
+            return summary.buckets.map(b => ({
+                start: b.bucketStartMs,
+                end: b.bucketEndMs,
+                error: b.errorCount,
+                fatal: b.fatalCount,
+                total: b.total,
+            }));
+        }
+
+        // Determine overall time range
+        const minStart = Math.min(...summary.buckets.map(b => b.bucketStartMs));
+        const maxEnd = Math.max(...summary.buckets.map(b => b.bucketEndMs));
+
+        const base = Math.floor(minStart / FIVE_MIN_MS) * FIVE_MIN_MS;
+        const last = Math.ceil(maxEnd / FIVE_MIN_MS) * FIVE_MIN_MS;
+        const bucketCount = Math.max(0, Math.floor((last - base) / FIVE_MIN_MS));
+
+        const buckets = Array.from({ length: bucketCount }, (_, i) => ({
+            start: base + i * FIVE_MIN_MS,
+            end: base + (i + 1) * FIVE_MIN_MS,
+            error: 0,
+            fatal: 0,
+            total: 0,
+        }));
+
+        for (const b of summary.buckets) {
+            // place the entire bucket into the bucket that matches its start
+            const idx = Math.floor((b.bucketStartMs - base) / FIVE_MIN_MS);
+            if (idx >= 0 && idx < buckets.length) {
+                buckets[idx].error += b.errorCount;
+                buckets[idx].fatal += b.fatalCount;
+                buckets[idx].total += b.total;
+            }
+        }
+
+        return buckets;
+    }
 
     private formatBucketLabel(startMs: number, endMs: number): string {
         const start = new Date(startMs);
