@@ -39,12 +39,31 @@ export type EnvironmentSummary = {
     byEnvironment: Record<NormalizedEnvironment, number>;
 };
 
+export type ErrorFatalTimelineBucket = {
+    bucketStartMs: number;
+    bucketEndMs: number;
+    errorCount: number;
+    fatalCount: number;
+    total: number;
+};
+
+export type ErrorFatalTimelineSummary = {
+    bucketSizeMs: number;
+    buckets: ErrorFatalTimelineBucket[];
+    topPeakBucketIndices: number[];
+    totalErrorCount: number;
+    totalFatalCount: number;
+    noTimestampErrorCount: number;
+    noTimestampFatalCount: number;
+};
+
 export type ExtendedParseSummary = {
     totalLines: number;
     malformedCount: number;
     counts: Record<ParsedKind, number>;
     levelSummary: LevelSummary;
     environmentSummary: EnvironmentSummary;
+    errorFatalTimeline?: ErrorFatalTimelineSummary | null;
 };
 
 export type ParsedBatch = {

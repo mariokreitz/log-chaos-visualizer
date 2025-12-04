@@ -3,6 +3,8 @@ import type { ParsingSpeed } from '../../shared/config/settings-config.types';
 import { APP_CONFIG } from '../config/app-config';
 import type {
     EnvironmentSummary,
+    ErrorFatalTimelineBucket,
+    ErrorFatalTimelineSummary,
     ExtendedParseSummary,
     LevelSummary,
     NormalizedEnvironment,
@@ -15,6 +17,9 @@ import type {
 } from '../types/file-parse.types';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
+
+const DEFAULT_TIMELINE_BUCKET_MS = 60_000; // 1 minute
+const DEFAULT_TOP_N_PEAKS = 5;
 
 @Injectable({ providedIn: 'root' })
 export class FileParseService {
@@ -70,6 +75,16 @@ export class FileParseService {
             },
         };
 
+        const emptyTimeline: ErrorFatalTimelineSummary = {
+            bucketSizeMs: DEFAULT_TIMELINE_BUCKET_MS,
+            buckets: [],
+            topPeakBucketIndices: [],
+            totalErrorCount: 0,
+            totalFatalCount: 0,
+            noTimestampErrorCount: 0,
+            noTimestampFatalCount: 0,
+        };
+
         this.summary.set({
             totalLines: 0,
             malformedCount: 0,
@@ -84,6 +99,7 @@ export class FileParseService {
             },
             levelSummary: emptyLevelSummary,
             environmentSummary: emptyEnvironmentSummary,
+            errorFatalTimeline: emptyTimeline,
         });
         this.latestBatch.set(null);
 
@@ -113,6 +129,9 @@ export class FileParseService {
                             total: current.environmentSummary.total,
                             byEnvironment: { ...current.environmentSummary.byEnvironment },
                         },
+                        errorFatalTimeline: current.errorFatalTimeline
+                          ? { ...current.errorFatalTimeline, buckets: [ ...current.errorFatalTimeline.buckets ] }
+                          : undefined,
                     };
 
                     for (const entry of msg.batch.entries) {
@@ -127,14 +146,24 @@ export class FileParseService {
                         updated.environmentSummary.total += 1;
                         updated.environmentSummary.byEnvironment[env] =
                           (updated.environmentSummary.byEnvironment[env] ?? 0) + 1;
+
+                        updated.errorFatalTimeline = updateErrorFatalTimeline(
+                          updated.errorFatalTimeline,
+                          entry,
+                          level,
+                        );
+                    }
+
+                    if (updated.errorFatalTimeline) {
+                        updated.errorFatalTimeline.topPeakBucketIndices = computeTopPeaks(
+                          updated.errorFatalTimeline.buckets,
+                          DEFAULT_TOP_N_PEAKS,
+                        );
                     }
 
                     this.summary.set(updated);
                 }
             } else if (msg.type === 'summary') {
-                // The worker currently only computes legacy summary fields.
-                // We keep our richer, incrementally built summary and ignore the worker one,
-                // except for ensuring totalLines/malformedCount stay in sync.
                 const current = this.summary();
                 if (current) {
                     this.summary.set({
@@ -286,4 +315,140 @@ function normalizeEnvironment(entry: ParsedLogEntry): NormalizedEnvironment {
     }
 
     return 'unknown';
+}
+
+function getEntryTimestampMs(entry: ParsedLogEntry): number | null {
+    if (entry.kind === 'pino') {
+        const time = entry.entry.time;
+        return typeof time === 'number' && Number.isFinite(time) ? time : null;
+    }
+
+    if (entry.kind === 'winston') {
+        const ts = entry.entry.timestamp;
+        const ms = Date.parse(ts);
+        return Number.isNaN(ms) ? null : ms;
+    }
+
+    if (entry.kind === 'loki') {
+        const ts = entry.entry.ts;
+        const ms = Date.parse(ts);
+        return Number.isNaN(ms) ? null : ms;
+    }
+
+    if (entry.kind === 'promtail') {
+        const ts = entry.entry.ts;
+        const ms = Date.parse(ts);
+        return Number.isNaN(ms) ? null : ms;
+    }
+
+    if (entry.kind === 'docker') {
+        const ts = entry.entry.time;
+        const ms = Date.parse(ts);
+        return Number.isNaN(ms) ? null : ms;
+    }
+
+    return null;
+}
+
+function updateErrorFatalTimeline(
+  summary: ErrorFatalTimelineSummary | undefined | null,
+  entry: ParsedLogEntry,
+  level: NormalizedLogLevel,
+): ErrorFatalTimelineSummary {
+    if (level !== 'error' && level !== 'fatal') {
+        return summary ?? {
+            bucketSizeMs: DEFAULT_TIMELINE_BUCKET_MS,
+            buckets: [],
+            topPeakBucketIndices: [],
+            totalErrorCount: 0,
+            totalFatalCount: 0,
+            noTimestampErrorCount: 0,
+            noTimestampFatalCount: 0,
+        };
+    }
+
+    const base: ErrorFatalTimelineSummary = summary ?? {
+        bucketSizeMs: DEFAULT_TIMELINE_BUCKET_MS,
+        buckets: [],
+        topPeakBucketIndices: [],
+        totalErrorCount: 0,
+        totalFatalCount: 0,
+        noTimestampErrorCount: 0,
+        noTimestampFatalCount: 0,
+    };
+
+    const timestampMs = getEntryTimestampMs(entry);
+    if (timestampMs === null) {
+        if (level === 'error') {
+            return {
+                ...base,
+                noTimestampErrorCount: base.noTimestampErrorCount + 1,
+            };
+        }
+        return {
+            ...base,
+            noTimestampFatalCount: base.noTimestampFatalCount + 1,
+        };
+    }
+
+    const bucketSizeMs = base.bucketSizeMs;
+    const bucketIndex = Math.floor(timestampMs / bucketSizeMs);
+    const bucketStartMs = bucketIndex * bucketSizeMs;
+    const bucketEndMs = bucketStartMs + bucketSizeMs;
+
+    const buckets: ErrorFatalTimelineBucket[] = base.buckets.slice();
+    const existingIndex = buckets.findIndex(b => b.bucketStartMs === bucketStartMs);
+
+    if (existingIndex === -1) {
+        const errorCount = level === 'error' ? 1 : 0;
+        const fatalCount = level === 'fatal' ? 1 : 0;
+        buckets.push({
+            bucketStartMs,
+            bucketEndMs,
+            errorCount,
+            fatalCount,
+            total: errorCount + fatalCount,
+        });
+    } else {
+        const bucket = buckets[existingIndex];
+        const errorCount = bucket.errorCount + (level === 'error' ? 1 : 0);
+        const fatalCount = bucket.fatalCount + (level === 'fatal' ? 1 : 0);
+        buckets[existingIndex] = {
+            ...bucket,
+            errorCount,
+            fatalCount,
+            total: errorCount + fatalCount,
+        };
+    }
+
+    buckets.sort((a, b) => a.bucketStartMs - b.bucketStartMs);
+
+    const totalErrorCount = buckets.reduce((acc, b) => acc + b.errorCount, base.noTimestampErrorCount);
+    const totalFatalCount = buckets.reduce((acc, b) => acc + b.fatalCount, base.noTimestampFatalCount);
+
+    return {
+        ...base,
+        buckets,
+        totalErrorCount,
+        totalFatalCount,
+    };
+}
+
+function computeTopPeaks(buckets: ErrorFatalTimelineBucket[], topN: number): number[] {
+    if (topN <= 0 || buckets.length === 0) {
+        return [];
+    }
+
+    const indexed = buckets
+      .map((bucket, index) => ({ index, total: bucket.total }))
+      .filter(item => item.total > 0);
+
+    indexed.sort((a, b) => {
+        if (b.total !== a.total) {
+            return b.total - a.total;
+        }
+        return a.index - b.index;
+    });
+
+    return indexed.slice(0, topN).map(item => item.index);
 }

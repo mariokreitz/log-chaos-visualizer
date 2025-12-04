@@ -4,6 +4,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FileParseService } from '../../core/services/file-parse.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ErrorFatalTimelineChartComponent } from '../../shared/components/error-fatal-timeline-chart/error-fatal-timeline-chart';
 import { FileSelectDialog } from '../../shared/components/file-select-dialog/file-select-dialog';
 import {
     LogEnvironmentDoughnutChartComponent,
@@ -21,6 +22,7 @@ import { UI_CONFIG } from '../../shared/config/ui-config';
         LogKindDoughnutChartComponent,
         LogLevelDoughnutChartComponent,
         LogEnvironmentDoughnutChartComponent,
+        ErrorFatalTimelineChartComponent,
     ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.scss',
@@ -36,6 +38,7 @@ export default class Dashboard {
     readonly summary = computed(() => this.fileParse.summary());
     readonly levelSummary = computed(() => this.fileParse.summary()?.levelSummary ?? null);
     readonly environmentSummary = computed(() => this.fileParse.summary()?.environmentSummary ?? null);
+    readonly errorFatalTimelineSummary = computed(() => this.fileParse.summary()?.errorFatalTimeline ?? null);
     private readonly notifications = inject(NotificationService);
 
     openFileDialog(): void {
