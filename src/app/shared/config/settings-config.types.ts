@@ -2,13 +2,12 @@ export type ParsingSpeed = 'slow' | 'normal' | 'fast';
 
 export type ProgressBarSize = 'thin' | 'normal';
 
-export type ProgressBarSettings = {
+export interface ProgressBarSettings {
     enabled: boolean;
     size: ProgressBarSize;
-};
+}
 
-export type SettingsDefaultsConfig = {
+export interface SettingsDefaultsConfig {
     parsingSpeed: ParsingSpeed;
     progressBar: ProgressBarSettings;
-};
-
+}

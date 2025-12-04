@@ -1,11 +1,11 @@
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from './log-entries';
 
-export type ParseProgress = {
+export interface ParseProgress {
     processedBytes: number;
     totalBytes: number;
     percent: number; // 0-100
-};
+}
 
 export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
 
@@ -27,27 +27,27 @@ export type NormalizedLogLevel =
   | 'fatal'
   | 'unknown';
 
-export type LevelSummary = {
+export interface LevelSummary {
     total: number;
     byLevel: Record<NormalizedLogLevel, number>;
-};
+}
 
 export type NormalizedEnvironment = 'dev' | 'staging' | 'prod' | 'unknown';
 
-export type EnvironmentSummary = {
+export interface EnvironmentSummary {
     total: number;
     byEnvironment: Record<NormalizedEnvironment, number>;
-};
+}
 
-export type ErrorFatalTimelineBucket = {
+export interface ErrorFatalTimelineBucket {
     bucketStartMs: number;
     bucketEndMs: number;
     errorCount: number;
     fatalCount: number;
     total: number;
-};
+}
 
-export type ErrorFatalTimelineSummary = {
+export interface ErrorFatalTimelineSummary {
     bucketSizeMs: number;
     buckets: ErrorFatalTimelineBucket[];
     topPeakBucketIndices: number[];
@@ -55,31 +55,31 @@ export type ErrorFatalTimelineSummary = {
     totalFatalCount: number;
     noTimestampErrorCount: number;
     noTimestampFatalCount: number;
-};
+}
 
-export type ExtendedParseSummary = {
+export interface ExtendedParseSummary {
     totalLines: number;
     malformedCount: number;
     counts: Record<ParsedKind, number>;
     levelSummary: LevelSummary;
     environmentSummary: EnvironmentSummary;
     errorFatalTimeline?: ErrorFatalTimelineSummary | null;
-};
+}
 
-export type ParsedBatch = {
+export interface ParsedBatch {
     entries: ParsedLogEntry[];
     rawCount: number;
     malformedCount: number;
     chunkStartOffset: number;
     chunkEndOffset: number;
-};
+}
 
-export type WorkerStartMessage = {
+export interface WorkerStartMessage {
     type: 'start';
     file: File;
     chunkSize: number;
     delayMs: number;
-};
+}
 
 export type WorkerMessage =
   | { type: 'progress'; progress: ParseProgress }

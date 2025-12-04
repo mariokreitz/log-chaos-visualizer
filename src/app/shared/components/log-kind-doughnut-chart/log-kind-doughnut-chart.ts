@@ -24,12 +24,12 @@ const PARSED_KIND_LABELS: Record<ParsedKind, string> = {
     text: 'Plain text',
 };
 
-export type ParsedKindCountEntry = {
+export interface ParsedKindCountEntry {
     kind: ParsedKind;
     label: string;
     count: number;
     percentage: number;
-};
+}
 
 @Component({
     selector: 'app-log-kind-doughnut-chart',

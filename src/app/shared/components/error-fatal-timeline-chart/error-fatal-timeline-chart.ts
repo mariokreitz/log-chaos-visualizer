@@ -5,13 +5,13 @@ import type { ErrorFatalTimelineSummary } from '../../../core/types/file-parse.t
 
 const FIVE_MIN_MS = 5 * 60 * 1000;
 
-type TimelineBucketView = {
+interface TimelineBucketView {
     start: number;
     end: number;
     error: number;
     fatal: number;
     total: number;
-};
+}
 
 @Component({
     selector: 'app-error-fatal-timeline-chart',

@@ -1,10 +1,10 @@
-export type DockerLogLine = {
+export interface DockerLogLine {
     log: string;
     stream: 'stdout' | 'stderr';
     time: string;
-};
+}
 
-export type LokiEntry = {
+export interface LokiEntry {
     ts: string;
     labels: {
         job: string;
@@ -14,9 +14,9 @@ export type LokiEntry = {
         [k: string]: string;
     };
     line: string;
-};
+}
 
-export type PinoEntry = {
+export interface PinoEntry {
     time: number; // epoch millis
     level: 10 | 20 | 30 | 40 | 50 | 60; // trace/debug/info/warn/error/fatal
     pid: number;
@@ -34,9 +34,9 @@ export type PinoEntry = {
         responseTimeMs?: number;
     };
     meta?: Record<string, unknown>;
-};
+}
 
-export type WinstonEntry = {
+export interface WinstonEntry {
     timestamp: string; // ISO
     level: 'silly' | 'debug' | 'verbose' | 'info' | 'warn' | 'error';
     message: string;
@@ -46,11 +46,10 @@ export type WinstonEntry = {
         traceId?: string;
         [k: string]: unknown;
     };
-};
+}
 
-export type PromtailTextLine = {
+export interface PromtailTextLine {
     ts: string; // ISO timestamp
     level: 'debug' | 'info' | 'warn' | 'error';
     message: string; // text message with key=value pairs
-};
-
+}

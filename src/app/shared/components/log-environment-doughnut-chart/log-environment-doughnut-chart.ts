@@ -4,12 +4,12 @@ import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import type { EnvironmentSummary, NormalizedEnvironment } from '../../../core/types/file-parse.types';
 
-export type EnvironmentCountEntry = {
+export interface EnvironmentCountEntry {
     environment: NormalizedEnvironment;
     label: string;
     count: number;
     percentage: number;
-};
+}
 
 @Component({
     selector: 'app-log-environment-doughnut-chart',
@@ -108,4 +108,3 @@ export class LogEnvironmentDoughnutChartComponent {
         animation: false,
     };
 }
-

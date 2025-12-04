@@ -24,12 +24,12 @@ const LEVEL_LABELS: Record<NormalizedLogLevel, string> = {
     unknown: 'Unknown',
 };
 
-export type LevelCountEntry = {
+export interface LevelCountEntry {
     level: NormalizedLogLevel;
     label: string;
     count: number;
     percentage: number;
-};
+}
 
 @Component({
     selector: 'app-log-level-doughnut-chart',

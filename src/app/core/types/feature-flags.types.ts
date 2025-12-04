@@ -1,5 +1,4 @@
-export type FeatureFlagsState = {
+export interface FeatureFlagsState {
     experimentalAnalysis: boolean;
     debugParsing: boolean;
-};
-
+}

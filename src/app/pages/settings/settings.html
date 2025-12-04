@@ -58,11 +58,11 @@
 
 		@if (progressBarSettings().enabled) {
 			<div class="progress-size">
-				<label>Bar thickness:</label>
+				<label for="progress-bar-thickness">Bar thickness:</label>
 				<mat-radio-group
 							(change)="onProgressBarSizeChange($event.value)"
 							[value]="progressBarSettings().size"
-							aria-label="Select progress bar thickness"
+							id="progress-bar-thickness"
 				>
 					<mat-radio-button value="thin">Thin</mat-radio-button>
 					<mat-radio-button value="normal">Normal</mat-radio-button>

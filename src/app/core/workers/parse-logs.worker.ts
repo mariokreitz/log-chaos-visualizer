@@ -130,8 +130,6 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
         text: 0,
     };
 
-    const decoder = new TextDecoder('utf-8');
-
     const batchEntries: ParsedLogEntry[] = [];
     let batchRawCount = 0;
     let batchMalformed = 0;
@@ -142,7 +140,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
     try {
         for (let offset = 0; offset < total; offset += chunkSize) {
             const slice = file.slice(offset, Math.min(offset + chunkSize, total));
-            const chunkText = await readSliceAsText(slice, decoder);
+            const chunkText = await readSliceAsText(slice);
 
             const text = remainder + chunkText;
             remainder = '';
@@ -158,13 +156,11 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
                 }
 
                 let parsed: ParsedLogEntry;
-                let isJson = false;
 
                 if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
                     try {
                         const obj = JSON.parse(trimmed) as unknown;
                         parsed = mapJsonObjectToParsed(obj);
-                        isJson = true;
                     } catch {
                         malformedCount += 1;
                         batchMalformed += 1;
@@ -272,7 +268,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
     }
 });
 
-async function readSliceAsText(blob: Blob, _decoder: TextDecoder): Promise<string> {
+async function readSliceAsText(blob: Blob): Promise<string> {
     return await blob.text();
 }
 

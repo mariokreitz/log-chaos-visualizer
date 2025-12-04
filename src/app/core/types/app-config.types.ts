@@ -1,41 +1,41 @@
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
 import type { NavItems } from './navigation';
 
-export type AppMetadataConfig = {
+export interface AppMetadataConfig {
     title: string;
     description: string;
     version: string;
     repositoryUrl?: string;
-};
+}
 
-export type ParsingSpeedPreset = {
+export interface ParsingSpeedPreset {
     chunkSize: number;
     delayMs: number;
-};
+}
 
-export type ParsingConfig = {
+export interface ParsingConfig {
     defaultSpeed: ParsingSpeed;
     presets: Record<ParsingSpeed, ParsingSpeedPreset>;
-};
+}
 
-export type NavigationSectionConfig = {
+export interface NavigationSectionConfig {
     navItems: NavItems;
     defaultRoute: string;
-};
+}
 
-export type FeatureFlagsConfig = {
+export interface FeatureFlagsConfig {
     experimentalAnalysis: boolean;
     debugParsing: boolean;
-};
+}
 
-export type StorageConfig = {
+export interface StorageConfig {
     userPreferencesKey: string;
-};
+}
 
-export type CoreAppConfig = {
+export interface CoreAppConfig {
     metadata: AppMetadataConfig;
     parsing: ParsingConfig;
     storage: StorageConfig;
     navigation: NavigationSectionConfig;
     featureFlags: FeatureFlagsConfig;
-};
+}
