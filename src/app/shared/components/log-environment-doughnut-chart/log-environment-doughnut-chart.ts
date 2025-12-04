@@ -39,10 +39,14 @@ export class LogEnvironmentDoughnutChartComponent {
     const environments: NormalizedEnvironment[] = ['dev', 'staging', 'prod', 'unknown'];
 
     if (!summary || total === 0) {
-      return environments.map((env) => {
-        const label = env === 'unknown' ? 'Unknown' : env.toUpperCase();
-        return { environment: env, label, count: 0, percentage: 0 };
-      });
+      return [
+        {
+          environment: 'unknown',
+          label: 'No data',
+          count: 0,
+          percentage: 0,
+        },
+      ];
     }
 
     return environments.map((env) => {
@@ -56,17 +60,12 @@ export class LogEnvironmentDoughnutChartComponent {
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
 
-    const rawCounts = entries.map((entry) => entry.count);
-    const absoluteTotal = rawCounts.reduce((acc, value) => acc + value, 0);
-
-    const displayData = absoluteTotal === 0 ? rawCounts.map(() => 1) : rawCounts;
-
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
-          data: displayData,
-          backgroundColor: ['#43A047', '#1E88E5', '#FB8C00', '#546E7A'],
+          data: entries.map((entry) => entry.count),
+          backgroundColor: ['#546E7A', '#43A047', '#1E88E5', '#FB8C00'],
           borderColor: '#121212',
           borderWidth: 1,
         },
@@ -89,12 +88,9 @@ export class LogEnvironmentDoughnutChartComponent {
           label: (context) => {
             const label = context.label ?? '';
             const index = context.dataIndex ?? 0;
-
-            // Recover the true underlying counts from the entries signal
             const entries = this.entries();
             const entry = entries[index];
             const trueValue = entry?.count ?? 0;
-
             const total = this.totalCount();
             const percentage = total === 0 ? 0 : (trueValue / total) * 100;
             return `${label}: ${trueValue} (${percentage.toFixed(1)}%)`;

@@ -49,12 +49,14 @@ export class LogLevelDoughnutChartComponent {
     const total = summary?.total ?? 0;
 
     if (!summary || total === 0) {
-      return LEVELS.map((level) => ({
-        level,
-        label: LEVEL_LABELS[level],
-        count: 0,
-        percentage: 0,
-      }));
+      return [
+        {
+          level: 'unknown',
+          label: 'No data',
+          count: 0,
+          percentage: 0,
+        },
+      ];
     }
 
     return LEVELS.map((level) => {
@@ -72,17 +74,12 @@ export class LogLevelDoughnutChartComponent {
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
 
-    const rawCounts = entries.map((entry) => entry.count);
-    const absoluteTotal = rawCounts.reduce((acc, value) => acc + value, 0);
-
-    const displayData = absoluteTotal === 0 ? rawCounts.map(() => 1) : rawCounts;
-
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
-          data: displayData,
-          backgroundColor: ['#5E35B1', '#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA', '#546E7A'],
+          data: entries.map((entry) => entry.count),
+          backgroundColor: ['#546E7A', '#5E35B1', '#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA'],
           borderColor: '#121212',
           borderWidth: 1,
         },
@@ -105,11 +102,9 @@ export class LogLevelDoughnutChartComponent {
           label: (context) => {
             const label = context.label ?? '';
             const index = context.dataIndex ?? 0;
-
             const entries = this.entries();
             const entry = entries[index];
             const trueValue = entry?.count ?? 0;
-
             const total = this.totalCount();
             const percentage = total === 0 ? 0 : (trueValue / total) * 100;
             return `${label}: ${trueValue} (${percentage.toFixed(1)}%)`;
