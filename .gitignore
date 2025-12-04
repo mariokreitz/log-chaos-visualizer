@@ -41,3 +41,11 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# -----------------------------------------------------------------------------
+# Ignore generated log files that are large and should not be checked into git
+# Keep a tracked placeholder (.gitkeep) so the directory remains in the repo
+/public/data/
+!public/data/.gitkeep
+# -----------------------------------------------------------------------------
+
