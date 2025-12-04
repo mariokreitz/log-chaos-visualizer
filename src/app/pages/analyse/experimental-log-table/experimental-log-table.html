@@ -9,33 +9,25 @@
         matInput
         placeholder="Search logs (message, kind, meta...)"
       />
-      <button
-        (click)="search.setValue('')"
-        *ngIf="search.value"
-        aria-label="Clear search"
-        mat-icon-button
-        matSuffix
-        type="button"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
+      @if (search.value) {
+        <button (click)="search.setValue('')" aria-label="Clear search" mat-icon-button matSuffix type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
     </mat-form-field>
 
     <div aria-live="polite" class="counts">
-      <span *ngIf="matchedCount() < totalCount(); else allCount"
-        >Showing {{ matchedCount() }} of {{ totalCount() }} entries</span
-      >
-      <ng-template #allCount
-        ><span>{{ totalCount() }} entries</span></ng-template
-      >
+      @if (matchedCount() < totalCount()) {
+        <span>Showing {{ matchedCount() }} of {{ totalCount() }} entries</span>
+      } @else {
+        <span>{{ totalCount() }} entries</span>
+      }
     </div>
   </div>
 
-  <div *ngIf="totalCount() === 0; else tableBlock">
+  @if (totalCount() === 0) {
     <div class="empty" role="status">No parsed entries yet. Start parsing a log file to see entries here.</div>
-  </div>
-
-  <ng-template #tableBlock>
+  } @else {
     <table [dataSource]="filteredEntries()" aria-label="Parsed log entries" class="log-table" mat-table role="table">
       <ng-container matColumnDef="timestamp">
         <th *matHeaderCellDef mat-header-cell>Timestamp</th>
@@ -65,5 +57,5 @@
       <tr *matHeaderRowDef="columns" mat-header-row></tr>
       <tr *matRowDef="let row; columns: columns" mat-row tabindex="0"></tr>
     </table>
-  </ng-template>
+  }
 </section>
