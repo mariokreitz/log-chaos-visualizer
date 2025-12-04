@@ -4,6 +4,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FileParseService } from '../../core/services/file-parse.service';
 import { FileSelectDialog } from '../../shared/components/file-select-dialog/file-select-dialog';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
     selector: 'app-dashboard',
@@ -19,6 +20,7 @@ import { FileSelectDialog } from '../../shared/components/file-select-dialog/fil
 export default class Dashboard {
     private readonly dialog = inject(MatDialog);
     private readonly fileParse = inject(FileParseService);
+    private readonly notifications = inject(NotificationService);
 
     openFileDialog(): void {
         const ref = this.dialog.open<FileSelectDialog, void, File | null>(FileSelectDialog, {
@@ -30,6 +32,7 @@ export default class Dashboard {
             if (!file) {
                 return;
             }
+            this.notifications.info('Starting to parse selected log file…');
             this.fileParse.setFile(file);
             this.fileParse.startParse();
         });

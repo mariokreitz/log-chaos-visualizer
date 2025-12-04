@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { NotificationService } from '../../shared/services/notification.service';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../shared/types';
 
 export type ParseProgress = {
@@ -42,6 +43,7 @@ export class FileParseService {
     readonly latestBatch = signal<ParsedBatch | null>(null);
 
     private worker: Worker | null = null;
+    private readonly notifications = inject(NotificationService);
 
     setFile(file: File | null): void {
         this.reset();
@@ -54,6 +56,7 @@ export class FileParseService {
         const file = this.selectedFile();
         if (!file) {
             this.error.set('No file selected.');
+            this.notifications.error('No file selected for parsing.');
             return;
         }
         this.error.set(null);
@@ -99,9 +102,11 @@ export class FileParseService {
                 this.summary.set(msg.summary);
             } else if (msg.type === 'done') {
                 this.isParsing.set(false);
+                this.notifications.success('Log file parsed successfully.');
             } else if (msg.type === 'error') {
                 this.error.set(msg.error);
                 this.isParsing.set(false);
+                this.notifications.error('Failed to parse log file.');
             }
         };
 
