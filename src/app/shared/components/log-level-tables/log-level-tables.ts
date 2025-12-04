@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import type { ParsedLogEntry } from '../../../core/types/file-parse.types';
@@ -68,13 +68,6 @@ export class LogLevelTablesComponent {
         return entry.kind;
     }
 
-    onErrorSortChange(_sort: Sort): void {
-        // no-op: rows are already sorted by timestamp desc; can extend later if needed
-    }
-
-    onFatalSortChange(_sort: Sort): void {
-        // no-op
-    }
 }
 
 function getTimestamp(entry: ParsedLogEntry): number | null {

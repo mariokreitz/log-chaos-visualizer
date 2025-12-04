@@ -1,17 +1,17 @@
 <section class="dashboard">
-	<h1>Dashboard</h1>
-	<p>Use the floating action button to pick a log file and start parsing it.</p>
+	<h1 class="app-section-title">Dashboard</h1>
+	<p class="app-section-subtitle">Use the floating action button to pick a log file and start parsing it.</p>
 
 	@if (hasSummary()) {
-		<section aria-label="Log distribution charts" class="dashboard__doughnut-grid">
+		<section aria-label="Log distribution charts" class="dashboard__doughnut-grid app-card">
 			<app-log-kind-doughnut-chart [summary]="summary()" />
 			<app-log-level-doughnut-chart [summary]="levelSummary()" />
 			<app-log-environment-doughnut-chart [summary]="environmentSummary()" />
 		</section>
-		<section aria-label="Error and fatal events timeline" class="dashboard__timeline">
+		<section aria-label="Error and fatal events timeline" class="dashboard__timeline app-card">
 			<app-error-fatal-timeline-chart [summary]="errorFatalTimelineSummary()" />
 		</section>
-		<section aria-label="Error and fatal log details" class="dashboard__log-details">
+		<section aria-label="Error and fatal log details" class="dashboard__log-details app-card">
 			<app-log-level-tables
 						[errorEntries]="errorEntries()"
 						[fatalEntries]="fatalEntries()"
