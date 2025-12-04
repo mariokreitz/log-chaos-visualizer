@@ -10,10 +10,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/dashboard/dashboard'),
             },
             {
-                path: 'upload',
-                loadComponent: () => import('./pages/upload/upload'),
-            },
-            {
                 path: 'analyse',
                 loadComponent: () => import('./pages/analyse/analyse'),
             },

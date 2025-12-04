@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NAV_ITEMS } from '../../constants/navigation';
 
 @Component({
     selector: 'app-navigation',
@@ -20,4 +21,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     },
 })
 export class Navigation {
+    readonly items = signal(NAV_ITEMS);
+    readonly visibleItems = computed(() => this.items().filter(i => i.visible !== false));
 }
