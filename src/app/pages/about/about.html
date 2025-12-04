@@ -1,0 +1,37 @@
+<section class="about">
+  <section aria-labelledby="about-heading" class="app-card">
+    <h1 class="app-section-title">About</h1>
+
+    <p>
+      <strong>{{ appMetadata.title }}</strong> (version {{ appMetadata.version }})
+    </p>
+    <p>{{ appMetadata.description }}</p>
+
+    @if (appMetadata.repositoryUrl) {
+      <p>
+        <a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank"> View project repository </a>
+      </p>
+    }
+
+    <h3>What this project does</h3>
+    <p>
+      This application visualizes and analyzes log files to surface errors, fatals, and trends over time. It provides
+      interactive charts and tables to help explore large log datasets efficiently.
+    </p>
+
+    <h3>Development & architecture</h3>
+    <p>
+      The project follows a modern Angular standalone-component architecture with a focus on small, focused components
+      and lazy-loaded routes. State is managed with Signals and derived values use `computed()` where appropriate.
+    </p>
+
+    <h3>Technologies used</h3>
+    <ul>
+      <li>Angular (standalone components, Signals)</li>
+      <li>TypeScript with strict typing</li>
+      <li>Angular Material for accessible UI components</li>
+      <li>Chart.js / ng2-charts for visualizations</li>
+      <li>Web Workers for heavy log parsing</li>
+    </ul>
+  </section>
+</section>

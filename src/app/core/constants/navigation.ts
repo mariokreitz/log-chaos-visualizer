@@ -25,4 +25,12 @@ export const NAV_ITEMS: NavItems = [
     ariaLabel: 'Go to settings',
     exact: true,
   },
+  {
+    id: 4,
+    label: 'About',
+    route: '/about',
+    icon: 'info',
+    ariaLabel: 'Go to about',
+    exact: true,
+  },
 ] as const;
