@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FileParseService } from '../../core/services/file-parse.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { FileSelectDialog } from '../../shared/components/file-select-dialog/file-select-dialog';
+import { LogKindDoughnutChartComponent } from '../../shared/components/log-kind-doughnut-chart/log-kind-doughnut-chart';
 import { UI_CONFIG } from '../../shared/config/ui-config';
 
 @Component({
@@ -13,6 +14,7 @@ import { UI_CONFIG } from '../../shared/config/ui-config';
         MatButtonModule,
         MatIconModule,
         MatDialogModule,
+        LogKindDoughnutChartComponent,
     ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.scss',
@@ -21,6 +23,11 @@ import { UI_CONFIG } from '../../shared/config/ui-config';
 export default class Dashboard {
     private readonly dialog = inject(MatDialog);
     private readonly fileParse = inject(FileParseService);
+    readonly hasSummary = computed(() => {
+        const summary = this.fileParse.summary();
+        return summary !== null && summary.totalLines > 0;
+    });
+    readonly summary = computed(() => this.fileParse.summary());
     private readonly notifications = inject(NotificationService);
 
     openFileDialog(): void {

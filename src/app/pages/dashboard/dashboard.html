@@ -2,6 +2,14 @@
 	<h1>Dashboard</h1>
 	<p>Use the floating action button to pick a log file and start parsing it.</p>
 
+	@if (hasSummary()) {
+		<section aria-label="Log analysis charts" class="analysis-charts">
+			<app-log-kind-doughnut-chart [summary]="summary()" />
+		</section>
+	} @else {
+		<p class="analysis-charts__placeholder">Start parsing a log file to see analysis charts.</p>
+	}
+
 	<button
 				(click)="openFileDialog()"
 				aria-label="Select log file to analyse"
