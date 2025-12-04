@@ -1,7 +1,20 @@
-/* You can add global styles to this file, and also import other style files */
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+/* Global CSS variables accessible in all component styles */
 :root {
-  --app-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --header-height: 64px;
+  --space-3: 16px;
+  --color-text: #1a1a1a;
+  --focus-ring: 2px solid #1a73e8;
+  --app-font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
 html, body {
@@ -9,7 +22,7 @@ html, body {
 }
 
 body {
-  font-family: var(--app-font-family), serif;
+  font-family: var(--app-font-family);
   margin: 0;
   color: var(--color-text, #0f172a);
   background: var(--color-bg, #fff);
@@ -24,4 +37,13 @@ body {
 :focus-visible {
   outline: var(--focus-ring, 3px solid rgba(14, 165, 163, 0.15));
   outline-offset: 2px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
