@@ -1,17 +1,34 @@
 <div class="file-selector">
 	<label class="file-label" for="log-file">Select a log file</label>
-	<input
-				(change)="onFileChange($event)"
-				accept=".txt,.log,.json"
+
+	<div
+				(dragleave)="onDragLeave($event)"
+				(dragover)="onDragOver($event)"
+				(drop)="onDrop($event)"
+				[class.file-selector__drop-zone--active]="dragActive()"
 				aria-describedby="file-help"
-				class="file-input"
-				id="log-file"
-				type="file"
-	/>
+				class="file-selector__drop-zone"
+				role="button"
+				tabindex="0"
+	>
+		<p class="file-selector__drop-title">Drop a log file here</p>
+		<p class="file-selector__drop-subtitle">or click to browse your files</p>
+
+		<input
+					(change)="onFileChange($event)"
+					accept=".txt,.log,.json"
+					class="file-input"
+					id="log-file"
+					type="file"
+		/>
+	</div>
+
 	<p class="help" id="file-help">Accepted formats: .txt, .log, .json</p>
+
 	@if (fileName()) {
 		<p aria-live="polite" class="selected">Selected: {{ fileName() }}</p>
 	}
+
 	@if (error()) {
 		<p class="error" role="alert">{{ error() }}</p>
 	}
