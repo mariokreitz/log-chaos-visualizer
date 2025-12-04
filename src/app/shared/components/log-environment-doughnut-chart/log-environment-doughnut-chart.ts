@@ -63,11 +63,15 @@ export class LogEnvironmentDoughnutChartComponent {
     const baseColors = ['#546E7A', '#43A047', '#1E88E5', '#FB8C00'];
     const colors = entries.map((_, index) => baseColors[index % baseColors.length]);
 
+    const rawCounts = entries.map((entry) => entry.count);
+    const hasAnyNonZero = rawCounts.some((value) => value > 0);
+    const displayData = hasAnyNonZero ? rawCounts : rawCounts.map(() => 1);
+
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
-          data: entries.map((entry) => entry.count),
+          data: displayData,
           backgroundColor: colors,
           borderColor: '#121212',
           borderWidth: 1,

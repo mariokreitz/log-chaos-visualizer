@@ -83,11 +83,15 @@ export class LogKindDoughnutChartComponent {
     const baseColors = ['#546E7A', '#1E88E5', '#43A047', '#FB8C00', '#8E24AA', '#00897B', '#F4511E'];
     const colors = entries.map((_, index) => baseColors[index % baseColors.length]);
 
+    const rawCounts = entries.map((entry) => entry.count);
+    const hasAnyNonZero = rawCounts.some((value) => value > 0);
+    const displayData = hasAnyNonZero ? rawCounts : rawCounts.map(() => 1);
+
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
-          data: entries.map((entry) => entry.count),
+          data: displayData,
           backgroundColor: colors,
           borderColor: '#121212',
           borderWidth: 1,
