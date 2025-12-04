@@ -10,7 +10,7 @@ services:
     container_name: log-chaos-visualizer
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
     healthcheck:
       test: ['CMD-SHELL', 'wget -q --spider http://localhost/ || exit 1']
       interval: 10s
