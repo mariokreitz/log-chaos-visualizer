@@ -48,9 +48,6 @@ RUN npm run build
 ################################################################################
 # Create a new stage to run the application with minimal runtime dependencies
 # where the necessary files are copied from the build stage.
-FROM base as final
-
-# Use nginx to serve the built static files (smaller runtime and proper static serving)
 FROM nginx:stable-alpine as final
 
 # Remove default nginx website and copy built app
