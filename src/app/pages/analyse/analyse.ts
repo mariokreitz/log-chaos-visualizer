@@ -16,6 +16,7 @@ export default class Analyse {
     readonly summary = this.parse.summary;
     readonly error = this.parse.error;
     readonly isParsing = this.parse.isParsing;
+    readonly latestBatch = this.parse.latestBatch;
 
     readonly hasFile = computed(() => this.parse.selectedFile() !== null);
 

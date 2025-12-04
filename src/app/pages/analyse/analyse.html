@@ -17,8 +17,48 @@
 	}
 
 	@if (summary()) {
-		<p>Lines: {{ summary()!.lines }}</p>
-		<p>JSON objects: {{ summary()!.jsonObjects }}</p>
+		<p>Parsed lines: {{ summary()!.totalLines }}</p>
+		<p>Malformed JSON lines: {{ summary()!.malformedCount }}</p>
+
+		<ul aria-label="Parsed entry counts by type">
+			<li>Pino: {{ summary()!.counts.pino }}</li>
+			<li>Winston: {{ summary()!.counts.winston }}</li>
+			<li>Loki: {{ summary()!.counts.loki }}</li>
+			<li>Promtail: {{ summary()!.counts.promtail }}</li>
+			<li>Docker: {{ summary()!.counts.docker }}</li>
+			<li>Unknown JSON: {{ summary()!.counts['unknown-json'] }}</li>
+			<li>Text: {{ summary()!.counts.text }}</li>
+		</ul>
+	}
+
+	@if (latestBatch()) {
+		<section aria-label="Latest parsed entries" class="latest-batch">
+			<h2>Latest parsed entries ({{ latestBatch()!.entries.length }})</h2>
+			<ul>
+				@for (entry of latestBatch()!.entries; track $index) {
+					<li>
+						<strong>{{ entry.kind }}</strong>
+						<span> -
+							@if (entry.kind === 'text') {
+								{{ entry.entry.line }}
+							} @else if (entry.kind === 'pino') {
+								{{ entry.entry.msg }}
+							} @else if (entry.kind === 'winston') {
+								{{ entry.entry.message }}
+							} @else if (entry.kind === 'docker') {
+								{{ entry.entry.log }}
+							} @else if (entry.kind === 'promtail') {
+								{{ entry.entry.message }}
+							} @else if (entry.kind === 'loki') {
+								{{ entry.entry.line }}
+							} @else {
+								[unrecognized JSON]
+							}
+						</span>
+					</li>
+				}
+			</ul>
+		</section>
 	}
 
 	@if (error()) {
