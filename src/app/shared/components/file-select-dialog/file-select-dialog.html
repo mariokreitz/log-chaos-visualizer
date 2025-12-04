@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>Select log file</h2>
+<div mat-dialog-content>
+	<p id="file-dialog-description">Choose a log file to analyse. Accepted formats: .txt, .log, .json.</p>
+	<app-file-selector (fileSelected)="onFileSelected($event)"></app-file-selector>
+</div>
+<div align="end" mat-dialog-actions>
+	<button (click)="close(null)" mat-button type="button">Cancel</button>
+</div>
