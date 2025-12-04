@@ -1,2 +1,14 @@
-<p>dashboard works!</p>
+<section class="dashboard">
+	<h1>Dashboard</h1>
+	<p>Use the floating action button to pick a log file and start parsing it.</p>
 
+	<button
+				(click)="openFileDialog()"
+				aria-label="Select log file to analyse"
+				class="dashboard-fab"
+				mat-fab
+				type="button"
+	>
+		<span aria-hidden="true" class="material-icons">upload_file</span>
+	</button>
+</section>

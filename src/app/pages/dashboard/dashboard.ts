@@ -1,11 +1,37 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { FileParseService } from '../../core/services/file-parse.service';
+import { FileSelectDialog } from '../../shared/components/file-select-dialog/file-select-dialog';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [],
+    imports: [
+        MatButtonModule,
+        MatIconModule,
+        MatDialogModule,
+    ],
     templateUrl: './dashboard.html',
     styleUrl: './dashboard.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Dashboard {
+    private readonly dialog = inject(MatDialog);
+    private readonly fileParse = inject(FileParseService);
 
+    openFileDialog(): void {
+        const ref = this.dialog.open<FileSelectDialog, void, File | null>(FileSelectDialog, {
+            width: '400px',
+            autoFocus: true,
+        });
+
+        ref.afterClosed().subscribe(file => {
+            if (!file) {
+                return;
+            }
+            this.fileParse.setFile(file);
+            this.fileParse.startParse();
+        });
+    }
 }
