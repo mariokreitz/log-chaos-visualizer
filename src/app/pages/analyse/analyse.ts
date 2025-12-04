@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { APP_CONFIG } from '../../core/config/app-config';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 
 @Component({
     selector: 'app-analyse',
@@ -9,5 +9,7 @@ import { APP_CONFIG } from '../../core/config/app-config';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Analyse {
-    readonly featureFlags = APP_CONFIG.featureFlags;
+    private readonly featureFlags = inject(FeatureFlagsService);
+    readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;
+
 }

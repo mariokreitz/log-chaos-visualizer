@@ -1,7 +1,7 @@
 <h1>Analyse</h1>
 <p>Analyse page (placeholder)</p>
 
-@if (featureFlags.experimentalAnalysis) {
+@if (experimentalAnalysisEnabled()) {
 	<section aria-label="Experimental analysis" class="experimental-note">
 		<h2>Experimental analysis features</h2>
 		<p>Additional analysis and visualizations may appear here when experimental features are enabled.</p>

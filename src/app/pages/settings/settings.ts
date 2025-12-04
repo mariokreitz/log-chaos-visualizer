@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { APP_CONFIG } from '../../core/config/app-config';
+import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { SettingsService } from '../../shared/services/settings.service';
 
 @Component({
@@ -16,15 +17,18 @@ import { SettingsService } from '../../shared/services/settings.service';
 })
 export default class Settings {
     readonly appMetadata = APP_CONFIG.metadata;
-    private readonly settings = inject(SettingsService);
-    readonly speed = this.settings.parsingSpeed;
     readonly speedLabel = computed(() => {
         const value = this.speed();
         if (value === 'slow') return 'Slow';
         if (value === 'normal') return 'Normal';
         return 'Fast';
     });
+    private readonly settings = inject(SettingsService);
+    readonly speed = this.settings.parsingSpeed;
     readonly progressBarSettings = this.settings.progressBarSettings;
+    private readonly featureFlags = inject(FeatureFlagsService);
+    readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;
+    readonly isProduction = this.featureFlags.isProduction;
 
     onSpeedChange(value: string | null): void {
         if (value === 'slow' || value === 'normal' || value === 'fast') {
@@ -41,5 +45,10 @@ export default class Settings {
         if (value === 'thin' || value === 'normal') {
             this.settings.setProgressBarSettings({ size: value });
         }
+    }
+
+    onToggleExperimentalAnalysis(enabled: boolean | null): void {
+        if (enabled === null) return;
+        this.featureFlags.setExperimentalAnalysis(enabled);
     }
 }

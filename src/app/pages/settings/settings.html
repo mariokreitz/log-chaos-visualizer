@@ -14,6 +14,20 @@
 		}
 	</section>
 
+	@if (!isProduction) {
+		<section aria-labelledby="experimental-heading" class="experimental-settings">
+			<h2 id="experimental-heading">Experimental features <span class="badge">Developer only</span></h2>
+			<p>These settings are intended for development and may change or be removed in future versions.</p>
+
+			<mat-slide-toggle
+						(change)="onToggleExperimentalAnalysis($event.checked)"
+						[checked]="experimentalAnalysisEnabled()"
+			>
+				Enable experimental analysis features
+			</mat-slide-toggle>
+		</section>
+	}
+
 	<section aria-labelledby="parsing-speed-heading">
 		<h2 id="parsing-speed-heading">Parsing speed</h2>
 		<p>Adjust how quickly the log parsing runs for demo purposes.</p>
