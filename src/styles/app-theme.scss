@@ -1,0 +1,150 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+// Gradient Blues tokens
+$royal-violet: #7400b8;
+$indigo-bloom: #6930c3;
+$slate-indigo: #5e60ce;
+$blue-energy: #5390d9;
+$fresh-sky: #4ea8de;
+$sky-surge: #48bfe3;
+$strong-cyan: #56cfe1;
+$pearl-aqua: #64dfdf;
+$turquoise: #72efdd;
+$aquamarine: #80ffdb;
+
+// Primary palette (Royal Violet spectrum)
+$app-primary-base: (
+        50: #f4e6ff,
+        100: #e0c0ff,
+        200: #c892ff,
+        300: #af63ff,
+        400: #9a3fff,
+        500: $royal-violet,
+        600: #6700a5,
+        700: #580091,
+        800: #48007d,
+        900: #32005d,
+        A100: #e0c0ff,
+        A200: #c892ff,
+        A400: #9a3fff,
+        A700: #580091,
+        contrast: (
+                50: #000000,
+                100: #000000,
+                200: #000000,
+                300: #000000,
+                400: #ffffff,
+                500: #ffffff,
+                600: #ffffff,
+                700: #ffffff,
+                800: #ffffff,
+                900: #ffffff,
+                A100: #000000,
+                A200: #000000,
+                A400: #ffffff,
+                A700: #ffffff,
+        ),
+);
+
+// Accent palette (Pearl Aqua / Turquoise spectrum)
+$app-accent-base: (
+        50: #e5fbfb,
+        100: #c1f3f2,
+        200: #9aeae8,
+        300: #73e2df,
+        400: #55dbd8,
+        500: $pearl-aqua,
+        600: #55cfce,
+        700: #49c4c3,
+        800: #3fb9b8,
+        900: #2da7a7,
+        A100: #c1f3f2,
+        A200: $turquoise,
+        A400: #40f1cf,
+        A700: #00d0af,
+        contrast: (
+                50: #000000,
+                100: #000000,
+                200: #000000,
+                300: #000000,
+                400: #000000,
+                500: #000000,
+                600: #000000,
+                700: #000000,
+                800: #000000,
+                900: #000000,
+                A100: #000000,
+                A200: #000000,
+                A400: #000000,
+                A700: #000000,
+        ),
+);
+
+// Warn palette (Blue Energy spectrum)
+$app-warn-base: (
+        50: #e6f1ff,
+        100: #c0d8ff,
+        200: #98bcff,
+        300: #70a0ff,
+        400: #558cff,
+        500: $blue-energy,
+        600: #4b80cc,
+        700: #406fb3,
+        800: #355e99,
+        900: #244377,
+        A100: #c0d8ff,
+        A200: #98bcff,
+        A400: #558cff,
+        A700: #406fb3,
+        contrast: (
+                50: #000000,
+                100: #000000,
+                200: #000000,
+                300: #000000,
+                400: #ffffff,
+                500: #ffffff,
+                600: #ffffff,
+                700: #ffffff,
+                800: #ffffff,
+                900: #ffffff,
+                A100: #000000,
+                A200: #000000,
+                A400: #ffffff,
+                A700: #ffffff,
+        ),
+);
+
+// Create M2 palettes
+$app-primary: mat.m2-define-palette($app-primary-base, 500, 100, 700);
+$app-accent: mat.m2-define-palette($app-accent-base, A200, A100, A400);
+$app-warn: mat.m2-define-palette($app-warn-base, 500);
+
+// Dark theme config
+$app-dark-theme: mat.m2-define-dark-theme((
+        color: (
+                primary: $app-primary,
+                accent: $app-accent,
+                warn: $app-warn,
+        ),
+));
+
+// Emit theme styles for all Material components
+@include mat.core-theme($app-dark-theme);
+@include mat.all-component-themes($app-dark-theme);
+
+// Optional helper classes
+.app-bg-primary {
+  background-color: mat.get-theme-color($app-dark-theme, primary, 500);
+  color: mat.get-theme-color($app-dark-theme, primary, 500-contrast);
+}
+
+.app-bg-accent {
+  background-color: mat.get-theme-color($app-dark-theme, accent, A200);
+  color: mat.get-theme-color($app-dark-theme, accent, A200-contrast);
+}
+
+.app-bg-warn {
+  background-color: mat.get-theme-color($app-dark-theme, warn, 500);
+  color: mat.get-theme-color($app-dark-theme, warn, 500-contrast);
+}

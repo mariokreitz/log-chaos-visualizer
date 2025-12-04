@@ -1,0 +1,36 @@
+@use 'styles/app-theme';
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+:root {
+  --header-height: 64px;
+  --space-3: 16px;
+  --color-text: #e5e7eb;
+  --focus-ring: 2px solid #64dfdf;
+  --app-font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--app-font-family);
+  color: var(--color-text);
+  background: #020617; // dark slate background to complement Gradient Blues
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+// ...existing global styles can follow here...
+
