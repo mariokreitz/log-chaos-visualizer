@@ -5,6 +5,8 @@
 	@if (hasSummary()) {
 		<section aria-label="Log analysis charts" class="analysis-charts">
 			<app-log-kind-doughnut-chart [summary]="summary()" />
+			<app-log-level-doughnut-chart [summary]="levelSummary()" />
+			<app-log-environment-doughnut-chart [summary]="environmentSummary()" />
 		</section>
 	} @else {
 		<p class="analysis-charts__placeholder">Start parsing a log file to see analysis charts.</p>
