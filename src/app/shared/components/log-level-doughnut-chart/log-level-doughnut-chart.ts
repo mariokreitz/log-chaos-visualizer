@@ -74,12 +74,15 @@ export class LogLevelDoughnutChartComponent {
   readonly chartData = computed<ChartData<'doughnut'>>(() => {
     const entries = this.entries();
 
+    const baseColors = ['#546E7A', '#5E35B1', '#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA'];
+    const colors = entries.map((_, index) => baseColors[index % baseColors.length]);
+
     return {
       labels: entries.map((entry) => entry.label),
       datasets: [
         {
           data: entries.map((entry) => entry.count),
-          backgroundColor: ['#546E7A', '#5E35B1', '#1E88E5', '#43A047', '#FB8C00', '#E53935', '#8E24AA'],
+          backgroundColor: colors,
           borderColor: '#121212',
           borderWidth: 1,
         },
