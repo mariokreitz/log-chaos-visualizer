@@ -1,9 +1,9 @@
 import { inject, Injectable, signal } from '@angular/core';
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
-import { NotificationService } from '../../shared/services/notification.service';
-import { SettingsService } from '../../shared/services/settings.service';
 import { APP_CONFIG } from '../config/app-config';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
+import { NotificationService } from './notification.service';
+import { SettingsService } from './settings.service';
 
 export type ParseProgress = {
     processedBytes: number;

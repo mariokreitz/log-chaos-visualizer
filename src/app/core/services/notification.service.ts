@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { MatSnackBar, MatSnackBarConfig } from '@angular/material/snack-bar';
-import { UI_CONFIG } from '../config/ui-config';
+import { UI_CONFIG } from '../../shared/config/ui-config';
 
 export type NotificationType = 'info' | 'success' | 'error';
 
@@ -34,3 +34,4 @@ export class NotificationService {
         this.snackBar.open(message, 'Close', config);
     }
 }
+

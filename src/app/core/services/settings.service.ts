@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
-import { SETTINGS_DEFAULTS } from '../config/settings-config';
-import type { ParsingSpeed, ProgressBarSettings } from '../config/settings-config.types';
+import { SETTINGS_DEFAULTS } from '../../shared/config/settings-config';
+import type { ParsingSpeed, ProgressBarSettings } from '../../shared/config/settings-config.types';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
@@ -15,3 +15,4 @@ export class SettingsService {
         this.progressBarSettings.update((prev) => ({ ...prev, ...partial }));
     }
 }
+

@@ -3,9 +3,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { FileParseService } from '../../core/services/file-parse.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { FileSelectDialog } from '../../shared/components/file-select-dialog/file-select-dialog';
 import { UI_CONFIG } from '../../shared/config/ui-config';
-import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
     selector: 'app-dashboard',
