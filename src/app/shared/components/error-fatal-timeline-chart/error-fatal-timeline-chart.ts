@@ -1,9 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import type { ChartConfiguration, ChartData, ChartDataset } from 'chart.js';
+import type { ChartConfiguration, ChartData, ChartDataset, TooltipItem } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ErrorFatalTimelineSummary } from '../../../core/types/file-parse.types';
 
 const FIVE_MIN_MS = 5 * 60 * 1000;
+
+type TimelineBucketView = {
+    start: number;
+    end: number;
+    error: number;
+    fatal: number;
+    total: number;
+};
 
 @Component({
     selector: 'app-error-fatal-timeline-chart',
@@ -33,7 +41,7 @@ export class ErrorFatalTimelineChartComponent {
         return summary.buckets.some(bucket => bucket.total > 0);
     });
 
-    readonly chartData = computed<ChartData<'bar'>>(() => {
+    readonly chartData = computed<ChartData<'bar', { x: Date; y: number }[]>>(() => {
         const summary = this.summary();
         if (!summary || summary.buckets.length === 0) {
             return {
@@ -42,38 +50,42 @@ export class ErrorFatalTimelineChartComponent {
             };
         }
 
-        const buckets = this.reBucketToFiveMinutes(summary as ErrorFatalTimelineSummary);
+        const buckets: TimelineBucketView[] = this.reBucketToFiveMinutes(summary);
 
-        // Build categorical labels (formatted midpoint strings) and numeric arrays for datasets —
-        // this is reliable without a time adapter and ensures bars render.
-        const midpoints = buckets.map((b: any) => Math.floor((b.start + b.end) / 2));
-        const labels = midpoints.map((ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+        const errorPoints = buckets.map(bucket => ({
+            x: new Date(Math.floor((bucket.start + bucket.end) / 2)),
+            y: bucket.error,
+        }));
 
-        const errorData = buckets.map((b) => b.error);
-        const fatalData = buckets.map((b) => b.fatal);
+        const fatalPoints = buckets.map(bucket => ({
+            x: new Date(Math.floor((bucket.start + bucket.end) / 2)),
+            y: bucket.fatal,
+        }));
 
-        const errorDataset: ChartDataset<'bar'> = {
+        const errorDataset: ChartDataset<'bar', { x: Date; y: number }[]> = {
             label: 'Error',
-            data: errorData as any,
+            data: errorPoints,
             backgroundColor: '#E53935',
             borderColor: '#B71C1C',
             borderWidth: 1,
             barPercentage: 0.9,
             categoryPercentage: 0.9,
+            barThickness: 14,
         };
 
-        const fatalDataset: ChartDataset<'bar'> = {
+        const fatalDataset: ChartDataset<'bar', { x: Date; y: number }[]> = {
             label: 'Fatal',
-            data: fatalData as any,
+            data: fatalPoints,
             backgroundColor: '#8E24AA',
             borderColor: '#6A1B9A',
             borderWidth: 1,
             barPercentage: 0.9,
             categoryPercentage: 0.9,
+            barThickness: 14,
         };
 
         return {
-            labels,
+            labels: [],
             datasets: [
                 errorDataset,
                 fatalDataset,
@@ -82,7 +94,6 @@ export class ErrorFatalTimelineChartComponent {
     });
 
     readonly chartOptions: ChartConfiguration<'bar'>['options'] = {
-        // ensure bar charts on numeric axes get a reasonable max pixel width
         datasets: {
             bar: {
                 maxBarThickness: 20,
@@ -99,24 +110,39 @@ export class ErrorFatalTimelineChartComponent {
             },
             tooltip: {
                 callbacks: {
-                    title: items => {
-                        if (!items.length) return '';
-                        const px = (items[0].parsed as any).x ?? items[0].label;
-                        const ms = typeof px === 'number' ? px : Number(px);
-                        if (!Number.isNaN(ms)) return new Date(ms).toLocaleString();
-                        return String(px ?? '');
+                    title: (items: TooltipItem<'bar'>[]) => {
+                        if (!items.length) {
+                            return '';
+                        }
+
+                        const parsed = items[0].parsed as { x?: unknown };
+
+                        if (parsed.x instanceof Date) {
+                            return parsed.x.toLocaleString();
+                        }
+
+                        if (typeof parsed.x === 'number' && !Number.isNaN(parsed.x)) {
+                            return new Date(parsed.x).toLocaleString();
+                        }
+
+                        return items[0].label ?? '';
                     },
-                    label: context => {
-                        const label = context.dataset.label ?? '';
-                        const value = (context.parsed as any).y ?? 0;
+                    label: (item: TooltipItem<'bar'>) => {
+                        const label = item.dataset.label ?? '';
+                        const parsed = item.parsed as { y?: number };
+                        const value = typeof parsed.y === 'number' ? parsed.y : 0;
                         return `${label}: ${value}`;
                     },
                 },
             },
         },
         scales: {
-            // use default category x-axis (labels) so Chart.js positions bars reliably
             x: {
+                type: 'time',
+                time: {
+                    unit: 'minute',
+                    displayFormats: { minute: 'HH:mm' },
+                },
                 title: {
                     display: true,
                     text: 'Time',
@@ -138,49 +164,50 @@ export class ErrorFatalTimelineChartComponent {
         animation: false,
     };
 
-    /**
-     * Aggregate incoming summary buckets into fixed 5-minute buckets.
-     * If the incoming summary already uses 5-minute buckets, use them as-is.
-     */
-    private reBucketToFiveMinutes(summary: ErrorFatalTimelineSummary) {
+    private reBucketToFiveMinutes(summary: ErrorFatalTimelineSummary): TimelineBucketView[] {
         if (summary.bucketSizeMs === FIVE_MIN_MS) {
-            // Already in required bucket size — return mapped buckets
-            // ensure buckets are sorted by start time
             return summary.buckets
               .slice()
               .sort((a, b) => a.bucketStartMs - b.bucketStartMs)
-              .map(b => ({
-                  start: b.bucketStartMs,
-                  end: b.bucketEndMs,
-                  error: b.errorCount,
-                  fatal: b.fatalCount,
-                  total: b.total,
+              .map(bucket => ({
+                  start: bucket.bucketStartMs,
+                  end: bucket.bucketEndMs,
+                  error: bucket.errorCount,
+                  fatal: bucket.fatalCount,
+                  total: bucket.total,
               }));
         }
 
-        // Determine overall time range
-        const minStart = Math.min(...summary.buckets.map(b => b.bucketStartMs));
-        const maxEnd = Math.max(...summary.buckets.map(b => b.bucketEndMs));
+        const starts = summary.buckets.map(bucket => bucket.bucketStartMs);
+        const ends = summary.buckets.map(bucket => bucket.bucketEndMs);
+
+        if (starts.length === 0 || ends.length === 0) {
+            return [];
+        }
+
+        const minStart = Math.min(...starts);
+        const maxEnd = Math.max(...ends);
 
         const base = Math.floor(minStart / FIVE_MIN_MS) * FIVE_MIN_MS;
         const last = Math.ceil(maxEnd / FIVE_MIN_MS) * FIVE_MIN_MS;
         const bucketCount = Math.max(0, Math.floor((last - base) / FIVE_MIN_MS));
 
-        const buckets = Array.from({ length: bucketCount }, (_, i) => ({
-            start: base + i * FIVE_MIN_MS,
-            end: base + (i + 1) * FIVE_MIN_MS,
+        const buckets: TimelineBucketView[] = Array.from({ length: bucketCount }, (_, index) => ({
+            start: base + index * FIVE_MIN_MS,
+            end: base + (index + 1) * FIVE_MIN_MS,
             error: 0,
             fatal: 0,
             total: 0,
         }));
 
-        for (const b of summary.buckets) {
-            // place the entire bucket into the bucket that matches its start
-            const idx = Math.floor((b.bucketStartMs - base) / FIVE_MIN_MS);
-            if (idx >= 0 && idx < buckets.length) {
-                buckets[idx].error += b.errorCount;
-                buckets[idx].fatal += b.fatalCount;
-                buckets[idx].total += b.total;
+        for (const bucket of summary.buckets) {
+            const targetIndex = Math.floor((bucket.bucketStartMs - base) / FIVE_MIN_MS);
+
+            if (targetIndex >= 0 && targetIndex < buckets.length) {
+                const target = buckets[targetIndex];
+                target.error += bucket.errorCount;
+                target.fatal += bucket.fatalCount;
+                target.total += bucket.total;
             }
         }
 
