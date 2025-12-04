@@ -9,24 +9,4 @@
 			></canvas>
 		</div>
 	</div>
-
-	<section aria-label="Log environment summary" class="chart-summary">
-		@if (entries().length > 0) {
-			<ul class="chart-summary__list">
-				@for (entry of entries(); track entry.environment) {
-					<li class="chart-summary__item">
-						<span class="chart-summary__label">{{ entry.label }}</span>
-						<span class="chart-summary__value">
-            {{ entry.count }}
-							@if (totalCount() > 0) {
-								<span class="chart-summary__percentage">({{ entry.percentage | number:'1.0-1' }}%)</span>
-							}
-          </span>
-					</li>
-				}
-			</ul>
-		} @else {
-			<p class="chart-summary__empty">Start parsing a log file to see environments here.</p>
-		}
-	</section>
 </section>

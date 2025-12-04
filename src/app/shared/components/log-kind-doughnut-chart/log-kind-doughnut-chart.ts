@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -35,8 +34,8 @@ export interface ParsedKindCountEntry {
     selector: 'app-log-kind-doughnut-chart',
     imports: [
         BaseChartDirective,
-        DecimalPipe,
     ],
+
     templateUrl: './log-kind-doughnut-chart.html',
     styleUrl: './log-kind-doughnut-chart.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,

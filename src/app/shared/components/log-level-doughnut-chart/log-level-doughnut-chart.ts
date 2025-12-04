@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -35,7 +34,6 @@ export interface LevelCountEntry {
     selector: 'app-log-level-doughnut-chart',
     imports: [
         BaseChartDirective,
-        DecimalPipe,
     ],
     templateUrl: './log-level-doughnut-chart.html',
     styleUrl: './log-level-doughnut-chart.scss',

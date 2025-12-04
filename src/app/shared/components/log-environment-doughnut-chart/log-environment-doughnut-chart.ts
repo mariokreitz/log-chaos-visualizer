@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { ChartConfiguration, ChartData } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -15,7 +14,6 @@ export interface EnvironmentCountEntry {
     selector: 'app-log-environment-doughnut-chart',
     imports: [
         BaseChartDirective,
-        DecimalPipe,
     ],
     templateUrl: './log-environment-doughnut-chart.html',
     styleUrl: './log-environment-doughnut-chart.scss',
