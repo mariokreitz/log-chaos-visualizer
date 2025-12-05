@@ -37,7 +37,6 @@ export class AnalyseLogTable {
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
 
   constructor() {
-    // Subscribe to the debounced FormControl observable and forward filter query to FileParseService
     effect((onCleanup) => {
       const sub = this.filterControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe((v) => {
         const val = String(v ?? '').trim();
@@ -70,11 +69,6 @@ export class AnalyseLogTable {
       default:
         return '';
     }
-  }
-
-  public trackByEntry(_index: number, item: ParsedLogEntry): string | number {
-    // Prefer a stable identifier if available, fall back to index
-    return (item as any)._id ?? (item as any)._lineNumber ?? _index;
   }
 
   public formatLevel(row: ParsedLogEntry): string {
