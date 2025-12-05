@@ -1,8 +1,9 @@
 <div class="search-input-wrapper">
-  <div class="search-input-container">
+  <div [class.has-error]="!isValid() && hasValue()" class="search-input-container">
     <input
       (input)="onInput($event)"
       (keydown)="onKeyDown($event)"
+      [attr.aria-invalid]="!isValid() && hasValue()"
       [attr.aria-label]="ariaLabel()"
       [placeholder]="placeholder()"
       [value]="value()"
@@ -30,9 +31,28 @@
           <mat-icon>close</mat-icon>
         </button>
       }
+      <button
+        (click)="onHelpClick()"
+        aria-label="Query syntax help"
+        class="search-help-button"
+        matTooltip="Query syntax help"
+        type="button"
+      >
+        <mat-icon>help_outline</mat-icon>
+      </button>
     </div>
   </div>
+
+  @if (!isValid() && hasValue()) {
+    <div class="search-error-message" role="alert">
+      @for (error of validationErrors(); track error) {
+        <div>{{ error }}</div>
+      }
+    </div>
+  }
+
   <div class="sr-only" id="search-input-help">
-    Type to search logs. Press Enter to submit. Click the clear button or delete text to reset.
+    Type to search logs. Use structured queries like "level=error" or simple text search. Press Enter to submit. Click
+    the help button for syntax guide.
   </div>
 </div>
