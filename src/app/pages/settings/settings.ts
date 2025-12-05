@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { APP_CONFIG } from '../../core/config/app-config';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { SettingsService } from '../../core/services/settings.service';
 
@@ -13,15 +12,14 @@ import { SettingsService } from '../../core/services/settings.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class Settings {
-  readonly appMetadata = APP_CONFIG.metadata;
-  private readonly settings = inject(SettingsService);
-  readonly speed = this.settings.parsingSpeed;
   readonly speedLabel = computed(() => {
     const value = this.speed();
     if (value === 'slow') return 'Slow';
     if (value === 'normal') return 'Normal';
     return 'Fast';
   });
+  private readonly settings = inject(SettingsService);
+  readonly speed = this.settings.parsingSpeed;
   readonly progressBarSettings = this.settings.progressBarSettings;
   private readonly featureFlags = inject(FeatureFlagsService);
   readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;

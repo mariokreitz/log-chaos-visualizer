@@ -32,10 +32,6 @@ import { UI_CONFIG } from '../../shared/config/ui-config';
 export default class Dashboard {
   private readonly dialog = inject(MatDialog);
   private readonly fileParse = inject(FileParseService);
-  readonly hasSummary = computed(() => {
-    const summary = this.fileParse.summary();
-    return summary !== null && summary.totalLines > 0;
-  });
   readonly summary = computed(() => this.fileParse.summary());
   readonly levelSummary = computed(() => this.fileParse.summary()?.levelSummary ?? null);
   readonly environmentSummary = computed(() => this.fileParse.summary()?.environmentSummary ?? null);

@@ -1,13 +1,11 @@
-<section class="analyse app-card">
-  <h1 class="app-section-title">Analyse</h1>
-  <p class="app-section-subtitle">Detailed log analysis and experimental visualizations.</p>
+<section aria-label="Log analysis" class="analyse app-card">
+	<h1>Log Analysis</h1>
+	@if (experimentalAnalysisEnabled()) {
+		<section aria-label="Experimental analysis" class="experimental-note">
+			<h2>Experimental analysis features</h2>
+			<p>Additional analysis and visualizations may appear here when experimental features are enabled.</p>
+		</section>
+	}
 
-  <p>Analyse page (placeholder)</p>
-
-  @if (experimentalAnalysisEnabled()) {
-    <section aria-label="Experimental analysis" class="experimental-note">
-      <h2>Experimental analysis features</h2>
-      <p>Additional analysis and visualizations may appear here when experimental features are enabled.</p>
-    </section>
-  }
+	<app-analyse-log-table />
 </section>
