@@ -1,16 +1,7 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  InputSignal,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, InputSignal, signal } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -69,10 +60,6 @@ export class AnalyseLogTable {
   public onOpenHelp(): void {
     // TODO: Open query help dialog (will be implemented in next step)
     console.log('[AnalyseLogTable] Help requested - dialog component pending');
-  }
-
-  public trackByEntry(index: number, entry: ParsedLogEntry): string {
-    return `${entry.kind}-${(entry.entry as any)?.time || (entry.entry as any)?.ts || index}`;
   }
 
   formatTimestamp(row: ParsedLogEntry): string {

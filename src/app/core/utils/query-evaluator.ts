@@ -1,5 +1,11 @@
 import type { ParsedLogEntry } from '../types/file-parse.types';
-import type { ASTNode, BinaryExpression, ComparisonExpression, FunctionCall, NotExpression } from '../types/query-language.types';
+import type {
+  ASTNode,
+  BinaryExpression,
+  ComparisonExpression,
+  FunctionCall,
+  NotExpression,
+} from '../types/query-language.types';
 import type { FieldIndexer } from './field-indexer';
 import { getNormalizedEnvironment, getNormalizedLevel } from './search-utils';
 

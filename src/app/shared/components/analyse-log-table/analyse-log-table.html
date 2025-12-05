@@ -39,7 +39,7 @@
       class="viewport"
       role="rowgroup"
     >
-      @for (row of entries(); track trackByEntry($index, row)) {
+      @for (row of entries(); track $index) {
         <div class="table-row" role="row" tabindex="0">
           <div class="col kind" role="cell">{{ row.kind }}</div>
           <div class="col timestamp" role="cell">{{ formatTimestamp(row) }}</div>
