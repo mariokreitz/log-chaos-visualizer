@@ -1,7 +1,16 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
 
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, InputSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  InputSignal,
+  signal,
+} from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -103,6 +112,18 @@ export class AnalyseLogTable {
         return (row.entry as any).level ?? 'unknown';
       case 'docker':
         return (row.entry as any).stream === 'stderr' ? 'error' : 'info';
+      case 'text': {
+        const line = String((row.entry as any).line ?? '');
+        const firstToken = line.split(/\s+/, 1)[0];
+        const upperToken = String(firstToken).toUpperCase();
+        if (upperToken === 'TRACE') return 'trace';
+        if (upperToken === 'DEBUG') return 'debug';
+        if (upperToken === 'INFO') return 'info';
+        if (upperToken === 'WARN') return 'warn';
+        if (upperToken === 'ERROR') return 'error';
+        if (upperToken === 'FATAL') return 'fatal';
+        return 'unknown';
+      }
       default:
         return 'unknown';
     }

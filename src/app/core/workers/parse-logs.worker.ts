@@ -247,9 +247,15 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
   try {
     const parsedQuery = parseQuery(query);
 
+    console.log(`[Worker] Query: "${query}"`);
+    console.log(
+      `[Worker] Parsed - isLegacy: ${parsedQuery.isLegacyTextSearch}, hasAST: ${!!parsedQuery.ast}, errors: ${parsedQuery.errors.length}`,
+    );
+
     if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
       if (parsedQuery.errors.length > 0) {
         const error = parsedQuery.errors.map((e) => e.message).join('; ');
+        console.log(`[Worker] Query errors: ${error}`);
         postMessage({ type: 'search-error', query: query.toLowerCase(), error } satisfies WorkerMessage);
         return;
       }

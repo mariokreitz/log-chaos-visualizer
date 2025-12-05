@@ -6,7 +6,7 @@ export interface FieldIndexes {
   byEnvironment: Map<string, number[]>; // environment -> entry indices
   byKind: Map<string, number[]>; // log kind -> entry indices
 
-  timestamps: Array<{ index: number; timestamp: number }>;
+  timestamps: { index: number; timestamp: number }[];
 
   messageKeywords: Map<string, number[]>; // keyword -> entry indices
 
