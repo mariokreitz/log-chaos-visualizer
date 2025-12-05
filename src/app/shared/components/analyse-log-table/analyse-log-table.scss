@@ -1,33 +1,48 @@
 .analyse-table {
   display: block;
   width: 100%;
+  background: var(--color-surface-mid);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 
   .table-header-row,
   .table-row {
     display: grid;
     grid-template-columns: 80px 220px 80px 1fr 160px;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
   }
 
   .table-header-row {
-    background: var(--surface, #f5f5f5);
-    color: var(--text-on-surface, #111);
+    background: var(--color-surface-high);
+    color: var(--color-text-primary);
     font-weight: 600;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: var(--font-size-meta);
+    border-bottom: 1px solid var(--color-border-subtle);
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   .table-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 12px 8px;
-    gap: 8px;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: var(--color-surface-low);
 
     .count {
-      font-size: 0.875rem;
-      color: rgba(0, 0, 0, 0.7);
+      font-size: var(--font-size-meta);
+      color: var(--color-text-secondary);
+    }
+
+    .search-meta {
+      color: var(--color-text-muted);
+      font-size: 0.825rem;
     }
 
     .search-spinner {
@@ -43,27 +58,47 @@
   }
 
   .table-row {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-    background: white;
-  }
+    border-bottom: 1px solid var(--color-border-subtle);
+    background: var(--color-surface-mid);
+    transition: background-color 120ms ease-out;
+    cursor: pointer;
 
-  .table-row:focus {
-    outline: 3px solid #2563eb; /* accessible focus color */
-    outline-offset: 2px;
+    &:hover {
+      background-color: var(--color-accent-soft);
+    }
+
+    &:focus {
+      outline: var(--focus-ring);
+      outline-offset: -2px;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: -2px;
+    }
   }
 
   .no-data {
-    padding: 16px;
-    color: rgba(0, 0, 0, 0.6);
+    padding: var(--space-3);
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
   }
 
   .col {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--color-text-primary);
   }
 
   @media (max-width: 768px) {
+    .table-header-row,
+    .table-row {
+      gap: var(--space-1);
+      padding: var(--space-2) var(--space-2);
+    }
+
     .viewport {
       height: calc(100vh - 220px);
     }
