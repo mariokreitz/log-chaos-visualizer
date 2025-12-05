@@ -1,16 +1,16 @@
 export const environment = {
-  production: true,
+  production: false,
   app: {
     name: 'Log Chaos Visualizer',
     description: 'Visualize and analyse logs from various formats.',
-    version: '0.0.0-dev',
+    version: '0.0.1-dev',
     repositoryUrl: 'https://github.com/mariokreitz/log-chaos-visualizer',
   },
   storage: {
     userPreferencesKey: 'log-chaos-preferences',
   },
   featureFlags: {
-    experimentalAnalysis: false,
-    debugParsing: false,
+    experimentalAnalysis: true,
+    debugParsing: true,
   },
 } as const;

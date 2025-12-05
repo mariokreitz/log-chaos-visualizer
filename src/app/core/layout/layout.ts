@@ -1,7 +1,8 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, signal } from '@angular/core';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { GlobalProgress } from '../components/global-progress/global-progress';
 import { Header } from '../components/header/header';
 import { Navigation } from '../components/navigation/navigation';
@@ -25,6 +26,15 @@ export class Layout implements OnDestroy {
     this.isMobile.set(mobile);
     this.isSidenavOpen.set(!mobile);
   });
+
+  private readonly router = inject(Router);
+  constructor() {
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
+      if (this.isMobile()) {
+        this.isSidenavOpen.set(false);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     this._sub.unsubscribe();
