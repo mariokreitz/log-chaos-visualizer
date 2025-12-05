@@ -10,13 +10,13 @@ export interface ParseProgress {
 export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
 
 export type ParsedLogEntry =
-  | { kind: 'pino'; entry: PinoEntry }
-  | { kind: 'winston'; entry: WinstonEntry }
-  | { kind: 'loki'; entry: LokiEntry }
-  | { kind: 'promtail'; entry: PromtailTextLine }
-  | { kind: 'docker'; entry: DockerLogLine }
-  | { kind: 'unknown-json'; entry: unknown }
-  | { kind: 'text'; entry: { line: string } };
+  | ({ kind: 'pino'; entry: PinoEntry } & { searchText?: string })
+  | ({ kind: 'winston'; entry: WinstonEntry } & { searchText?: string })
+  | ({ kind: 'loki'; entry: LokiEntry } & { searchText?: string })
+  | ({ kind: 'promtail'; entry: PromtailTextLine } & { searchText?: string })
+  | ({ kind: 'docker'; entry: DockerLogLine } & { searchText?: string })
+  | ({ kind: 'unknown-json'; entry: unknown } & { searchText?: string })
+  | ({ kind: 'text'; entry: { line: string } } & { searchText?: string });
 
 export type NormalizedLogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'unknown';
 

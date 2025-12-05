@@ -7,7 +7,7 @@ import type {
   ParsedLogEntry,
   ParseProgress,
   WorkerMessage,
-  WorkerStartMessage,
+  WorkerStartMessage
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 
@@ -107,6 +107,72 @@ function mapTextLine(line: string): ParsedLogEntry {
   return { kind: 'text', entry: { line: trimmed } };
 }
 
+function safeString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return String(value);
+}
+
+function computeSearchText(parsed: ParsedLogEntry): string {
+  const parts: string[] = [];
+  parts.push(parsed.kind ?? '');
+  switch (parsed.kind) {
+    case 'pino': {
+      const e = parsed.entry as PinoEntry;
+      parts.push(safeString(e.msg));
+      parts.push(safeString(e.hostname));
+      parts.push(safeString(e.pid));
+      parts.push(safeString(e.name));
+      parts.push(safeString(e.time));
+      break;
+    }
+    case 'winston': {
+      const e = parsed.entry as WinstonEntry & Record<string, unknown>;
+      parts.push(safeString(e.message));
+      parts.push(safeString(e.level));
+      parts.push(safeString((e.meta as any)?.requestId));
+      parts.push(safeString((e.meta as any)?.userId));
+      break;
+    }
+    case 'loki': {
+      const e = parsed.entry as LokiEntry & Record<string, any>;
+      parts.push(safeString(e.line));
+      parts.push(safeString((e.labels as any)?.['job']));
+      parts.push(safeString((e.labels as any)?.['level']));
+      parts.push(safeString(e.ts));
+      break;
+    }
+    case 'promtail': {
+      const e = parsed.entry as PromtailTextLine & Record<string, any>;
+      parts.push(safeString(e.message));
+      parts.push(safeString(e.level));
+      parts.push(safeString(e.ts));
+      break;
+    }
+    case 'docker': {
+      const e = parsed.entry as DockerLogLine & Record<string, any>;
+      parts.push(safeString(e.log));
+      parts.push(safeString(e.stream));
+      parts.push(safeString(e.time));
+      break;
+    }
+    case 'text': {
+      parts.push(safeString((parsed.entry as any).line));
+      break;
+    }
+    case 'unknown-json':
+    default: {
+      try {
+        parts.push(JSON.stringify(parsed.entry));
+      } catch {
+        parts.push(safeString(parsed.entry));
+      }
+      break;
+    }
+  }
+  return parts.join(' | ').toLowerCase();
+}
+
 addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) => {
   const msg = data;
   if (!msg || msg.type !== 'start') {
@@ -169,6 +235,9 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
         } else {
           parsed = mapTextLine(trimmed);
         }
+
+        // compute a lightweight search index for fast client-side filtering
+        (parsed as any).searchText = computeSearchText(parsed);
 
         batchEntries.push(parsed);
         batchRawCount += 1;

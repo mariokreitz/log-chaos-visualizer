@@ -1,50 +1,38 @@
-@defer (when dataSource) {
-  <mat-form-field>
-    <mat-label>Filter</mat-label>
-    <input #input (keyup)="applyFilter($event)" aria-label="Filter logs" matInput placeholder="Filter logs" />
-  </mat-form-field>
+<mat-form-field>
+	<mat-label>Filter</mat-label>
+	<input #filterInput [formControl]="filterControl" aria-label="Filter logs" matInput placeholder="Filter logs" />
+	<button (click)="clearFilter()" *ngIf="filterControl.value" aria-label="Clear filter" mat-icon-button matSuffix>
+		<mat-icon>close</mat-icon>
+	</button>
+</mat-form-field>
 
-  <div class="mat-elevation-z8">
-    <table [dataSource]="dataSource" aria-label="Parsed log entries table" mat-table matSort>
-      <!-- Kind Column -->
-      <ng-container matColumnDef="kind">
-        <th *matHeaderCellDef mat-header-cell mat-sort-header>Kind</th>
-        <td *matCellDef="let row" mat-cell>{{ row.kind }}</td>
-      </ng-container>
+<div aria-label="Parsed log entries table" class="mat-elevation-z8 analyse-table" role="table">
+	<!-- Static header kept outside the virtual viewport for accessibility -->
+	<div class="table-header" role="rowgroup">
+		<div class="table-header-row" role="row">
+			<div class="col kind" role="columnheader">Kind</div>
+			<div class="col timestamp" role="columnheader">Timestamp</div>
+			<div class="col level" role="columnheader">Level</div>
+			<div class="col message" role="columnheader">Message</div>
+			<div class="col source" role="columnheader">Source</div>
+		</div>
+	</div>
 
-      <!-- Timestamp Column -->
-      <ng-container matColumnDef="timestamp">
-        <th *matHeaderCellDef mat-header-cell mat-sort-header>Timestamp</th>
-        <td *matCellDef="let row" mat-cell>{{ formatTimestamp(row) }}</td>
-      </ng-container>
+	<div aria-live="polite" class="table-toolbar">
+		<span class="count">Showing {{ filteredEntries().length }} / {{ entries().length }} entries</span>
+	</div>
 
-      <!-- Level Column -->
-      <ng-container matColumnDef="level">
-        <th *matHeaderCellDef mat-header-cell mat-sort-header>Level</th>
-        <td *matCellDef="let row" mat-cell>{{ formatLevel(row) }}</td>
-      </ng-container>
+	<cdk-virtual-scroll-viewport aria-label="Log entries viewport" class="viewport" itemSize="48" role="rowgroup">
+		<div *ngFor="let row of filteredEntries(); trackBy: trackByEntry" class="table-row" role="row" tabindex="0">
+			<div class="col kind" role="cell">{{ row.kind }}</div>
+			<div class="col timestamp" role="cell">{{ formatTimestamp(row) }}</div>
+			<div class="col level" role="cell">{{ formatLevel(row) }}</div>
+			<div class="col message" role="cell">{{ formatMessage(row) }}</div>
+			<div class="col source" role="cell">{{ formatSource(row) }}</div>
+		</div>
 
-      <!-- Message Column -->
-      <ng-container matColumnDef="message">
-        <th *matHeaderCellDef mat-header-cell>Message</th>
-        <td *matCellDef="let row" mat-cell>{{ formatMessage(row) }}</td>
-      </ng-container>
-
-      <!-- Source Column -->
-      <ng-container matColumnDef="source">
-        <th *matHeaderCellDef mat-header-cell>Source</th>
-        <td *matCellDef="let row" mat-cell>{{ formatSource(row) }}</td>
-      </ng-container>
-
-      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
-      <tr *matRowDef="let _row; columns: displayedColumns" mat-row></tr>
-
-      <!-- Row shown when there is no matching data. -->
-      <tr *matNoDataRow class="mat-row">
-        <td class="mat-cell" colspan="5">No data matching the filter "{{ input.value }}"</td>
-      </tr>
-    </table>
-
-    <mat-paginator [hidePageSize]="true" [pageSize]="10" aria-label="Select page of logs"></mat-paginator>
-  </div>
-}
+		<div *ngIf="filteredEntries().length === 0" class="no-data" role="row">
+			<div class="mat-cell" role="cell">No data matching the filter "{{ filterInput.value }}"</div>
+		</div>
+	</cdk-virtual-scroll-viewport>
+</div>
