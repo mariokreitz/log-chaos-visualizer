@@ -29,22 +29,50 @@
       }
     </span>
   </div>
+  @defer {
+    <cdk-virtual-scroll-viewport
+      [itemSize]="itemSize"
+      [maxBufferPx]="maxBufferPx"
+      [minBufferPx]="minBufferPx"
+      aria-label="Log entries viewport"
+      class="viewport"
+      role="rowgroup"
+    >
+      @for (row of entries(); track trackByEntry($index, row)) {
+        <div class="table-row" role="row" tabindex="0">
+          <div class="col kind" role="cell">{{ row.kind }}</div>
+          <div class="col timestamp" role="cell">{{ formatTimestamp(row) }}</div>
+          <div class="col level" role="cell">{{ formatLevel(row) }}</div>
+          <div class="col message" role="cell">{{ formatMessage(row) }}</div>
+          <div class="col source" role="cell">{{ formatSource(row) }}</div>
+        </div>
+      }
 
-  <cdk-virtual-scroll-viewport aria-label="Log entries viewport" class="viewport" itemSize="48" role="rowgroup">
-    @for (row of entries(); track row.entry) {
-      <div class="table-row" role="row" tabindex="0">
-        <div class="col kind" role="cell">{{ row.kind }}</div>
-        <div class="col timestamp" role="cell">{{ formatTimestamp(row) }}</div>
-        <div class="col level" role="cell">{{ formatLevel(row) }}</div>
-        <div class="col message" role="cell">{{ formatMessage(row) }}</div>
-        <div class="col source" role="cell">{{ formatSource(row) }}</div>
+      @if (shouldShowEmpty()) {
+        <div class="no-data" role="row">
+          <div class="mat-cell" role="cell">No data matching the filter "{{ searchQuery() }}"</div>
+        </div>
+      }
+    </cdk-virtual-scroll-viewport>
+  } @placeholder (minimum 500ms) {
+    <div aria-label="Loading log entries" class="loading-state">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="skeleton-row">
+          <div class="skeleton-cell skeleton-kind"></div>
+          <div class="skeleton-cell skeleton-timestamp"></div>
+          <div class="skeleton-cell skeleton-level"></div>
+          <div class="skeleton-cell skeleton-message"></div>
+          <div class="skeleton-cell skeleton-source"></div>
+        </div>
+      }
+      <div class="loading-indicator">
+        <mat-progress-spinner
+          aria-label="Loading log entries"
+          diameter="24"
+          mode="indeterminate"
+        ></mat-progress-spinner>
+        <span class="loading-text">Loading log entries...</span>
       </div>
-    }
-
-    @if (entries().length === 0 && !isSearching()) {
-      <div class="no-data" role="row">
-        <div class="mat-cell" role="cell">No data matching the filter "{{ searchQuery() }}"</div>
-      </div>
-    }
-  </cdk-virtual-scroll-viewport>
+    </div>
+  }
 </div>

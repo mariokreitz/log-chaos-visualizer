@@ -1,7 +1,16 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
 
-import { ChangeDetectionStrategy, Component, effect, inject, input, InputSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  InputSignal,
+  signal,
+} from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -20,15 +29,21 @@ export class AnalyseLogTable {
   public readonly entries: InputSignal<ParsedLogEntry[]> = input.required<ParsedLogEntry[]>();
   public readonly isSearching: InputSignal<boolean> = input(false);
   public readonly searchQuery = signal<string>('');
+  // Virtual scroll configuration
+  public readonly itemSize = 48; // Height of each row in pixels
+  public readonly minBufferPx = 200; // Minimum buffer size in pixels
+  public readonly maxBufferPx = 400; // Maximum buffer size in pixels
+  // Loading state management
+  public noData = computed(() => !this.isSearching() && this.entries().length === 0);
+  public shouldShowEmpty = computed(() => this.entries().length === 0 && !this.isSearching());
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
-
   private readonly searchSubject = new Subject<string>();
 
   constructor() {
     effect((onCleanup) => {
-      const sub = this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe((query) => {
+      const sub = this.searchSubject.pipe(debounceTime(200), distinctUntilChanged()).subscribe((query) => {
         const trimmedQuery = query.trim();
         this.fileParse.setFilterQuery(trimmedQuery);
       });
@@ -48,6 +63,10 @@ export class AnalyseLogTable {
   public onSearchClear(): void {
     this.searchQuery.set('');
     this.searchSubject.next('');
+  }
+
+  public trackByEntry(index: number, entry: ParsedLogEntry): string {
+    return `${entry.kind}-${(entry.entry as any)?.time || (entry.entry as any)?.ts || index}`;
   }
 
   formatTimestamp(row: ParsedLogEntry): string {
