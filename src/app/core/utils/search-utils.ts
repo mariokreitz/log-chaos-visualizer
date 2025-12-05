@@ -46,7 +46,7 @@ export function formatSourceForIndex(parsed: ParsedLogEntry): string {
   }
 }
 
-function getNormalizedLevel(parsed: ParsedLogEntry): string {
+export function getNormalizedLevel(parsed: ParsedLogEntry): string {
   try {
     switch (parsed.kind) {
       case 'pino': {
@@ -139,7 +139,7 @@ function getNormalizedLevel(parsed: ParsedLogEntry): string {
   }
 }
 
-function getNormalizedEnvironment(parsed: ParsedLogEntry): string {
+export function getNormalizedEnvironment(parsed: ParsedLogEntry): string {
   try {
     switch (parsed.kind) {
       case 'loki': {

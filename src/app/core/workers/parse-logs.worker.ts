@@ -11,7 +11,7 @@ import type {
   WorkerStartMessage
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
-import { computeSearchText } from '../utils/search-utils';
+import { computeSearchText, getNormalizedEnvironment, getNormalizedLevel } from '../utils/search-utils';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -236,23 +236,46 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
   }
 
   try {
-    const { tokens, phrases } = tokenizeQuery(query);
+    let { tokens, phrases } = tokenizeQuery(query);
 
-    // If no valid tokens after tokenization, return all entries
-    if (tokens.length === 0 && phrases.length === 0) {
+    let unknownRequested = false;
+    if (tokens.includes('unknown')) {
+      unknownRequested = true;
+      tokens = tokens.filter((t) => t !== 'unknown');
+    }
+
+    if (tokens.length === 0 && phrases.length === 0 && !unknownRequested) {
       postMessage({ type: 'search-result', query, entries: allEntries.slice() } satisfies WorkerMessage);
       return;
     }
+
+    const hasSearchTokens = tokens.length > 0 || phrases.length > 0;
 
     const scoredResults = allEntries
       .map((entry) => {
         const search = (entry as any).searchText as string | undefined;
         if (typeof search !== 'string') return null;
 
-        if (matchesQuery(search, tokens, phrases)) {
+        if (hasSearchTokens && matchesQuery(search, tokens, phrases)) {
           const score = calculateRelevance(search, tokens, phrases);
           return { entry, score };
         }
+
+        if (unknownRequested) {
+          try {
+            const lvl = getNormalizedLevel(entry);
+            const env = getNormalizedEnvironment(entry);
+            if (lvl === 'unknown' || env === 'unknown' || search.includes('unknown')) {
+              let score = 30;
+              if (lvl === 'unknown') score += 10;
+              if (env === 'unknown') score += 10;
+              return { entry, score };
+            }
+          } catch {
+            // ignore
+          }
+        }
+
         return null;
       })
       .filter((result): result is { entry: ParsedLogEntry; score: number } => result !== null)

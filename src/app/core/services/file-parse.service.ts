@@ -283,6 +283,13 @@ export class FileParseService {
       } else {
         const { tokens, phrases } = tokenizeQueryFallback(normalized);
 
+        let _tokens = tokens.slice();
+        let unknownRequested = false;
+        if (_tokens.includes('unknown')) {
+          unknownRequested = true;
+          _tokens = _tokens.filter((t) => t !== 'unknown');
+        }
+
         if (tokens.length === 0 && phrases.length === 0) {
           this.filteredEntries.set(this.allEntries());
           this.lastSearchResultCount.set(this.allEntries().length);
@@ -304,9 +311,24 @@ export class FileParseService {
               const search = (entry as any).searchText as string | undefined;
               if (typeof search !== 'string') return null;
 
-              if (matchesQueryFallback(search, tokens, phrases)) {
-                const score = calculateRelevanceFallback(search, tokens, phrases);
+              if (matchesQueryFallback(search, _tokens, phrases)) {
+                const score = calculateRelevanceFallback(search, _tokens, phrases);
                 return { entry, score };
+              }
+
+              if (unknownRequested) {
+                try {
+                  const lvl = normalizeLogLevel(entry);
+                  const env = normalizeEnvironment(entry);
+                  if (lvl === 'unknown' || env === 'unknown' || search.includes('unknown')) {
+                    let score = 30;
+                    if (lvl === 'unknown') score += 10;
+                    if (env === 'unknown') score += 10;
+                    return { entry, score };
+                  }
+                } catch {
+                  // ignore
+                }
               }
               return null;
             })
