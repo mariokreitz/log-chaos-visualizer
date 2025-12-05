@@ -14,7 +14,7 @@ import type {
   ParseProgress,
   WorkerMessage,
   WorkerSearchMessage,
-  WorkerStartMessage,
+  WorkerStartMessage
 } from '../types/file-parse.types';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
@@ -280,14 +280,31 @@ export class FileParseService {
         this.filteredEntries.set(this.allEntries());
         this.lastSearchResultCount.set(this.allEntries().length);
       } else {
-        const all = this.allEntries();
-        const filtered = all.filter((entry) => {
-          const search = (entry as any).searchText as string | undefined;
-          return typeof search === 'string' ? search.includes(normalized) : false;
-        });
-        this.filteredEntries.set(filtered);
-        this.lastSearchResultCount.set(filtered.length);
-        this.searchCache.set(normalized, filtered);
+        const { tokens, phrases } = tokenizeQueryFallback(normalized);
+
+        if (tokens.length === 0 && phrases.length === 0) {
+          this.filteredEntries.set(this.allEntries());
+          this.lastSearchResultCount.set(this.allEntries().length);
+        } else {
+          const scoredResults = this.allEntries()
+            .map((entry) => {
+              const search = (entry as any).searchText as string | undefined;
+              if (typeof search !== 'string') return null;
+
+              if (matchesQueryFallback(search, tokens, phrases)) {
+                const score = calculateRelevanceFallback(search, tokens, phrases);
+                return { entry, score };
+              }
+              return null;
+            })
+            .filter((result): result is { entry: ParsedLogEntry; score: number } => result !== null)
+            .sort((a, b) => b.score - a.score);
+
+          const filtered = scoredResults.map((result) => result.entry);
+          this.filteredEntries.set(filtered);
+          this.lastSearchResultCount.set(filtered.length);
+        }
+        this.searchCache.set(normalized, this.filteredEntries() ?? []);
       }
       return;
     }
@@ -545,4 +562,142 @@ function computeTopPeaks(buckets: ErrorFatalTimelineBucket[], topN: number): num
   });
 
   return indexed.slice(0, topN).map((item) => item.index);
+}
+
+/**
+ * Enhanced tokenization for full-text search (fallback implementation)
+ */
+function tokenizeQueryFallback(query: string): { tokens: string[]; phrases: string[] } {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return { tokens: [], phrases: [] };
+
+  const tokens: string[] = [];
+  const phrases: string[] = [];
+
+  // Extract quoted phrases first
+  const phraseRegex = /"([^"]*)"/g;
+  let match;
+  let remainingQuery = trimmed;
+
+  while ((match = phraseRegex.exec(trimmed)) !== null) {
+    phrases.push(match[1].trim());
+    remainingQuery = remainingQuery.replace(match[0], '');
+  }
+
+  // Tokenize remaining text
+  const rawTokens = remainingQuery
+    .split(/[\s\-_.,;:/\\|()[\]{}<>"']+/)
+    .filter((token) => token.length > 0 && token.length >= 2);
+
+  // Apply basic stemming
+  const stemmedTokens = rawTokens.map(stemWordFallback);
+
+  tokens.push(...stemmedTokens);
+
+  return { tokens, phrases };
+}
+
+/**
+ * Basic word stemming (fallback implementation)
+ */
+function stemWordFallback(word: string): string {
+  const suffixes = ['ing', 'ly', 'ed', 'ies', 'ied', 's', 'es'];
+  for (const suffix of suffixes) {
+    if (word.endsWith(suffix) && word.length > suffix.length + 1) {
+      return word.slice(0, -suffix.length);
+    }
+  }
+  return word;
+}
+
+/**
+ * Calculate relevance score (fallback implementation)
+ */
+function calculateRelevanceFallback(searchText: string, tokens: string[], phrases: string[]): number {
+  let score = 0;
+
+  // Exact phrase matches get highest score
+  for (const phrase of phrases) {
+    if (searchText.includes(phrase)) {
+      score += 100;
+    }
+  }
+
+  // Token matches get points based on position and frequency
+  for (const token of tokens) {
+    const lowerSearch = searchText.toLowerCase();
+    let tokenScore = 0;
+
+    const occurrences = (lowerSearch.match(new RegExp(token, 'g')) || []).length;
+    tokenScore += occurrences * 10;
+
+    if (new RegExp(`\\b${token}\\b`).test(lowerSearch)) {
+      tokenScore += 20;
+    }
+
+    if (lowerSearch.startsWith(token)) {
+      tokenScore += 15;
+    }
+
+    score += tokenScore;
+  }
+
+  return score;
+}
+
+/**
+ * Enhanced matching with fuzzy support (fallback implementation)
+ */
+function matchesQueryFallback(searchText: string, tokens: string[], phrases: string[]): boolean {
+  const lowerSearch = searchText.toLowerCase();
+
+  // All phrases must match exactly
+  for (const phrase of phrases) {
+    if (!lowerSearch.includes(phrase)) {
+      return false;
+    }
+  }
+
+  // For tokens, use fuzzy matching if exact match fails
+  for (const token of tokens) {
+    let found = false;
+
+    if (lowerSearch.includes(token)) {
+      found = true;
+    } else {
+      // Simple fuzzy matching
+      const words = lowerSearch.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/);
+      for (const word of words) {
+        if (word.length >= 3 && fuzzyMatchFallback(word, token, 1)) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Simple fuzzy matching (fallback implementation)
+ */
+function fuzzyMatchFallback(text: string, query: string, maxDistance: number = 2): boolean {
+  if (Math.abs(text.length - query.length) > maxDistance) return false;
+
+  let distance = 0;
+  const maxLen = Math.max(text.length, query.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    if (text[i] !== query[i]) {
+      distance++;
+      if (distance > maxDistance) return false;
+    }
+  }
+
+  return distance <= maxDistance;
 }
