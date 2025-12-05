@@ -15,15 +15,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 export class SearchInput {
   public readonly value = input<string>('');
-
   public readonly isSearching = input<boolean>(false);
-
   public readonly placeholder = input<string>('Search logs...');
-
   public readonly ariaLabel = input<string>('Search logs');
-
   public readonly valueChange = output<string>();
-
   public readonly clear = output<void>();
 
   public onInput(event: Event): void {

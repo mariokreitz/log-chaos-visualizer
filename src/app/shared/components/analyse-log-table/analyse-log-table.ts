@@ -28,7 +28,7 @@ export class AnalyseLogTable {
 
   constructor() {
     effect((onCleanup) => {
-      const sub = this.searchSubject.pipe(debounceTime(200), distinctUntilChanged()).subscribe((query) => {
+      const sub = this.searchSubject.pipe(debounceTime(500), distinctUntilChanged()).subscribe((query) => {
         const trimmedQuery = query.trim();
         this.fileParse.setFilterQuery(trimmedQuery);
       });

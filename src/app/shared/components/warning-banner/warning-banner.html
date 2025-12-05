@@ -1,0 +1,24 @@
+<div [class]="getSeverityClass()" class="warning-banner">
+  <div class="warning-banner__content">
+    <div class="warning-banner__icon">
+      <mat-icon [attr.aria-label]="title() + ' icon'">{{ getIconName() }}</mat-icon>
+    </div>
+
+    <div class="warning-banner__text">
+      <h3 class="warning-banner__title">{{ title() }}</h3>
+      <p class="warning-banner__message">{{ message() }}</p>
+    </div>
+
+    @if (dismissible()) {
+      <button
+        (click)="onDismiss()"
+        aria-label="Dismiss warning"
+        class="warning-banner__dismiss"
+        title="Dismiss warning"
+        type="button"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+</div>

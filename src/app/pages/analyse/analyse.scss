@@ -1,3 +1,21 @@
 .analyse {
   padding-bottom: var(--space-3);
 }
+
+.experimental-analysis {
+  margin-top: var(--space-4);
+}
+
+.experimental-analysis__title {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-title);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.experimental-analysis__description {
+  margin: 0 0 var(--space-3) 0;
+  font-size: var(--font-size-meta);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-meta);
+}

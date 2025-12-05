@@ -1,8 +1,19 @@
 <h1 class="app-section-title">Log Analysis</h1>
+
 @if (experimentalAnalysisEnabled()) {
-  <section aria-label="Experimental analysis" class="experimental-note">
-    <h2>Experimental analysis features</h2>
-    <p>Additional analysis and visualizations may appear here when experimental features are enabled.</p>
+  @if (showExperimentalWarning()) {
+    <app-warning-banner
+      (dismissed)="onDismissExperimentalWarning()"
+      [dismissible]="true"
+      ariaLive="polite"
+      message="These experimental analysis features are under active development and may not work as intended. Results may be incomplete, inaccurate, or unstable. Use with caution and report any issues."
+      role="alert"
+      severity="warning"
+      title="Experimental Features Active"
+    />
+  }
+
+  <section aria-label="Experimental analysis" class="experimental-analysis">
+    <app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
   </section>
 }
-<app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
