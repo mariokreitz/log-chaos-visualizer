@@ -1,20 +1,20 @@
 <section class="error-fatal-timeline-chart__container">
-  <header class="error-fatal-timeline-chart__header">
-    <h2 class="error-fatal-timeline-chart__title">{{ title() }}</h2>
-    @if (summary()) {
-      <p class="error-fatal-timeline-chart__meta">
-        Total error: {{ summary()?.totalErrorCount ?? 0 }} \u00b7 Total fatal:
-        {{ summary()?.totalFatalCount ?? 0 }} \u00b7 No-timestamp error:
-        {{ summary()?.noTimestampErrorCount ?? 0 }} \u00b7 No-timestamp fatal:
-        {{ summary()?.noTimestampFatalCount ?? 0 }}
-      </p>
-    } @else {
-      <p class="error-fatal-timeline-chart__meta">No log file has been parsed yet.</p>
-    }
-  </header>
+	<header class="error-fatal-timeline-chart__header">
+		<h2 class="error-fatal-timeline-chart__title">{{ title() }}</h2>
+		@if (summary()) {
+			<p class="error-fatal-timeline-chart__meta">
+				Total error: {{ summary()?.totalErrorCount ?? 0 }} \ Total fatal:
+				{{ summary()?.totalFatalCount ?? 0 }} \ No-timestamp error:
+				{{ summary()?.noTimestampErrorCount ?? 0 }} \ No-timestamp fatal:
+				{{ summary()?.noTimestampFatalCount ?? 0 }}
+			</p>
+		} @else {
+			<p class="error-fatal-timeline-chart__meta">No log file has been parsed yet.</p>
+		}
+	</header>
 
-  <!-- Always render the chart canvas so the timeline area is visible even when there's no data -->
-  <div aria-hidden="true" class="error-fatal-timeline-chart__chart">
-    <canvas [data]="chartData()" [options]="chartOptions" [type]="'bar'" baseChart></canvas>
-  </div>
+	<!-- Always render the chart canvas so the timeline area is visible even when there's no data -->
+	<div aria-hidden="true" class="error-fatal-timeline-chart__chart">
+		<canvas [data]="chartData()" [options]="chartOptions" [type]="'bar'" baseChart></canvas>
+	</div>
 </section>
