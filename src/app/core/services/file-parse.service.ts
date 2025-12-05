@@ -698,7 +698,7 @@ function matchesQueryFallback(searchText: string, tokens: string[], phrases: str
 /**
  * Simple fuzzy matching (fallback implementation)
  */
-function fuzzyMatchFallback(text: string, query: string, maxDistance: number = 2): boolean {
+function fuzzyMatchFallback(text: string, query: string, maxDistance = 2): boolean {
   if (Math.abs(text.length - query.length) > maxDistance) return false;
 
   let distance = 0;
