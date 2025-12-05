@@ -16,6 +16,7 @@ import type {
   WorkerSearchMessage,
   WorkerStartMessage,
 } from '../types/file-parse.types';
+import { computeSearchText } from '../utils/search-utils';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
 
@@ -387,6 +388,22 @@ function normalizeLogLevel(entry: ParsedLogEntry): NormalizedLogLevel {
     }
   }
 
+  // Docker logs: derive level from stream (stderr -> error, stdout -> info)
+  if (entry.kind === 'docker') {
+    try {
+      const stream = String((entry.entry as any).stream ?? '').toLowerCase();
+      if (stream === 'stderr') return 'error';
+      if (stream === 'stdout') return 'info';
+      // Fallback: attempt to extract level token from the log text
+      const log = (entry.entry as any).log ?? '';
+      const m = /level=(trace|debug|info|warn|error|fatal)\b/i.exec(String(log));
+      if (m) return m[1].toLowerCase() as NormalizedLogLevel;
+    } catch {
+      // ignore
+    }
+    return 'unknown';
+  }
+
   return 'unknown';
 }
 
@@ -596,12 +613,10 @@ function tokenizeQueryFallback(query: string): { tokens: string[]; phrases: stri
     remainingQuery = remainingQuery.replace(match[0], '');
   }
 
-  // Tokenize remaining text
-  const rawTokens = remainingQuery
-    .split(/[\s\-_.,;:/\\|()[\]{}<>"']+/)
-    .filter((token) => token.length > 0 && token.length >= 2);
+  // Tokenize remaining text — match worker behaviour (no minimum length filter)
+  const rawTokens = remainingQuery.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/).filter((token) => token.length > 0);
 
-  // Apply basic stemming
+  // Apply same stemming as worker
   const stemmedTokens = rawTokens.map(stemWordFallback);
 
   tokens.push(...stemmedTokens);
@@ -609,11 +624,8 @@ function tokenizeQueryFallback(query: string): { tokens: string[]; phrases: stri
   return { tokens, phrases };
 }
 
-/**
- * Basic word stemming (fallback implementation)
- */
 function stemWordFallback(word: string): string {
-  const suffixes = ['ing', 'ly', 'ed', 'ies', 'ied', 's', 'es'];
+  const suffixes = ['ing', 'ly', 'ed', 'ies', 'ied', 'ies', 'ied', 's', 'es'];
   for (const suffix of suffixes) {
     if (word.endsWith(suffix) && word.length > suffix.length + 1) {
       return word.slice(0, -suffix.length);
@@ -622,20 +634,105 @@ function stemWordFallback(word: string): string {
   return word;
 }
 
-/**
- * Calculate relevance score (fallback implementation)
- */
+// Compute a lightweight searchText for an entry (mirrors worker computeSearchText)
+function computeSearchTextForEntry(entry: ParsedLogEntry): string {
+  try {
+    return computeSearchText(entry);
+  } catch {
+    // Fallback to previous local fallback implementation if util fails
+    const parts: string[] = [];
+    parts.push(entry.kind ?? '');
+
+    switch (entry.kind) {
+      case 'pino': {
+        const e = entry.entry as any;
+        parts.push(safeString(e.msg));
+        parts.push(safeString(e.hostname));
+        parts.push(safeString(e.pid));
+        parts.push(safeString(e.name));
+        parts.push(safeString(e.time));
+        break;
+      }
+      case 'winston': {
+        const e = entry.entry as any;
+        parts.push(safeString(e.message));
+        parts.push(safeString(e.level));
+        parts.push(safeString((e.meta as any)?.requestId));
+        parts.push(safeString((e.meta as any)?.userId));
+        break;
+      }
+      case 'loki': {
+        const e = entry.entry as any;
+        parts.push(safeString(e.line));
+        parts.push(safeString((e.labels as any)?.['job']));
+        parts.push(safeString((e.labels as any)?.['level']));
+        parts.push(safeString(e.ts));
+        break;
+      }
+      case 'promtail': {
+        const e = entry.entry as any;
+        parts.push(safeString(e.message));
+        parts.push(safeString(e.level));
+        parts.push(safeString(e.ts));
+        break;
+      }
+      case 'docker': {
+        const e = entry.entry as any;
+        parts.push(safeString(e.log));
+        parts.push(safeString(e.stream));
+        parts.push(safeString(e.time));
+        break;
+      }
+      case 'text': {
+        parts.push(safeString((entry.entry as any).line));
+        break;
+      }
+      case 'unknown-json':
+      default: {
+        try {
+          parts.push(JSON.stringify(entry.entry));
+        } catch {
+          parts.push(safeString(entry.entry));
+        }
+        break;
+      }
+    }
+
+    try {
+      const lvl = normalizeLogLevel(entry);
+      const env = normalizeEnvironment(entry);
+      if (lvl && lvl !== 'unknown') {
+        parts.push(lvl);
+        parts.push(`level:${lvl}`);
+      }
+      if (env && env !== 'unknown') {
+        parts.push(env);
+        parts.push(`env:${env}`);
+      }
+    } catch {
+      // ignore
+    }
+
+    return parts.join(' | ').toLowerCase();
+  }
+}
+
+// Small helper to safely stringify values for the fallback search index
+function safeString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return String(value);
+}
+
 function calculateRelevanceFallback(searchText: string, tokens: string[], phrases: string[]): number {
   let score = 0;
 
-  // Exact phrase matches get highest score
   for (const phrase of phrases) {
     if (searchText.includes(phrase)) {
       score += 100;
     }
   }
 
-  // Token matches get points based on position and frequency
   for (const token of tokens) {
     const lowerSearch = searchText.toLowerCase();
     let tokenScore = 0;
@@ -657,47 +754,6 @@ function calculateRelevanceFallback(searchText: string, tokens: string[], phrase
   return score;
 }
 
-/**
- * Enhanced matching with fuzzy support (fallback implementation)
- */
-function matchesQueryFallback(searchText: string, tokens: string[], phrases: string[]): boolean {
-  const lowerSearch = searchText.toLowerCase();
-
-  // All phrases must match exactly
-  for (const phrase of phrases) {
-    if (!lowerSearch.includes(phrase)) {
-      return false;
-    }
-  }
-
-  // For tokens, use fuzzy matching if exact match fails
-  for (const token of tokens) {
-    let found = false;
-
-    if (lowerSearch.includes(token)) {
-      found = true;
-    } else {
-      // Simple fuzzy matching
-      const words = lowerSearch.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/);
-      for (const word of words) {
-        if (word.length >= 3 && fuzzyMatchFallback(word, token, 1)) {
-          found = true;
-          break;
-        }
-      }
-    }
-
-    if (!found) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * Simple fuzzy matching (fallback implementation)
- */
 function fuzzyMatchFallback(text: string, query: string, maxDistance = 2): boolean {
   if (Math.abs(text.length - query.length) > maxDistance) return false;
 
@@ -714,86 +770,34 @@ function fuzzyMatchFallback(text: string, query: string, maxDistance = 2): boole
   return distance <= maxDistance;
 }
 
-// Small helper to safely stringify values for the fallback search index
-function safeString(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  return String(value);
-}
+function matchesQueryFallback(searchText: string, tokens: string[], phrases: string[]): boolean {
+  const lowerSearch = searchText.toLowerCase();
 
-// Compute a lightweight searchText for an entry (mirrors worker computeSearchText)
-function computeSearchTextForEntry(entry: ParsedLogEntry): string {
-  const parts: string[] = [];
-  parts.push(entry.kind ?? '');
+  for (const phrase of phrases) {
+    if (!lowerSearch.includes(phrase)) {
+      return false;
+    }
+  }
 
-  switch (entry.kind) {
-    case 'pino': {
-      const e = entry.entry as any;
-      parts.push(safeString(e.msg));
-      parts.push(safeString(e.hostname));
-      parts.push(safeString(e.pid));
-      parts.push(safeString(e.name));
-      parts.push(safeString(e.time));
-      break;
-    }
-    case 'winston': {
-      const e = entry.entry as any;
-      parts.push(safeString(e.message));
-      parts.push(safeString(e.level));
-      parts.push(safeString((e.meta as any)?.requestId));
-      parts.push(safeString((e.meta as any)?.userId));
-      break;
-    }
-    case 'loki': {
-      const e = entry.entry as any;
-      parts.push(safeString(e.line));
-      parts.push(safeString((e.labels as any)?.['job']));
-      parts.push(safeString((e.labels as any)?.['level']));
-      parts.push(safeString(e.ts));
-      break;
-    }
-    case 'promtail': {
-      const e = entry.entry as any;
-      parts.push(safeString(e.message));
-      parts.push(safeString(e.level));
-      parts.push(safeString(e.ts));
-      break;
-    }
-    case 'docker': {
-      const e = entry.entry as any;
-      parts.push(safeString(e.log));
-      parts.push(safeString(e.stream));
-      parts.push(safeString(e.time));
-      break;
-    }
-    case 'text': {
-      parts.push(safeString((entry.entry as any).line));
-      break;
-    }
-    case 'unknown-json':
-    default: {
-      try {
-        parts.push(JSON.stringify(entry.entry));
-      } catch {
-        parts.push(safeString(entry.entry));
+  for (const token of tokens) {
+    let found = false;
+
+    if (lowerSearch.includes(token)) {
+      found = true;
+    } else {
+      const words = lowerSearch.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/);
+      for (const word of words) {
+        if (word.length >= 3 && fuzzyMatchFallback(word, token, 1)) {
+          found = true;
+          break;
+        }
       }
-      break;
+    }
+
+    if (!found) {
+      return false;
     }
   }
 
-  // Append normalized tokens using existing helpers
-  try {
-    const lvl = normalizeLogLevel(entry);
-    const env = normalizeEnvironment(entry);
-    parts.push(lvl);
-    parts.push(`level:${lvl}`);
-    parts.push(env);
-    parts.push(`env:${env}`);
-  } catch {
-    // ignore
-  }
-
-  return parts.join(' | ').toLowerCase();
+  return true;
 }
-
-// Patch: in setFilterQuery fallback branch compute missing searchText before searching

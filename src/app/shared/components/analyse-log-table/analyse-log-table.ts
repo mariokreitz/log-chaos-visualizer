@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import { formatSourceForIndex } from '../../../core/utils/search-utils';
 import { SearchInput } from '../search-input/search-input';
 
 @Component({
@@ -136,25 +137,6 @@ export class AnalyseLogTable {
   }
 
   public formatSource(row: ParsedLogEntry): string {
-    switch (row.kind) {
-      case 'pino': {
-        const e = row.entry as any;
-        return `${e.pid ?? ''}${e.hostname ? '@' + e.hostname : ''}${e.name ? ' (' + e.name + ')' : ''}`.trim();
-      }
-      case 'winston': {
-        const meta = (row.entry as any).meta ?? {};
-        return meta.requestId ?? meta.userId ?? meta.traceId ?? '';
-      }
-      case 'loki':
-        return (row.entry as any).labels?.job ?? '';
-      case 'promtail':
-        return '';
-      case 'docker':
-        return (row.entry as any).stream ?? '';
-      case 'text':
-      case 'unknown-json':
-      default:
-        return '';
-    }
+    return formatSourceForIndex(row);
   }
 }
