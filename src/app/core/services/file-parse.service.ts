@@ -13,6 +13,7 @@ import type {
   ParsedLogEntry,
   ParseProgress,
   WorkerMessage,
+  WorkerSearchMessage,
   WorkerStartMessage,
 } from '../types/file-parse.types';
 import { NotificationService } from './notification.service';
@@ -30,6 +31,9 @@ export class FileParseService {
   readonly isParsing = signal(false);
   readonly latestBatch = signal<ParsedBatch | null>(null);
   readonly allEntries = signal<ParsedLogEntry[]>([]);
+  readonly filterQuery = signal<string>('');
+  readonly filteredEntries = signal<ParsedLogEntry[] | null>(null);
+  readonly isSearching = signal(false);
 
   private worker: Worker | null = null;
   private readonly notifications = inject(NotificationService);
@@ -104,6 +108,9 @@ export class FileParseService {
     });
     this.latestBatch.set(null);
     this.allEntries.set([]);
+    this.filterQuery.set('');
+    this.filteredEntries.set(null);
+    this.isSearching.set(false);
 
     const speed = this.settings.parsingSpeed();
     const { chunkSize, delayMs } = getParsingParameters(speed);
@@ -120,6 +127,13 @@ export class FileParseService {
         // Append parsed entries to the global accumulator used by analysis UIs.
         if (msg.batch.entries && msg.batch.entries.length) {
           this.allEntries.update((prev) => prev.concat(msg.batch.entries));
+          // If there is no active filter, keep filteredEntries in sync with allEntries
+          if (!this.filterQuery()) {
+            this.filteredEntries.update((prev) => {
+              const base = prev ?? [];
+              return base.concat(msg.batch.entries);
+            });
+          }
         }
         const current = this.summary();
         if (current) {
@@ -178,10 +192,25 @@ export class FileParseService {
       } else if (msg.type === 'done') {
         this.isParsing.set(false);
         this.notifications.success('Log file parsed successfully.');
+        // Ensure filteredEntries is defined when parsing completes and no filter is applied
+        if (!this.filterQuery() && this.filteredEntries() === null) {
+          this.filteredEntries.set(this.allEntries());
+        }
       } else if (msg.type === 'error') {
         this.error.set(msg.error);
         this.isParsing.set(false);
         this.notifications.error('Failed to parse log file.');
+      } else if (msg.type === 'search-start') {
+        this.isSearching.set(true);
+      } else if (msg.type === 'search-result') {
+        // Only apply the result if it matches the current filter query
+        if (msg.query === this.filterQuery().trim().toLowerCase()) {
+          this.filteredEntries.set(msg.entries);
+          this.isSearching.set(false);
+        }
+      } else if (msg.type === 'search-error') {
+        this.error.set(msg.error);
+        this.isSearching.set(false);
       }
     };
 
@@ -203,6 +232,33 @@ export class FileParseService {
     this.isParsing.set(false);
     this.latestBatch.set(null);
     this.allEntries.set([]);
+    this.filterQuery.set('');
+    this.filteredEntries.set(null);
+    this.isSearching.set(false);
+  }
+
+  setFilterQuery(query: string): void {
+    const normalized = query.trim().toLowerCase();
+    this.filterQuery.set(normalized);
+
+    if (!this.worker) {
+      // Fallback: if worker is not available, just filter on main thread using searchText
+      if (!normalized) {
+        this.filteredEntries.set(this.allEntries());
+      } else {
+        const all = this.allEntries();
+        const filtered = all.filter((entry) => {
+          const search = (entry as any).searchText as string | undefined;
+          return typeof search === 'string' ? search.includes(normalized) : false;
+        });
+        this.filteredEntries.set(filtered);
+      }
+      return;
+    }
+
+    const msg: WorkerSearchMessage = { type: 'search', query: normalized };
+    this.isSearching.set(true);
+    this.worker.postMessage(msg);
   }
 }
 

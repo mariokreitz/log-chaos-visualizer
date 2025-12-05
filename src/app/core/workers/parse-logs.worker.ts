@@ -7,7 +7,8 @@ import type {
   ParsedLogEntry,
   ParseProgress,
   WorkerMessage,
-  WorkerStartMessage
+  WorkerSearchMessage,
+  WorkerStartMessage,
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 
@@ -173,9 +174,45 @@ function computeSearchText(parsed: ParsedLogEntry): string {
   return parts.join(' | ').toLowerCase();
 }
 
-addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) => {
+const allEntries: ParsedLogEntry[] = [];
+
+function handleSearchMessage(msg: WorkerSearchMessage): void {
+  const raw = msg.query ?? '';
+  const query = raw.trim().toLowerCase();
+
+  postMessage({ type: 'search-start', query } satisfies WorkerMessage);
+
+  if (!query) {
+    postMessage({ type: 'search-result', query, entries: allEntries.slice() } satisfies WorkerMessage);
+    return;
+  }
+
+  try {
+    const filtered = allEntries.filter((entry) => {
+      const search = (entry as any).searchText as string | undefined;
+      return typeof search === 'string' ? search.includes(query) : false;
+    });
+    postMessage({ type: 'search-result', query, entries: filtered } satisfies WorkerMessage);
+  } catch (e) {
+    const error = e instanceof Error ? e.message : 'Unknown search error';
+    postMessage({ type: 'search-error', query, error } satisfies WorkerMessage);
+  }
+}
+
+addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | WorkerSearchMessage>) => {
   const msg = data;
-  if (!msg || msg.type !== 'start') {
+
+  if (!msg) {
+    postMessage({ type: 'error', error: 'Invalid message' } satisfies WorkerMessage);
+    return;
+  }
+
+  if (msg.type === 'search') {
+    handleSearchMessage(msg);
+    return;
+  }
+
+  if (msg.type !== 'start') {
     postMessage({ type: 'error', error: 'Invalid start message' } satisfies WorkerMessage);
     return;
   }
@@ -239,6 +276,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
         // compute a lightweight search index for fast client-side filtering
         (parsed as any).searchText = computeSearchText(parsed);
 
+        allEntries.push(parsed);
         batchEntries.push(parsed);
         batchRawCount += 1;
         counts[parsed.kind] += 1;
@@ -287,6 +325,8 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage>) =
       } else {
         parsed = mapTextLine(trimmed);
       }
+      (parsed as any).searchText = computeSearchText(parsed);
+      allEntries.push(parsed);
       batchEntries.push(parsed);
       batchRawCount += 1;
       counts[parsed.kind] += 1;

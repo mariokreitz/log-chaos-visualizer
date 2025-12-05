@@ -74,11 +74,19 @@ export interface WorkerStartMessage {
   delayMs: number;
 }
 
+export interface WorkerSearchMessage {
+  type: 'search';
+  query: string;
+}
+
 export type WorkerMessage =
   | { type: 'progress'; progress: ParseProgress }
   | { type: 'batch'; batch: ParsedBatch }
   | { type: 'summary'; summary: ExtendedParseSummary }
   | { type: 'done' }
-  | { type: 'error'; error: string };
+  | { type: 'error'; error: string }
+  | { type: 'search-start'; query: string }
+  | { type: 'search-result'; query: string; entries: ParsedLogEntry[] }
+  | { type: 'search-error'; query: string; error: string };
 
 export type GetParsingParametersFn = (speed: ParsingSpeed) => { chunkSize: number; delayMs: number };

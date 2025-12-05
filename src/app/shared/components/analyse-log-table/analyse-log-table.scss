@@ -18,8 +18,26 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
 
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px 8px;
+    gap: 8px;
+
+    .count {
+      font-size: 0.875rem;
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .search-spinner {
+      flex-shrink: 0;
+    }
+  }
+
   .viewport {
-    height: 480px; /* default viewport height; can be tuned */
+    /* Responsive height: fill viewport minus a rough header/filter offset */
+    height: calc(100vh - 320px);
     width: 100%;
     overflow: auto;
   }
@@ -30,7 +48,7 @@
   }
 
   .table-row:focus {
-    outline: 3px solid #2563EB; /* accessible focus color */
+    outline: 3px solid #2563eb; /* accessible focus color */
     outline-offset: 2px;
   }
 
@@ -43,5 +61,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .viewport {
+      height: calc(100vh - 220px);
+    }
   }
 }
