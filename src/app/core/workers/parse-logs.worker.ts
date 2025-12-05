@@ -8,7 +8,7 @@ import type {
   ParseProgress,
   WorkerMessage,
   WorkerSearchMessage,
-  WorkerStartMessage,
+  WorkerStartMessage
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 
@@ -114,6 +114,148 @@ function safeString(value: unknown): string {
   return String(value);
 }
 
+// New: normalize a parsed entry's level into a human friendly token
+function getNormalizedLevel(parsed: ParsedLogEntry): string {
+  try {
+    switch (parsed.kind) {
+      case 'pino': {
+        const lvl = (parsed.entry as PinoEntry).level;
+        if (lvl === 10) return 'trace';
+        if (lvl === 20) return 'debug';
+        if (lvl === 30) return 'info';
+        if (lvl === 40) return 'warn';
+        if (lvl === 50) return 'error';
+        if (lvl === 60) return 'fatal';
+        return 'unknown';
+      }
+      case 'winston': {
+        const lvl = (parsed.entry as WinstonEntry & Record<string, unknown>).level as unknown;
+        if (typeof lvl === 'string') {
+          const l = (lvl as string).toLowerCase();
+          if (l === 'silly' || l === 'verbose') return 'trace';
+          if (l === 'debug') return 'debug';
+          if (l === 'info') return 'info';
+          if (l === 'warn') return 'warn';
+          if (l === 'error') return 'error';
+          return 'unknown';
+        }
+        return 'unknown';
+      }
+      case 'promtail': {
+        const lvl = (parsed.entry as PromtailTextLine & Record<string, unknown>).level as unknown;
+        if (typeof lvl === 'string') {
+          const l = (lvl as string).toLowerCase();
+          if (l === 'debug' || l === 'info' || l === 'warn' || l === 'error') return l;
+        }
+        return 'unknown';
+      }
+      case 'loki': {
+        const lvl = (parsed.entry as LokiEntry & Record<string, unknown>).labels?.['level'];
+        if (typeof lvl === 'string') return (lvl as string).toLowerCase();
+        return 'unknown';
+      }
+      case 'docker': {
+        const log = (parsed.entry as DockerLogLine & Record<string, unknown>).log ?? '';
+        const m = /level=(trace|debug|info|warn|error|fatal)\b/i.exec(String(log));
+        if (m) return m[1].toLowerCase();
+        return 'unknown';
+      }
+      case 'text': {
+        const line = (parsed.entry as any).line ?? '';
+        const firstToken = String(line).split(/\s+/, 1)[0];
+        const upperToken = firstToken.toUpperCase();
+        if (upperToken === 'TRACE') return 'trace';
+        if (upperToken === 'DEBUG') return 'debug';
+        if (upperToken === 'INFO') return 'info';
+        if (upperToken === 'WARN') return 'warn';
+        if (upperToken === 'ERROR') return 'error';
+        if (upperToken === 'FATAL') return 'fatal';
+        return 'unknown';
+      }
+      case 'unknown-json':
+      default: {
+        // Try to heuristically find a level property in unknown JSON
+        const obj = parsed.entry as Record<string, unknown> | undefined;
+        if (obj) {
+          const candidate = (obj['level'] ?? obj['logLevel'] ?? obj['lvl'] ?? obj['severity']) as unknown;
+          if (typeof candidate === 'string') {
+            const lc = candidate.toLowerCase();
+            if (lc.includes('trace')) return 'trace';
+            if (lc.includes('debug')) return 'debug';
+            if (lc.includes('info')) return 'info';
+            if (lc.includes('warn')) return 'warn';
+            if (lc.includes('error')) return 'error';
+            if (lc.includes('fatal')) return 'fatal';
+          }
+        }
+        return 'unknown';
+      }
+    }
+  } catch {
+    return 'unknown';
+  }
+}
+
+// New: normalize environment names (dev/staging/prod/unknown)
+function getNormalizedEnvironment(parsed: ParsedLogEntry): string {
+  try {
+    switch (parsed.kind) {
+      case 'loki': {
+        const env = (parsed.entry as LokiEntry & Record<string, unknown>).labels?.['environment'];
+        if (env === 'dev' || env === 'staging' || env === 'prod') return env;
+        return 'unknown';
+      }
+      case 'pino': {
+        const meta = (parsed.entry as PinoEntry & Record<string, unknown>).meta as Record<string, unknown> | undefined;
+        const env = meta ? meta['environment'] : undefined;
+        if (env === 'dev' || env === 'staging' || env === 'prod') return env as string;
+        return 'unknown';
+      }
+      case 'winston': {
+        const meta = (parsed.entry as WinstonEntry & Record<string, unknown>).meta as
+          | Record<string, unknown>
+          | undefined;
+        const env = meta ? meta['environment'] : undefined;
+        if (env === 'dev' || env === 'staging' || env === 'prod') return env as string;
+        return 'unknown';
+      }
+      case 'promtail': {
+        const anyE = parsed.entry as unknown as { environment?: string };
+        if (anyE && (anyE.environment === 'dev' || anyE.environment === 'staging' || anyE.environment === 'prod'))
+          return anyE.environment as string;
+        return 'unknown';
+      }
+      case 'docker': {
+        const log = (parsed.entry as DockerLogLine & Record<string, unknown>).log ?? '';
+        const m = /env=(dev|staging|prod)\b/i.exec(String(log));
+        if (m) return m[1].toLowerCase();
+        return 'unknown';
+      }
+      case 'text': {
+        const line = (parsed.entry as any).line ?? '';
+        const m = /env=(dev|staging|prod)\b/i.exec(String(line));
+        if (m) return m[1].toLowerCase();
+        return 'unknown';
+      }
+      case 'unknown-json':
+      default: {
+        try {
+          const obj = parsed.entry as Record<string, unknown> | undefined;
+          if (obj) {
+            const env = (obj['environment'] ?? obj['env'] ?? obj['envName']) as unknown;
+            if (env === 'dev' || env === 'staging' || env === 'prod') return env as string;
+          }
+        } catch {
+          // ignore
+        }
+        return 'unknown';
+      }
+    }
+  } catch {
+    return 'unknown';
+  }
+}
+
 function computeSearchText(parsed: ParsedLogEntry): string {
   const parts: string[] = [];
   parts.push(parsed.kind ?? '');
@@ -171,6 +313,17 @@ function computeSearchText(parsed: ParsedLogEntry): string {
       break;
     }
   }
+
+  // Append normalized level and environment tokens to the search text so
+  // queries like "fatal" or "env=prod" match consistently across kinds.
+  const normalizedLevel = getNormalizedLevel(parsed);
+  const normalizedEnv = getNormalizedEnvironment(parsed);
+
+  parts.push(normalizedLevel);
+  parts.push(`level:${normalizedLevel}`);
+  parts.push(normalizedEnv);
+  parts.push(`env:${normalizedEnv}`);
+
   return parts.join(' | ').toLowerCase();
 }
 
@@ -192,9 +345,7 @@ function tokenizeQuery(query: string): { tokens: string[]; phrases: string[] } {
     remainingQuery = remainingQuery.replace(match[0], '');
   }
 
-  const rawTokens = remainingQuery
-    .split(/[\s\-_.,;:/\\|()[\]{}<>"']+/)
-    .filter((token) => token.length > 0 && token.length >= 2); // Minimum 2 chars
+  const rawTokens = remainingQuery.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/).filter((token) => token.length > 0);
 
   const stemmedTokens = rawTokens.map(stemWord);
 

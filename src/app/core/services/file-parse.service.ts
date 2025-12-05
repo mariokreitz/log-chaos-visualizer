@@ -14,7 +14,7 @@ import type {
   ParseProgress,
   WorkerMessage,
   WorkerSearchMessage,
-  WorkerStartMessage
+  WorkerStartMessage,
 } from '../types/file-parse.types';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
@@ -286,6 +286,18 @@ export class FileParseService {
           this.filteredEntries.set(this.allEntries());
           this.lastSearchResultCount.set(this.allEntries().length);
         } else {
+          // Ensure entries have a computed searchText when worker isn't available
+          for (const ent of this.allEntries()) {
+            const existing = (ent as any).searchText as string | undefined;
+            if (typeof existing !== 'string') {
+              try {
+                (ent as any).searchText = computeSearchTextForEntry(ent);
+              } catch {
+                (ent as any).searchText = '';
+              }
+            }
+          }
+
           const scoredResults = this.allEntries()
             .map((entry) => {
               const search = (entry as any).searchText as string | undefined;
@@ -701,3 +713,87 @@ function fuzzyMatchFallback(text: string, query: string, maxDistance: number = 2
 
   return distance <= maxDistance;
 }
+
+// Small helper to safely stringify values for the fallback search index
+function safeString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  return String(value);
+}
+
+// Compute a lightweight searchText for an entry (mirrors worker computeSearchText)
+function computeSearchTextForEntry(entry: ParsedLogEntry): string {
+  const parts: string[] = [];
+  parts.push(entry.kind ?? '');
+
+  switch (entry.kind) {
+    case 'pino': {
+      const e = entry.entry as any;
+      parts.push(safeString(e.msg));
+      parts.push(safeString(e.hostname));
+      parts.push(safeString(e.pid));
+      parts.push(safeString(e.name));
+      parts.push(safeString(e.time));
+      break;
+    }
+    case 'winston': {
+      const e = entry.entry as any;
+      parts.push(safeString(e.message));
+      parts.push(safeString(e.level));
+      parts.push(safeString((e.meta as any)?.requestId));
+      parts.push(safeString((e.meta as any)?.userId));
+      break;
+    }
+    case 'loki': {
+      const e = entry.entry as any;
+      parts.push(safeString(e.line));
+      parts.push(safeString((e.labels as any)?.['job']));
+      parts.push(safeString((e.labels as any)?.['level']));
+      parts.push(safeString(e.ts));
+      break;
+    }
+    case 'promtail': {
+      const e = entry.entry as any;
+      parts.push(safeString(e.message));
+      parts.push(safeString(e.level));
+      parts.push(safeString(e.ts));
+      break;
+    }
+    case 'docker': {
+      const e = entry.entry as any;
+      parts.push(safeString(e.log));
+      parts.push(safeString(e.stream));
+      parts.push(safeString(e.time));
+      break;
+    }
+    case 'text': {
+      parts.push(safeString((entry.entry as any).line));
+      break;
+    }
+    case 'unknown-json':
+    default: {
+      try {
+        parts.push(JSON.stringify(entry.entry));
+      } catch {
+        parts.push(safeString(entry.entry));
+      }
+      break;
+    }
+  }
+
+  // Append normalized tokens using existing helpers
+  try {
+    const lvl = normalizeLogLevel(entry);
+    const env = normalizeEnvironment(entry);
+    parts.push(lvl);
+    parts.push(`level:${lvl}`);
+    parts.push(env);
+    parts.push(`env:${env}`);
+  } catch {
+    // ignore
+  }
+
+  return parts.join(' | ').toLowerCase();
+}
+
+// Patch: in setFilterQuery fallback branch compute missing searchText before searching
