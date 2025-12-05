@@ -1,5 +1,6 @@
 <app-search-input
   (clear)="onSearchClear()"
+  (openHelp)="onOpenHelp()"
   (valueChange)="onSearchInput($event)"
   [isSearching]="isSearching()"
   [value]="searchQuery()"

@@ -66,6 +66,11 @@ export class AnalyseLogTable {
     this.searchSubject.next('');
   }
 
+  public onOpenHelp(): void {
+    // TODO: Open query help dialog (will be implemented in next step)
+    console.log('[AnalyseLogTable] Help requested - dialog component pending');
+  }
+
   public trackByEntry(index: number, entry: ParsedLogEntry): string {
     return `${entry.kind}-${(entry.entry as any)?.time || (entry.entry as any)?.ts || index}`;
   }
