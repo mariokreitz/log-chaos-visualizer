@@ -8,9 +8,12 @@ import type {
   ParseProgress,
   WorkerMessage,
   WorkerSearchMessage,
-  WorkerStartMessage
+  WorkerStartMessage,
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
+import { FieldIndexer } from '../utils/field-indexer';
+import { evaluateQuery } from '../utils/query-evaluator';
+import { parseQuery } from '../utils/query-parser';
 import { computeSearchText, getNormalizedEnvironment, getNormalizedLevel } from '../utils/search-utils';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -110,6 +113,8 @@ function mapTextLine(line: string): ParsedLogEntry {
 }
 
 const allEntries: ParsedLogEntry[] = [];
+const fieldIndexer = new FieldIndexer();
+const queryCache = new Map<string, { ast: any; timestamp: number }>();
 
 function tokenizeQuery(query: string): { tokens: string[]; phrases: string[] } {
   const trimmed = query.trim().toLowerCase();
@@ -226,17 +231,46 @@ function matchesQuery(searchText: string, tokens: string[], phrases: string[]): 
 
 function handleSearchMessage(msg: WorkerSearchMessage): void {
   const raw = msg.query ?? '';
-  const query = raw.trim().toLowerCase();
+  const query = raw.trim();
 
-  postMessage({ type: 'search-start', query } satisfies WorkerMessage);
+  postMessage({ type: 'search-start', query: query.toLowerCase() } satisfies WorkerMessage);
 
   if (!query) {
-    postMessage({ type: 'search-result', query, entries: allEntries.slice() } satisfies WorkerMessage);
+    postMessage({
+      type: 'search-result',
+      query: query.toLowerCase(),
+      entries: allEntries.slice(),
+    } satisfies WorkerMessage);
     return;
   }
 
   try {
-    let { tokens, phrases } = tokenizeQuery(query);
+    const parsedQuery = parseQuery(query);
+
+    if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
+      if (parsedQuery.errors.length > 0) {
+        const error = parsedQuery.errors.map((e) => e.message).join('; ');
+        postMessage({ type: 'search-error', query: query.toLowerCase(), error } satisfies WorkerMessage);
+        return;
+      }
+
+      const result = evaluateQuery(parsedQuery.ast, {
+        entries: allEntries,
+        indexer: fieldIndexer,
+      });
+
+      const filtered = result.matchedIndices.map((idx) => allEntries[idx]);
+
+      console.log(
+        `[Worker] Query evaluated in ${result.evaluationTimeMs.toFixed(2)}ms, found ${filtered.length} matches (indexed: ${result.usedIndexes})`,
+      );
+
+      postMessage({ type: 'search-result', query: query.toLowerCase(), entries: filtered } satisfies WorkerMessage);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    let { tokens, phrases } = tokenizeQuery(lowerQuery);
 
     let unknownRequested = false;
     if (tokens.includes('unknown')) {
@@ -245,7 +279,7 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
     }
 
     if (tokens.length === 0 && phrases.length === 0 && !unknownRequested) {
-      postMessage({ type: 'search-result', query, entries: allEntries.slice() } satisfies WorkerMessage);
+      postMessage({ type: 'search-result', query: lowerQuery, entries: allEntries.slice() } satisfies WorkerMessage);
       return;
     }
 
@@ -373,6 +407,9 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
         counts[parsed.kind] += 1;
 
         if (batchEntries.length >= BATCH_SIZE) {
+          const startIndex = allEntries.length - batchEntries.length;
+          fieldIndexer.addBatch(batchEntries, startIndex);
+
           const batch: ParsedBatch = {
             entries: batchEntries.slice(),
             rawCount: batchRawCount,
@@ -424,6 +461,9 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
     }
 
     if (batchEntries.length > 0) {
+      const startIndex = allEntries.length - batchEntries.length;
+      fieldIndexer.addBatch(batchEntries, startIndex);
+
       const finalBatch: ParsedBatch = {
         entries: batchEntries.slice(),
         rawCount: batchRawCount,
@@ -433,6 +473,9 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
       };
       postMessage({ type: 'batch', batch: finalBatch } satisfies WorkerMessage);
     }
+
+    const indexStats = fieldIndexer.getStats();
+    console.log('[Worker] Field indexes built:', indexStats);
 
     const summary: ExtendedParseSummary = {
       totalLines,
