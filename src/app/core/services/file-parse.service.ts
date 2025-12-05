@@ -16,6 +16,9 @@ import type {
   WorkerSearchMessage,
   WorkerStartMessage,
 } from '../types/file-parse.types';
+import { FieldIndexer } from '../utils/field-indexer';
+import { evaluateQuery } from '../utils/query-evaluator';
+import { parseQuery } from '../utils/query-parser';
 import { computeSearchText } from '../utils/search-utils';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
@@ -44,6 +47,7 @@ export class FileParseService {
   private readonly settings = inject(SettingsService);
 
   private readonly searchCache = new Map<string, ParsedLogEntry[]>();
+  private readonly fallbackIndexer = new FieldIndexer();
 
   setFile(file: File | null): void {
     this.reset();
@@ -260,49 +264,80 @@ export class FileParseService {
   }
 
   setFilterQuery(query: string): void {
-    const normalized = query.trim().toLowerCase();
-    this.filterQuery.set(normalized);
+    const normalized = query.trim();
+    this.filterQuery.set(normalized.toLowerCase());
     this.lastSearchDurationMs.set(null);
     this.lastSearchResultCount.set(null);
 
-    // Check cache first for instant results
-    const cachedResult = this.searchCache.get(normalized);
+    const cachedResult = this.searchCache.get(normalized.toLowerCase());
     if (cachedResult !== undefined) {
       this.filteredEntries.set(cachedResult);
       this.lastSearchResultCount.set(cachedResult.length);
-      // Simulate minimal cache hit latency
       this.lastSearchDurationMs.set(0.5);
       return;
     }
 
     if (!this.worker) {
-      // Fallback: if worker is not available, just filter on main thread using searchText
+      const startTime = performance.now();
+
       if (!normalized) {
         this.filteredEntries.set(this.allEntries());
         this.lastSearchResultCount.set(this.allEntries().length);
-      } else {
-        const { tokens, phrases } = tokenizeQueryFallback(normalized);
+        this.lastSearchDurationMs.set(performance.now() - startTime);
+        return;
+      }
 
-        let _tokens = tokens.slice();
-        let unknownRequested = false;
-        if (_tokens.includes('unknown')) {
-          unknownRequested = true;
-          _tokens = _tokens.filter((t) => t !== 'unknown');
+      const parsedQuery = parseQuery(normalized);
+
+      if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
+        if (parsedQuery.errors.length > 0) {
+          const error = parsedQuery.errors.map((e) => e.message).join('; ');
+          this.error.set(error);
+          this.filteredEntries.set([]);
+          this.lastSearchResultCount.set(0);
+          return;
         }
 
-        if (tokens.length === 0 && phrases.length === 0) {
-          this.filteredEntries.set(this.allEntries());
-          this.lastSearchResultCount.set(this.allEntries().length);
-        } else {
-          // Ensure entries have a computed searchText when worker isn't available
-          for (const ent of this.allEntries()) {
-            const existing = (ent as any).searchText as string | undefined;
-            if (typeof existing !== 'string') {
-              try {
-                (ent as any).searchText = computeSearchTextForEntry(ent);
-              } catch {
-                (ent as any).searchText = '';
-              }
+        if (this.fallbackIndexer.getStats().totalEntries !== this.allEntries().length) {
+          this.fallbackIndexer.buildIndexes(this.allEntries());
+        }
+
+        const result = evaluateQuery(parsedQuery.ast, {
+          entries: this.allEntries(),
+          indexer: this.fallbackIndexer,
+        });
+
+        const filtered = result.matchedIndices.map((idx) => this.allEntries()[idx]);
+        this.filteredEntries.set(filtered);
+        this.lastSearchResultCount.set(filtered.length);
+        this.lastSearchDurationMs.set(performance.now() - startTime);
+        this.searchCache.set(normalized.toLowerCase(), filtered);
+        return;
+      }
+
+      const lowerQuery = normalized.toLowerCase();
+      const { tokens, phrases } = tokenizeQueryFallback(lowerQuery);
+
+      let _tokens = tokens.slice();
+      let unknownRequested = false;
+      if (_tokens.includes('unknown')) {
+        unknownRequested = true;
+        _tokens = _tokens.filter((t) => t !== 'unknown');
+      }
+
+      if (tokens.length === 0 && phrases.length === 0 && !unknownRequested) {
+        this.filteredEntries.set(this.allEntries());
+        this.lastSearchResultCount.set(this.allEntries().length);
+        this.lastSearchDurationMs.set(performance.now() - startTime);
+      } else {
+        // Ensure entries have a computed searchText when worker isn't available
+        for (const ent of this.allEntries()) {
+          const existing = (ent as any).searchText as string | undefined;
+          if (typeof existing !== 'string') {
+            try {
+              (ent as any).searchText = computeSearchTextForEntry(ent);
+            } catch {
+              (ent as any).searchText = '';
             }
           }
 
