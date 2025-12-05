@@ -176,6 +176,23 @@ function computeSearchText(parsed: ParsedLogEntry): string {
 
 const allEntries: ParsedLogEntry[] = [];
 
+function tokenizeQuery(query: string): string[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return [];
+
+  // Split on whitespace and common punctuation, filter empty tokens
+  return trimmed.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/).filter((token) => token.length > 0);
+}
+
+function matchesAllTokens(searchText: string, tokens: string[]): boolean {
+  for (const token of tokens) {
+    if (!searchText.includes(token)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function handleSearchMessage(msg: WorkerSearchMessage): void {
   const raw = msg.query ?? '';
   const query = raw.trim().toLowerCase();
@@ -188,10 +205,19 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
   }
 
   try {
+    const tokens = tokenizeQuery(query);
+
+    // If no valid tokens after tokenization, return all entries
+    if (tokens.length === 0) {
+      postMessage({ type: 'search-result', query, entries: allEntries.slice() } satisfies WorkerMessage);
+      return;
+    }
+
     const filtered = allEntries.filter((entry) => {
       const search = (entry as any).searchText as string | undefined;
-      return typeof search === 'string' ? search.includes(query) : false;
+      return typeof search === 'string' ? matchesAllTokens(search, tokens) : false;
     });
+
     postMessage({ type: 'search-result', query, entries: filtered } satisfies WorkerMessage);
   } catch (e) {
     const error = e instanceof Error ? e.message : 'Unknown search error';

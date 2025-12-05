@@ -29,7 +29,7 @@
   .table-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: var(--space-2) var(--space-3);
     gap: var(--space-2);
     border-bottom: 1px solid var(--color-border-subtle);
@@ -43,10 +43,6 @@
     .search-meta {
       color: var(--color-text-muted);
       font-size: 0.825rem;
-    }
-
-    .search-spinner {
-      flex-shrink: 0;
     }
   }
 

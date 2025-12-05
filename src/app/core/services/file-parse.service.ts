@@ -42,8 +42,11 @@ export class FileParseService {
   private readonly notifications = inject(NotificationService);
   private readonly settings = inject(SettingsService);
 
+  private readonly searchCache = new Map<string, ParsedLogEntry[]>();
+
   setFile(file: File | null): void {
     this.reset();
+    this.searchCache.clear();
     if (file) {
       this.selectedFile.set(file);
     }
@@ -56,6 +59,7 @@ export class FileParseService {
       this.notifications.error('No file selected for parsing.');
       return;
     }
+    this.searchCache.clear();
     this.error.set(null);
     this.isParsing.set(true);
     this.progress.set({ processedBytes: 0, totalBytes: file.size, percent: 0 });
@@ -217,6 +221,7 @@ export class FileParseService {
             this.lastSearchDurationMs.set(duration);
           }
           this.lastSearchResultCount.set(msg.entries.length);
+          this.searchCache.set(msg.query, msg.entries);
           this.isSearching.set(false);
         }
       } else if (msg.type === 'search-error') {
@@ -238,6 +243,7 @@ export class FileParseService {
   reset(): void {
     this.worker?.terminate();
     this.worker = null;
+    this.searchCache.clear();
     this.progress.set(null);
     this.summary.set(null);
     this.error.set(null);
@@ -258,6 +264,16 @@ export class FileParseService {
     this.lastSearchDurationMs.set(null);
     this.lastSearchResultCount.set(null);
 
+    // Check cache first for instant results
+    const cachedResult = this.searchCache.get(normalized);
+    if (cachedResult !== undefined) {
+      this.filteredEntries.set(cachedResult);
+      this.lastSearchResultCount.set(cachedResult.length);
+      // Simulate minimal cache hit latency
+      this.lastSearchDurationMs.set(0.5);
+      return;
+    }
+
     if (!this.worker) {
       // Fallback: if worker is not available, just filter on main thread using searchText
       if (!normalized) {
@@ -271,6 +287,7 @@ export class FileParseService {
         });
         this.filteredEntries.set(filtered);
         this.lastSearchResultCount.set(filtered.length);
+        this.searchCache.set(normalized, filtered);
       }
       return;
     }

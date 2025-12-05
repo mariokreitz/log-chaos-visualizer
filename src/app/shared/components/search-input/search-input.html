@@ -1,0 +1,38 @@
+<div class="search-input-wrapper">
+  <div class="search-input-container">
+    <input
+      (input)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      [attr.aria-label]="ariaLabel()"
+      [placeholder]="placeholder()"
+      [value]="value()"
+      aria-describedby="search-input-help"
+      class="search-input"
+      type="text"
+    />
+
+    <div class="search-input-suffix">
+      @if (isSearching()) {
+        <mat-progress-spinner
+          aria-label="Searching"
+          class="search-spinner"
+          diameter="18"
+          mode="indeterminate"
+        ></mat-progress-spinner>
+      } @else if (value()) {
+        <button
+          (click)="onClear()"
+          aria-label="Clear search"
+          class="search-clear-button"
+          title="Clear search"
+          type="button"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+  <div class="sr-only" id="search-input-help">
+    Type to search logs. Press Enter to submit. Click the clear button or delete text to reset.
+  </div>
+</div>

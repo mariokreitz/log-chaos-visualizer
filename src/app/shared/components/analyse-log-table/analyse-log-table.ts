@@ -1,29 +1,17 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
 
-import { ChangeDetectionStrategy, Component, effect, inject, input, InputSignal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
+import { ChangeDetectionStrategy, Component, effect, inject, input, InputSignal, signal } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import { SearchInput } from '../search-input/search-input';
 
 @Component({
   selector: 'app-analyse-log-table',
-  imports: [
-    MatFormFieldModule,
-    MatInputModule,
-    ScrollingModule,
-    ReactiveFormsModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    DecimalPipe,
-  ],
+  imports: [SearchInput, ScrollingModule, MatProgressSpinnerModule, DecimalPipe],
   templateUrl: './analyse-log-table.html',
   styleUrls: ['./analyse-log-table.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,24 +19,35 @@ import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 export class AnalyseLogTable {
   public readonly entries: InputSignal<ParsedLogEntry[]> = input.required<ParsedLogEntry[]>();
   public readonly isSearching: InputSignal<boolean> = input(false);
-  public readonly filterControl = new FormControl<string>('');
+  public readonly searchQuery = signal<string>('');
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
 
+  private readonly searchSubject = new Subject<string>();
+
   constructor() {
     effect((onCleanup) => {
-      const sub = this.filterControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe((v) => {
-        const val = String(v ?? '').trim();
-        this.fileParse.setFilterQuery(val);
+      const sub = this.searchSubject.pipe(debounceTime(200), distinctUntilChanged()).subscribe((query) => {
+        const trimmedQuery = query.trim();
+        this.fileParse.setFilterQuery(trimmedQuery);
       });
-      onCleanup(() => sub.unsubscribe());
+
+      onCleanup(() => {
+        sub.unsubscribe();
+        this.searchSubject.complete();
+      });
     });
   }
 
-  public clearFilter(): void {
-    this.filterControl.setValue('');
-    this.fileParse.setFilterQuery('');
+  public onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.searchSubject.next(value);
+  }
+
+  public onSearchClear(): void {
+    this.searchQuery.set('');
+    this.searchSubject.next('');
   }
 
   formatTimestamp(row: ParsedLogEntry): string {
