@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "lint:fix": "ng lint --fix",
     "format": "prettier --write .",
     "gen:logs:20k": "python3 generate_logs.py --lines 20000 --output ./public/data/generated-20000.log",
     "gen:logs:50k": "python3 generate_logs.py --lines 50000 --output ./public/data/generated-50000.log",

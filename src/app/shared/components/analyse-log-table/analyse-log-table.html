@@ -1,1 +1,50 @@
-<p>analyse-log-table works!</p>
+@defer (when dataSource) {
+  <mat-form-field>
+    <mat-label>Filter</mat-label>
+    <input #input (keyup)="applyFilter($event)" aria-label="Filter logs" matInput placeholder="Filter logs" />
+  </mat-form-field>
+
+  <div class="mat-elevation-z8">
+    <table [dataSource]="dataSource" aria-label="Parsed log entries table" mat-table matSort>
+      <!-- Kind Column -->
+      <ng-container matColumnDef="kind">
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Kind</th>
+        <td *matCellDef="let row" mat-cell>{{ row.kind }}</td>
+      </ng-container>
+
+      <!-- Timestamp Column -->
+      <ng-container matColumnDef="timestamp">
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Timestamp</th>
+        <td *matCellDef="let row" mat-cell>{{ formatTimestamp(row) }}</td>
+      </ng-container>
+
+      <!-- Level Column -->
+      <ng-container matColumnDef="level">
+        <th *matHeaderCellDef mat-header-cell mat-sort-header>Level</th>
+        <td *matCellDef="let row" mat-cell>{{ formatLevel(row) }}</td>
+      </ng-container>
+
+      <!-- Message Column -->
+      <ng-container matColumnDef="message">
+        <th *matHeaderCellDef mat-header-cell>Message</th>
+        <td *matCellDef="let row" mat-cell>{{ formatMessage(row) }}</td>
+      </ng-container>
+
+      <!-- Source Column -->
+      <ng-container matColumnDef="source">
+        <th *matHeaderCellDef mat-header-cell>Source</th>
+        <td *matCellDef="let row" mat-cell>{{ formatSource(row) }}</td>
+      </ng-container>
+
+      <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+      <tr *matRowDef="let _row; columns: displayedColumns" mat-row></tr>
+
+      <!-- Row shown when there is no matching data. -->
+      <tr *matNoDataRow class="mat-row">
+        <td class="mat-cell" colspan="5">No data matching the filter "{{ input.value }}"</td>
+      </tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Select page of logs"></mat-paginator>
+  </div>
+}

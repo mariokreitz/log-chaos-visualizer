@@ -1,11 +1,11 @@
 <section class="chart-container">
-	<header class="chart-header">
-		<h2 class="chart-title">{{ title() }}</h2>
-	</header>
+  <header class="chart-header">
+    <h2 class="chart-title">{{ title() }}</h2>
+  </header>
 
-	<div aria-hidden="true" class="chart-body">
-		<div class="chart-canvas-wrapper">
-			<canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
-		</div>
-	</div>
+  <div aria-hidden="true" class="chart-body">
+    <div class="chart-canvas-wrapper">
+      <canvas [data]="chartData()" [options]="chartOptions" [type]="'doughnut'" baseChart></canvas>
+    </div>
+  </div>
 </section>
