@@ -1,4 +1,5 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { DecimalPipe } from '@angular/common';
 
 import { ChangeDetectionStrategy, Component, effect, inject, input, InputSignal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -21,6 +22,7 @@ import { ParsedLogEntry } from '../../../core/types/file-parse.types';
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    DecimalPipe,
   ],
   templateUrl: './analyse-log-table.html',
   styleUrls: ['./analyse-log-table.scss'],
@@ -31,6 +33,8 @@ export class AnalyseLogTable {
   public readonly isSearching: InputSignal<boolean> = input(false);
   public readonly filterControl = new FormControl<string>('');
   private readonly fileParse = inject(FileParseService);
+  public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
+  public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
 
   constructor() {
     // Subscribe to the debounced FormControl observable and forward filter query to FileParseService

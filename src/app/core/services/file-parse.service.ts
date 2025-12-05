@@ -34,7 +34,10 @@ export class FileParseService {
   readonly filterQuery = signal<string>('');
   readonly filteredEntries = signal<ParsedLogEntry[] | null>(null);
   readonly isSearching = signal(false);
+  readonly lastSearchDurationMs = signal<number | null>(null);
+  readonly lastSearchResultCount = signal<number | null>(null);
 
+  private lastSearchStartedAt: number | null = null;
   private worker: Worker | null = null;
   private readonly notifications = inject(NotificationService);
   private readonly settings = inject(SettingsService);
@@ -111,6 +114,8 @@ export class FileParseService {
     this.filterQuery.set('');
     this.filteredEntries.set(null);
     this.isSearching.set(false);
+    this.lastSearchDurationMs.set(null);
+    this.lastSearchResultCount.set(null);
 
     const speed = this.settings.parsingSpeed();
     const { chunkSize, delayMs } = getParsingParameters(speed);
@@ -202,15 +207,22 @@ export class FileParseService {
         this.notifications.error('Failed to parse log file.');
       } else if (msg.type === 'search-start') {
         this.isSearching.set(true);
+        this.lastSearchStartedAt = performance.now();
       } else if (msg.type === 'search-result') {
         // Only apply the result if it matches the current filter query
         if (msg.query === this.filterQuery().trim().toLowerCase()) {
           this.filteredEntries.set(msg.entries);
+          if (this.lastSearchStartedAt !== null) {
+            const duration = performance.now() - this.lastSearchStartedAt;
+            this.lastSearchDurationMs.set(duration);
+          }
+          this.lastSearchResultCount.set(msg.entries.length);
           this.isSearching.set(false);
         }
       } else if (msg.type === 'search-error') {
         this.error.set(msg.error);
         this.isSearching.set(false);
+        this.lastSearchStartedAt = null;
       }
     };
 
@@ -235,16 +247,22 @@ export class FileParseService {
     this.filterQuery.set('');
     this.filteredEntries.set(null);
     this.isSearching.set(false);
+    this.lastSearchDurationMs.set(null);
+    this.lastSearchResultCount.set(null);
+    this.lastSearchStartedAt = null;
   }
 
   setFilterQuery(query: string): void {
     const normalized = query.trim().toLowerCase();
     this.filterQuery.set(normalized);
+    this.lastSearchDurationMs.set(null);
+    this.lastSearchResultCount.set(null);
 
     if (!this.worker) {
       // Fallback: if worker is not available, just filter on main thread using searchText
       if (!normalized) {
         this.filteredEntries.set(this.allEntries());
+        this.lastSearchResultCount.set(this.allEntries().length);
       } else {
         const all = this.allEntries();
         const filtered = all.filter((entry) => {
@@ -252,12 +270,14 @@ export class FileParseService {
           return typeof search === 'string' ? search.includes(normalized) : false;
         });
         this.filteredEntries.set(filtered);
+        this.lastSearchResultCount.set(filtered.length);
       }
       return;
     }
 
     const msg: WorkerSearchMessage = { type: 'search', query: normalized };
     this.isSearching.set(true);
+    this.lastSearchStartedAt = performance.now();
     this.worker.postMessage(msg);
   }
 }
