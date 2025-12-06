@@ -16,6 +16,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import { extractFieldValue } from '../../../core/utils/field-extractor';
 import { formatSourceForIndex } from '../../../core/utils/search-utils';
 import { SearchInput } from '../search-input/search-input';
 
@@ -71,104 +72,83 @@ export class AnalyseLogTable {
     console.log('[AnalyseLogTable] Help requested - dialog component pending');
   }
 
-  formatTimestamp(row: ParsedLogEntry): string {
-    switch (row.kind) {
-      case 'pino':
-        return new Date(row.entry.time).toLocaleString();
-      case 'winston':
-        return String(row.entry.timestamp ?? '');
-      case 'loki':
-        return String(row.entry.ts ?? '');
-      case 'promtail':
-        return String(row.entry.ts ?? '');
-      case 'docker':
-        return String(row.entry.time ?? '');
-      case 'text':
-        return '';
-      case 'unknown-json':
-      default:
-        return '';
+  /**
+   * Format timestamp using normalized entry structure
+   * Converts epoch milliseconds to localized string
+   */
+  public formatTimestamp(row: ParsedLogEntry): string {
+    try {
+      // Use normalized timestamp if available
+      if ('normalized' in row && row.normalized?.timestamp) {
+        return new Date(row.normalized.timestamp).toLocaleString();
+      }
+      // Fallback to raw entry extraction
+      const value = extractFieldValue(row, 'timestamp');
+      if (typeof value === 'number') {
+        return new Date(value).toLocaleString();
+      }
+      return '';
+    } catch {
+      return '';
     }
   }
 
+  /**
+   * Format log level using normalized entry structure
+   * Returns: trace, debug, info, warn, error, fatal, or unknown
+   */
   public formatLevel(row: ParsedLogEntry): string {
-    switch (row.kind) {
-      case 'pino': {
-        const map: Record<number, string> = {
-          10: 'trace',
-          20: 'debug',
-          30: 'info',
-          40: 'warn',
-          50: 'error',
-          60: 'fatal',
-        };
-        const pinoEntry = row.entry as unknown as { level?: number };
-        return map[pinoEntry.level ?? 0] ?? 'unknown';
+    try {
+      // Use normalized level if available
+      if ('normalized' in row && row.normalized?.level) {
+        return row.normalized.level;
       }
-      case 'winston': {
-        const winstonEntry = row.entry as unknown as { level?: string };
-        return winstonEntry.level ?? 'unknown';
-      }
-      case 'loki': {
-        const lokiEntry = row.entry as unknown as { labels?: { level?: string } };
-        return (lokiEntry.labels?.level as string) ?? 'unknown';
-      }
-      case 'promtail': {
-        const promtailEntry = row.entry as unknown as { level?: string };
-        return promtailEntry.level ?? 'unknown';
-      }
-      case 'docker': {
-        const dockerEntry = row.entry as unknown as { stream?: string };
-        return dockerEntry.stream === 'stderr' ? 'error' : 'info';
-      }
-      case 'text': {
-        const textEntry = row.entry as unknown as { line?: string };
-        const line = String(textEntry.line ?? '');
-        const firstToken = line.split(/\s+/, 1)[0];
-        const upperToken = String(firstToken).toUpperCase();
-        if (upperToken === 'TRACE') return 'trace';
-        if (upperToken === 'DEBUG') return 'debug';
-        if (upperToken === 'INFO') return 'info';
-        if (upperToken === 'WARN') return 'warn';
-        if (upperToken === 'ERROR') return 'error';
-        if (upperToken === 'FATAL') return 'fatal';
-        return 'unknown';
-      }
-      default:
-        return 'unknown';
+      // Fallback to raw entry extraction
+      return String(extractFieldValue(row, 'level') ?? 'unknown');
+    } catch {
+      return 'unknown';
     }
   }
 
+  /**
+   * Format log message using normalized entry structure
+   * Extracts message from format-specific fields
+   */
   public formatMessage(row: ParsedLogEntry): string {
-    switch (row.kind) {
-      case 'pino': {
-        const pinoEntry = row.entry as unknown as { msg?: string };
-        return String(pinoEntry.msg ?? '');
+    try {
+      // Use normalized message if available
+      if ('normalized' in row && row.normalized?.message) {
+        return row.normalized.message;
       }
-      case 'winston': {
-        const winstonEntry = row.entry as unknown as { message?: string };
-        return String(winstonEntry.message ?? '');
-      }
-      case 'loki': {
-        const lokiEntry = row.entry as unknown as { line?: string };
-        return String(lokiEntry.line ?? '');
-      }
-      case 'promtail': {
-        const promtailEntry = row.entry as unknown as { message?: string };
-        return String(promtailEntry.message ?? '');
-      }
-      case 'docker': {
-        const dockerEntry = row.entry as unknown as { log?: string };
-        return String(dockerEntry.log ?? '');
-      }
-      case 'text': {
-        const textEntry = row.entry as unknown as { line?: string };
-        return String(textEntry.line ?? '');
-      }
-      case 'unknown-json':
-      default:
-        return JSON.stringify(row.entry ?? '');
+      // Fallback to raw entry extraction
+      const value = extractFieldValue(row, 'message');
+      return String(value ?? '');
+    } catch {
+      return '';
     }
+  }
+
+  /**
+   * Get environment for the log entry using normalized structure
+   */
+  public formatEnvironment(row: ParsedLogEntry): string {
+    try {
+      // Use normalized environment if available
+      if ('normalized' in row && row.normalized?.environment) {
+        return row.normalized.environment;
+      }
+      // Fallback
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  /**
+   * Get kind/format of the log entry
+   */
+  public formatKind(row: ParsedLogEntry): string {
+    return row.kind;
   }
 
   public formatSource(row: ParsedLogEntry): string {
