@@ -1,107 +1,107 @@
 <app-search-input
-  (clear)="onSearchClear()"
-  (openHelp)="onOpenHelp()"
-  (valueChange)="onSearchInput($event)"
-  [isSearching]="isSearching()"
-  [value]="searchQuery()"
-  ariaLabel="Search through log entries"
-  placeholder="Search logs..."
+			(clear)="onSearchClear()"
+			(openHelp)="onOpenHelp()"
+			(valueChange)="onSearchInput($event)"
+			[isSearching]="isSearching()"
+			[value]="searchQuery()"
+			ariaLabel="Search through log entries"
+			placeholder="Search logs..."
 ></app-search-input>
 
 <div aria-label="Parsed log entries table" class="mat-elevation-z8 analyse-table" role="table">
-  <div class="table-header" role="rowgroup">
-    <div class="table-header-row" role="row">
-      <div class="col kind" role="columnheader">Kind</div>
-      <div class="col environment" role="columnheader">Environment</div>
-      <div class="col timestamp" role="columnheader">Timestamp</div>
-      <div class="col level" role="columnheader">Level</div>
-      <div class="col message" role="columnheader">Message</div>
-      <div class="col source" role="columnheader">Source</div>
-    </div>
-  </div>
+	<div class="table-header" role="rowgroup">
+		<div class="table-header-row" role="row">
+			<div class="col kind" role="columnheader">Kind</div>
+			<div class="col environment" role="columnheader">Environment</div>
+			<div class="col timestamp" role="columnheader">Timestamp</div>
+			<div class="col level" role="columnheader">Level</div>
+			<div class="col source" role="columnheader">Source</div>
+			<div class="col message" role="columnheader">Message</div>
+		</div>
+	</div>
 
-  <div aria-live="polite" class="table-toolbar">
+	<div aria-live="polite" class="table-toolbar">
     <span class="count">
       Showing {{ entries().length }} entries
-      @if (lastSearchDurationMs() !== null && lastSearchResultCount() !== null) {
-        <span class="search-meta">
+			@if (lastSearchDurationMs() !== null && lastSearchResultCount() !== null) {
+				<span class="search-meta">
           &mdash; last search: {{ lastSearchResultCount() }} results in
-          {{ lastSearchDurationMs() | number: '1.0-0' }} ms
+					{{ lastSearchDurationMs() | number: '1.0-0' }} ms
         </span>
-      }
+			}
     </span>
-  </div>
-  @defer {
-    <cdk-virtual-scroll-viewport
-      [itemSize]="itemSize"
-      [maxBufferPx]="maxBufferPx"
-      [minBufferPx]="minBufferPx"
-      aria-label="Log entries viewport"
-      class="viewport"
-      role="rowgroup"
-    >
-      @for (row of entries(); track $index) {
-        <div
-          [class.env-dev]="formatEnvironment(row) === 'dev'"
-          [class.env-prod]="formatEnvironment(row) === 'prod'"
-          [class.env-staging]="formatEnvironment(row) === 'staging'"
-          [class.level-error]="formatLevel(row) === 'error' || formatLevel(row) === 'fatal'"
-          [class.level-warn]="formatLevel(row) === 'warn'"
-          class="table-row"
-          role="row"
-          tabindex="0"
-        >
-          <div [title]="row.kind" class="col kind" role="cell">
-            <span class="kind-badge">{{ row.kind }}</span>
-          </div>
-          <div [title]="'Environment: ' + formatEnvironment(row)" class="col environment" role="cell">
+	</div>
+	@defer {
+		<cdk-virtual-scroll-viewport
+					[itemSize]="itemSize"
+					[maxBufferPx]="maxBufferPx"
+					[minBufferPx]="minBufferPx"
+					aria-label="Log entries viewport"
+					class="viewport"
+					role="rowgroup"
+		>
+			@for (row of entries(); track $index) {
+				<div
+							[class.env-dev]="formatEnvironment(row) === 'dev'"
+							[class.env-prod]="formatEnvironment(row) === 'prod'"
+							[class.env-staging]="formatEnvironment(row) === 'staging'"
+							[class.level-error]="formatLevel(row) === 'error' || formatLevel(row) === 'fatal'"
+							[class.level-warn]="formatLevel(row) === 'warn'"
+							class="table-row"
+							role="row"
+							tabindex="0"
+				>
+					<div [title]="row.kind" class="col kind" role="cell">
+						<span class="kind-badge">{{ row.kind }}</span>
+					</div>
+					<div [title]="'Environment: ' + formatEnvironment(row)" class="col environment" role="cell">
             <span [class]="'env-' + formatEnvironment(row)" class="env-badge">
               {{ formatEnvironment(row) }}
             </span>
-          </div>
-          <div [title]="formatTimestamp(row)" class="col timestamp" role="cell">
-            {{ formatTimestamp(row) }}
-          </div>
-          <div [title]="'Level: ' + formatLevel(row)" class="col level" role="cell">
+					</div>
+					<div [title]="formatTimestamp(row)" class="col timestamp" role="cell">
+						{{ formatTimestamp(row) }}
+					</div>
+					<div [title]="'Level: ' + formatLevel(row)" class="col level" role="cell">
             <span [class]="'level-' + formatLevel(row)" class="level-badge">
               {{ formatLevel(row) }}
             </span>
-          </div>
-          <div [title]="formatMessage(row)" class="col message" role="cell">
-            {{ formatMessage(row) }}
-          </div>
-          <div [title]="formatSource(row)" class="col source" role="cell">
-            {{ formatSource(row) }}
-          </div>
-        </div>
-      }
+					</div>
+					<div [title]="formatSource(row)" class="col source" role="cell">
+						{{ formatSource(row) }}
+					</div>
+					<div [title]="formatMessage(row)" class="col message" role="cell">
+						{{ formatMessage(row) }}
+					</div>
+				</div>
+			}
 
-      @if (shouldShowEmpty()) {
-        <div class="no-data" role="row">
-          <div class="mat-cell" role="cell">No data matching the filter "{{ searchQuery() }}"</div>
-        </div>
-      }
-    </cdk-virtual-scroll-viewport>
-  } @placeholder (minimum 500ms) {
-    <div aria-label="Loading log entries" class="loading-state">
-      @for (i of [1, 2, 3, 4, 5]; track i) {
-        <div class="skeleton-row">
-          <div class="skeleton-cell skeleton-kind"></div>
-          <div class="skeleton-cell skeleton-environment"></div>
-          <div class="skeleton-cell skeleton-timestamp"></div>
-          <div class="skeleton-cell skeleton-level"></div>
-          <div class="skeleton-cell skeleton-message"></div>
-          <div class="skeleton-cell skeleton-source"></div>
-        </div>
-      }
-      <div class="loading-indicator">
-        <mat-progress-spinner
-          aria-label="Loading log entries"
-          diameter="24"
-          mode="indeterminate"
-        ></mat-progress-spinner>
-        <span class="loading-text">Loading log entries...</span>
-      </div>
-    </div>
-  }
+			@if (shouldShowEmpty()) {
+				<div class="no-data" role="row">
+					<div class="mat-cell" role="cell">No data matching the filter "{{ searchQuery() }}"</div>
+				</div>
+			}
+		</cdk-virtual-scroll-viewport>
+	} @placeholder (minimum 500ms) {
+		<div aria-label="Loading log entries" class="loading-state">
+			@for (i of [ 1, 2, 3, 4, 5 ]; track i) {
+				<div class="skeleton-row">
+					<div class="skeleton-cell skeleton-kind"></div>
+					<div class="skeleton-cell skeleton-environment"></div>
+					<div class="skeleton-cell skeleton-timestamp"></div>
+					<div class="skeleton-cell skeleton-level"></div>
+					<div class="skeleton-cell skeleton-message"></div>
+					<div class="skeleton-cell skeleton-source"></div>
+				</div>
+			}
+			<div class="loading-indicator">
+				<mat-progress-spinner
+							aria-label="Loading log entries"
+							diameter="24"
+							mode="indeterminate"
+				></mat-progress-spinner>
+				<span class="loading-text">Loading log entries...</span>
+			</div>
+		</div>
+	}
 </div>
