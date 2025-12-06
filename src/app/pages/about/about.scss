@@ -5,6 +5,220 @@
   padding-bottom: var(--space-3);
 }
 
-.about h3 {
+.app-card {
+  background: var(--color-surface-mid);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+
+  h2,
+  h3 {
+    margin-top: var(--space-2);
+    margin-bottom: var(--space-1);
+    color: var(--color-text-primary);
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin-bottom: var(--space-2);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  ul {
+    margin-left: var(--space-3);
+    margin-bottom: var(--space-2);
+
+    li {
+      margin-bottom: var(--space-1);
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+
+      strong {
+        color: var(--color-text-primary);
+      }
+    }
+  }
+
+  code {
+    background: var(--color-surface-high);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    font-family: 'Courier New', monospace;
+    color: var(--color-text-primary);
+    font-size: 0.9em;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition: opacity 200ms ease-out;
+
+    &:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    &:focus {
+      outline: var(--focus-ring);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.app-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.project-header {
+  margin-bottom: var(--space-2);
+
+  p {
+    margin-bottom: var(--space-1);
+
+    &.project-description {
+      font-size: 1.05rem;
+      color: var(--color-text-primary);
+    }
+  }
+}
+
+.version-badge {
+  display: inline-block;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-left: var(--space-1);
+}
+
+.repository-link {
   margin-top: var(--space-2);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-accent);
+    color: white;
+    border-radius: var(--radius-sm);
+    transition: all 200ms ease-out;
+
+    &:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .link-icon {
+      font-size: 1.1em;
+    }
+  }
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+
+  .metadata-item {
+    background: var(--color-surface-high);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+
+    strong {
+      display: block;
+      color: var(--color-text-primary);
+      font-weight: 600;
+      margin-bottom: var(--space-1);
+    }
+
+    span {
+      display: block;
+      color: var(--color-text-secondary);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95em;
+    }
+  }
+}
+
+.formats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+
+  .format-card {
+    background: var(--color-surface-high);
+    padding: var(--space-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-subtle);
+    transition: all 200ms ease-out;
+
+    h3 {
+      color: var(--color-text-primary);
+      font-size: 1.05rem;
+      margin-bottom: var(--space-1);
+      margin-top: 0;
+    }
+
+    p {
+      margin-bottom: 0;
+      font-size: 0.95em;
+      line-height: 1.5;
+    }
+
+    &:hover {
+      border-color: var(--color-accent);
+      background: var(--color-surface-mid);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.footer-card {
+  margin-top: var(--space-2);
+  background: var(--color-surface-high);
+  border: 1px solid var(--color-border-subtle);
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .about {
+    gap: var(--space-2);
+  }
+
+  .app-card {
+    padding: var(--space-2);
+  }
+
+  .app-section-title {
+    font-size: 1.25rem;
+  }
+
+  .metadata-grid,
+  .formats-grid {
+    grid-template-columns: 1fr;
+  }
 }

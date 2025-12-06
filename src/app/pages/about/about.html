@@ -1,37 +1,143 @@
 <section class="about">
+  <!-- Project Overview -->
   <section aria-labelledby="about-heading" class="app-card">
-    <h1 class="app-section-title">About</h1>
+    <h1 class="app-section-title" id="about-heading">About Log Chaos Visualizer</h1>
 
-    <p>
-      <strong>{{ appMetadata.title }}</strong> (version {{ appMetadata.version }})
-    </p>
-    <p>{{ appMetadata.description }}</p>
-
-    @if (appMetadata.repositoryUrl) {
+    <div class="project-header">
       <p>
-        <a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank"> View project repository </a>
+        <strong>{{ appMetadata.title }}</strong>
+        <span class="version-badge">v{{ appMetadata.version }}</span>
       </p>
-    }
+      <p class="project-description">
+        <strong>Log Chaos Visualizer</strong> is a demonstration project created to showcase modern Angular development
+        practices, advanced log processing, and intuitive data visualization techniques.
+      </p>
 
-    <h3>What this project does</h3>
-    <p>
-      This application visualizes and analyzes log files to surface errors, fatals, and trends over time. It provides
-      interactive charts and tables to help explore large log datasets efficiently.
-    </p>
+      <p>
+        <em>Note: This is a demo application and not intended for production use.</em>
+      </p>
 
-    <h3>Development & architecture</h3>
-    <p>
-      The project follows a modern Angular standalone-component architecture with a focus on small, focused components
-      and lazy-loaded routes. State is managed with Signals and derived values use `computed()` where appropriate.
-    </p>
+      @if (appMetadata.repositoryUrl) {
+        <p>
+          <a [href]="appMetadata.repositoryUrl" rel="noopener noreferrer" target="_blank">
+            View Complete Project Repository
+          </a>
+        </p>
+      }
+    </div>
+  </section>
 
-    <h3>Technologies used</h3>
+  <!-- Project Metadata -->
+  <section aria-labelledby="metadata-heading" class="app-card">
+    <h2 class="app-section-title" id="metadata-heading">Project Metadata</h2>
+
+    <div class="metadata-grid">
+      <div class="metadata-item">
+        <strong>Project Name</strong>
+        <span>{{ appMetadata.title }}</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>Version</strong>
+        <span>{{ appMetadata.version }}</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>Angular Version</strong>
+        <span>21.0.0</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>TypeScript Version</strong>
+        <span>5.9.2</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>Node Package Manager</strong>
+        <span>npm 11.6.1</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>Build Tool</strong>
+        <span>Angular CLI 21.0.1</span>
+      </div>
+
+      <div class="metadata-item">
+        <strong>License</strong>
+        <span>MIT (Demo Project)</span>
+      </div>
+    </div>
+  </section>
+  <!-- Supported Log Formats -->
+  <section aria-labelledby="formats-heading" class="app-card">
+    <h2 class="app-section-title" id="formats-heading">Supported Log Formats</h2>
+
+    <div class="formats-grid">
+      <div class="format-card">
+        <h3>Pino</h3>
+        <p>Node.js JSON logger with structured logging, request/response tracking, and metadata support.</p>
+      </div>
+
+      <div class="format-card">
+        <h3>Winston</h3>
+        <p>Popular Node.js logging library with metadata objects and distributed tracing support.</p>
+      </div>
+
+      <div class="format-card">
+        <h3>Loki/Promtail</h3>
+        <p>Grafana's log aggregation format with labels and time-based indexing.</p>
+      </div>
+
+      <div class="format-card">
+        <h3>Docker</h3>
+        <p>Docker container logs with stream distinction (stdout/stderr).</p>
+      </div>
+
+      <div class="format-card">
+        <h3>Plain Text</h3>
+        <p>Syslog-style text logs with automatic parsing and level detection.</p>
+      </div>
+
+      <div class="format-card">
+        <h3>Unknown JSON</h3>
+        <p>Generic JSON format fallback for custom log structures.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Query Language & Features -->
+  <section aria-labelledby="query-heading" class="app-card">
+    <h2 class="app-section-title" id="query-heading">Advanced Query Language</h2>
+
+    <p>The application includes a powerful, structured query language for advanced log filtering and analysis:</p>
+
+    <h3>Query Examples</h3>
     <ul>
-      <li>Angular (standalone components, Signals)</li>
-      <li>TypeScript with strict typing</li>
-      <li>Angular Material for accessible UI components</li>
-      <li>Chart.js / ng2-charts for visualizations</li>
-      <li>Web Workers for heavy log parsing</li>
+      <li><code>level=error</code> - Find all error-level logs</li>
+      <li><code>environment=prod AND level=error</code> - Production errors only</li>
+      <li><code>message.contains(timeout)</code> - Find timeout messages</li>
+      <li><code>statusCode>=500</code> - Server errors (Pino HTTP fields)</li>
+      <li><code>(level=error OR level=fatal) AND environment=prod</code> - Critical production issues</li>
+    </ul>
+
+    <h3>Supported Fields</h3>
+    <ul>
+      <li><strong>Common:</strong> level, message, timestamp, environment, kind, hostname</li>
+      <li><strong>Pino:</strong> msg, time, pid, name, method, url, statusCode, responseTime</li>
+      <li><strong>Winston:</strong> requestId, userId, traceId</li>
+      <li><strong>Loki:</strong> job, instance, app, line</li>
+      <li><strong>Docker:</strong> log, stream</li>
+    </ul>
+
+    <h3>Query Features</h3>
+    <ul>
+      <li>Field-specific searches</li>
+      <li>Comparison operators (=, !=, &gt;, &gt;=, &lt;, &lt;=)</li>
+      <li>String functions (contains, startsWith, endsWith, matches)</li>
+      <li>Boolean operators (AND, OR, NOT)</li>
+      <li>Regular expression support</li>
+      <li>Parentheses grouping</li>
+      <li>Real-time validation with error messages</li>
     </ul>
   </section>
 </section>
