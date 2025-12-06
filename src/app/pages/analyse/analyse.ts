@@ -3,11 +3,12 @@ import { Router } from '@angular/router';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { FileParseService } from '../../core/services/file-parse.service';
 import { AnalyseLogTable } from '../../shared/components/analyse-log-table/analyse-log-table';
+import { QuickFilters } from '../../shared/components/quick-filters/quick-filters';
 import { WarningBanner } from '../../shared/components/warning-banner/warning-banner';
 
 @Component({
   selector: 'app-analyse',
-  imports: [AnalyseLogTable, WarningBanner],
+  imports: [AnalyseLogTable, WarningBanner, QuickFilters],
   templateUrl: './analyse.html',
   styleUrl: './analyse.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,21 +18,17 @@ export default class Analyse {
   protected readonly showExperimentalWarning = signal(true);
   protected readonly renderProgress = signal(0);
   protected readonly isFullyRendered = signal(false);
+  private readonly fileParse = inject(FileParseService);
+  protected readonly allEntries = this.fileParse.allEntries;
   // Check if any data is available
   protected readonly hasData = computed(() => this.allEntries().length > 0);
+  protected readonly filteredEntries = this.fileParse.filteredEntries;
   // Total count for display (always show full count)
   protected readonly totalEntryCount = computed(() => {
     const filtered = this.filteredEntries();
     const all = filtered !== null ? filtered : this.allEntries();
     return all.length;
   });
-  // Loading state for better UX (used in template)
-  protected readonly isLoading = computed(() => {
-    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
-  });
-  private readonly fileParse = inject(FileParseService);
-  protected readonly allEntries = this.fileParse.allEntries;
-  protected readonly filteredEntries = this.fileParse.filteredEntries;
   protected readonly isSearching = this.fileParse.isSearching;
   protected readonly isParsing = this.fileParse.isParsing;
   private readonly router = inject(Router);
@@ -52,6 +49,10 @@ export default class Analyse {
     }
 
     return all;
+  });
+  // Loading state for better UX (used in template)
+  protected readonly isLoading = computed(() => {
+    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
   });
 
   constructor() {
@@ -94,6 +95,13 @@ export default class Analyse {
    */
   protected goToDashboard(): void {
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Handle quick filter selection
+   */
+  protected onQuickFilterSelected(query: string): void {
+    this.fileParse.setFilterQuery(query);
   }
 
   /**

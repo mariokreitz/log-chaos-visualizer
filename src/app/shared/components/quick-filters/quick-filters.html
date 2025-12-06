@@ -1,0 +1,28 @@
+<div aria-label="Quick filter selection" class="quick-filters-container" role="region">
+  <div class="quick-filters-header">
+    <h3 class="quick-filters-title">
+      <mat-icon>filter_list</mat-icon>
+      Quick Filters
+    </h3>
+    <p class="quick-filters-description">Click a filter to quickly search logs by common patterns</p>
+  </div>
+
+  <div class="quick-filters-grid">
+    @for (filter of quickFilters; track filter.query) {
+      <button
+        (click)="onFilterClick(filter)"
+        [attr.aria-label]="filter.description"
+        [class.filter-chip--advanced]="filter.category === 'advanced'"
+        [class.filter-chip--common]="filter.category === 'common'"
+        [class.filter-chip--environment]="filter.category === 'environment'"
+        [class.filter-chip--level]="filter.category === 'level'"
+        [matTooltip]="filter.description"
+        class="filter-chip"
+        type="button"
+      >
+        <mat-icon class="filter-icon">{{ filter.icon }}</mat-icon>
+        <span class="filter-label">{{ filter.label }}</span>
+      </button>
+    }
+  </div>
+</div>
