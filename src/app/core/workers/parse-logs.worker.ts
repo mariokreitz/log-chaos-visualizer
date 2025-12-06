@@ -299,37 +299,48 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
 
     const hasSearchTokens = tokens.length > 0 || phrases.length > 0;
 
-    const scoredResults = allEntries
-      .map((entry) => {
-        const entryWithSearch = entry as ParsedLogEntry & { searchText?: string };
-        if (typeof entryWithSearch.searchText !== 'string') return null;
+    // Process in chunks to enable streaming results for large datasets
+    const CHUNK_SIZE = 5000;
+    const allResults: { entry: ParsedLogEntry; score: number }[] = [];
 
-        if (hasSearchTokens && matchesQuery(entryWithSearch.searchText, tokens, phrases)) {
-          const score = calculateRelevance(entryWithSearch.searchText, tokens, phrases);
-          return { entry, score };
-        }
+    for (let i = 0; i < allEntries.length; i += CHUNK_SIZE) {
+      const chunk = allEntries.slice(i, i + CHUNK_SIZE);
 
-        if (unknownRequested) {
-          try {
-            const lvl = getNormalizedLevel(entry);
-            const env = getNormalizedEnvironment(entry);
-            if (lvl === 'unknown' || env === 'unknown' || entryWithSearch.searchText.includes('unknown')) {
-              let score = 30;
-              if (lvl === 'unknown') score += 10;
-              if (env === 'unknown') score += 10;
-              return { entry, score };
-            }
-          } catch {
-            // ignore
+      const chunkResults = chunk
+        .map((entry) => {
+          const entryWithSearch = entry as ParsedLogEntry & { searchText?: string };
+          if (typeof entryWithSearch.searchText !== 'string') return null;
+
+          if (hasSearchTokens && matchesQuery(entryWithSearch.searchText, tokens, phrases)) {
+            const score = calculateRelevance(entryWithSearch.searchText, tokens, phrases);
+            return { entry, score };
           }
-        }
 
-        return null;
-      })
-      .filter((result): result is { entry: ParsedLogEntry; score: number } => result !== null)
-      .sort((a, b) => b.score - a.score); // Sort by relevance (highest first)
+          if (unknownRequested) {
+            try {
+              const lvl = getNormalizedLevel(entry);
+              const env = getNormalizedEnvironment(entry);
+              if (lvl === 'unknown' || env === 'unknown' || entryWithSearch.searchText.includes('unknown')) {
+                let score = 30;
+                if (lvl === 'unknown') score += 10;
+                if (env === 'unknown') score += 10;
+                return { entry, score };
+              }
+            } catch {
+              // ignore
+            }
+          }
 
-    const filtered = scoredResults.map((result) => result.entry);
+          return null;
+        })
+        .filter((result): result is { entry: ParsedLogEntry; score: number } => result !== null);
+
+      allResults.push(...chunkResults);
+    }
+
+    // Sort by relevance (highest first)
+    allResults.sort((a, b) => b.score - a.score);
+    const filtered = allResults.map((result) => result.entry);
 
     postMessage({ type: 'search-result', query, entries: filtered } satisfies WorkerMessage);
   } catch (e) {

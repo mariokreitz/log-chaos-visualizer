@@ -47,12 +47,30 @@ export class FieldIndexer {
   }
 
   addBatch(entries: ParsedLogEntry[], startIndex: number): void {
+    const startTimestampIndex = this.indexes.timestamps.length;
+
     entries.forEach((entry, offset) => {
       this.indexEntry(entry, startIndex + offset);
     });
 
     this.indexes.totalEntries += entries.length;
-    this.indexes.timestamps.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Only sort the newly added timestamps and merge with existing ones
+    // This is much faster than re-sorting the entire array
+    if (this.indexes.timestamps.length > startTimestampIndex) {
+      const newTimestamps = this.indexes.timestamps.slice(startTimestampIndex);
+      newTimestamps.sort((a, b) => a.timestamp - b.timestamp);
+
+      // If we had existing timestamps, merge the sorted arrays
+      if (startTimestampIndex > 0) {
+        const existingTimestamps = this.indexes.timestamps.slice(0, startTimestampIndex);
+        this.indexes.timestamps = this.mergeSortedTimestamps(existingTimestamps, newTimestamps);
+      } else {
+        this.indexes.timestamps = newTimestamps;
+      }
+    }
+
+    this.indexes.memoryEstimateBytes = this.estimateMemoryUsage();
   }
 
   getIndexes(): Readonly<FieldIndexes> {
@@ -127,6 +145,40 @@ export class FieldIndexer {
       keywordIndexSize: this.indexes.messageKeywords.size,
       memoryEstimateMB: this.indexes.memoryEstimateBytes / 1024 / 1024,
     };
+  }
+
+  /**
+   * Merge two sorted timestamp arrays efficiently
+   */
+  private mergeSortedTimestamps(
+    arr1: { index: number; timestamp: number }[],
+    arr2: { index: number; timestamp: number }[],
+  ): { index: number; timestamp: number }[] {
+    const result: { index: number; timestamp: number }[] = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < arr1.length && j < arr2.length) {
+      if (arr1[i].timestamp <= arr2[j].timestamp) {
+        result.push(arr1[i]);
+        i++;
+      } else {
+        result.push(arr2[j]);
+        j++;
+      }
+    }
+
+    // Add remaining elements
+    while (i < arr1.length) {
+      result.push(arr1[i]);
+      i++;
+    }
+    while (j < arr2.length) {
+      result.push(arr2[j]);
+      j++;
+    }
+
+    return result;
   }
 
   private createEmptyIndexes(): FieldIndexes {

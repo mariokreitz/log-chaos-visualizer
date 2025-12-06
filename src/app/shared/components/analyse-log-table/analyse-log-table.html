@@ -41,12 +41,14 @@
       role="rowgroup"
     >
       @for (row of entries(); track $index) {
+        @let env = row.normalized.environment;
+        @let level = row.normalized.level;
         <div
-          [class.env-dev]="formatEnvironment(row) === 'dev'"
-          [class.env-prod]="formatEnvironment(row) === 'prod'"
-          [class.env-staging]="formatEnvironment(row) === 'staging'"
-          [class.level-error]="formatLevel(row) === 'error' || formatLevel(row) === 'fatal'"
-          [class.level-warn]="formatLevel(row) === 'warn'"
+          [class.env-dev]="env === 'dev'"
+          [class.env-prod]="env === 'prod'"
+          [class.env-staging]="env === 'staging'"
+          [class.level-error]="level === 'error' || level === 'fatal'"
+          [class.level-warn]="level === 'warn'"
           class="table-row"
           role="row"
           tabindex="0"
@@ -54,17 +56,17 @@
           <div [title]="row.kind" class="col kind" role="cell">
             <span class="kind-badge">{{ row.kind }}</span>
           </div>
-          <div [title]="'Environment: ' + formatEnvironment(row)" class="col environment" role="cell">
-            <span [class]="'env-' + formatEnvironment(row)" class="env-badge">
-              {{ formatEnvironment(row) }}
+          <div [title]="'Environment: ' + env" class="col environment" role="cell">
+            <span [class]="'env-' + env" class="env-badge">
+              {{ env }}
             </span>
           </div>
           <div [title]="formatTimestamp(row)" class="col timestamp" role="cell">
             {{ formatTimestamp(row) }}
           </div>
-          <div [title]="'Level: ' + formatLevel(row)" class="col level" role="cell">
-            <span [class]="'level-' + formatLevel(row)" class="level-badge">
-              {{ formatLevel(row) }}
+          <div [title]="'Level: ' + level" class="col level" role="cell">
+            <span [class]="'level-' + level" class="level-badge">
+              {{ level }}
             </span>
           </div>
           <div [title]="formatSource(row)" class="col source" role="cell">

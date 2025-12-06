@@ -1,6 +1,5 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
-
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,7 +17,16 @@ import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import { extractFieldValue } from '../../../core/utils/field-extractor';
 import { formatSourceForIndex } from '../../../core/utils/search-utils';
-import { SearchInput } from '../search-input/search-input';
+import { SearchInput } from '../search-input/search-input'; // Formatting cache to avoid repeated computations
+
+// Formatting cache to avoid repeated computations
+interface FormattedEntry {
+  timestamp: string;
+  level: string;
+  message: string;
+  environment: string;
+  source: string;
+}
 
 @Component({
   selector: 'app-analyse-log-table',
@@ -31,17 +39,22 @@ export class AnalyseLogTable {
   public readonly entries: InputSignal<ParsedLogEntry[]> = input.required<ParsedLogEntry[]>();
   public readonly isSearching: InputSignal<boolean> = input(false);
   public readonly searchQuery = signal<string>('');
-  // Virtual scroll configuration
+
+  // Virtual scroll configuration - optimized for performance
   public readonly itemSize = 48; // Height of each row in pixels
-  public readonly minBufferPx = 200; // Minimum buffer size in pixels
-  public readonly maxBufferPx = 400; // Maximum buffer size in pixels
+  public readonly minBufferPx = 100; // Reduced from 200 for faster initial render
+  public readonly maxBufferPx = 300; // Reduced from 400 for less memory usage
+
   // Loading state management
-  public noData = computed(() => !this.isSearching() && this.entries().length === 0);
   public shouldShowEmpty = computed(() => this.entries().length === 0 && !this.isSearching());
+
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
   private readonly searchSubject = new Subject<string>();
+
+  // Memoization cache for formatted values
+  private formatCache = new WeakMap<ParsedLogEntry, FormattedEntry>();
 
   constructor() {
     effect((onCleanup) => {
@@ -77,6 +90,55 @@ export class AnalyseLogTable {
    * Converts epoch milliseconds to localized string
    */
   public formatTimestamp(row: ParsedLogEntry): string {
+    return this.getFormattedEntry(row).timestamp;
+  }
+
+  /**
+   * Format log level using normalized entry structure
+   * Returns: trace, debug, info, warn, error, fatal, or unknown
+   */
+  public formatLevel(row: ParsedLogEntry): string {
+    return this.getFormattedEntry(row).level;
+  }
+
+  /**
+   * Format log message using normalized entry structure
+   * Extracts message from format-specific fields
+   */
+  public formatMessage(row: ParsedLogEntry): string {
+    return this.getFormattedEntry(row).message;
+  }
+
+  /**
+   * Get environment for the log entry using normalized structure
+   */
+  public formatEnvironment(row: ParsedLogEntry): string {
+    return this.getFormattedEntry(row).environment;
+  }
+
+  public formatSource(row: ParsedLogEntry): string {
+    return this.getFormattedEntry(row).source;
+  }
+
+  /**
+   * Get or compute formatted entry values with memoization
+   */
+  private getFormattedEntry(row: ParsedLogEntry): FormattedEntry {
+    let cached = this.formatCache.get(row);
+    if (!cached) {
+      cached = {
+        timestamp: this.computeTimestamp(row),
+        level: this.computeLevel(row),
+        message: this.computeMessage(row),
+        environment: this.computeEnvironment(row),
+        source: formatSourceForIndex(row),
+      };
+      this.formatCache.set(row, cached);
+    }
+    return cached;
+  }
+
+  private computeTimestamp(row: ParsedLogEntry): string {
     try {
       // Use normalized timestamp if available
       if ('normalized' in row && row.normalized?.timestamp) {
@@ -93,11 +155,7 @@ export class AnalyseLogTable {
     }
   }
 
-  /**
-   * Format log level using normalized entry structure
-   * Returns: trace, debug, info, warn, error, fatal, or unknown
-   */
-  public formatLevel(row: ParsedLogEntry): string {
+  private computeLevel(row: ParsedLogEntry): string {
     try {
       // Use normalized level if available
       if ('normalized' in row && row.normalized?.level) {
@@ -110,11 +168,7 @@ export class AnalyseLogTable {
     }
   }
 
-  /**
-   * Format log message using normalized entry structure
-   * Extracts message from format-specific fields
-   */
-  public formatMessage(row: ParsedLogEntry): string {
+  private computeMessage(row: ParsedLogEntry): string {
     try {
       // Use normalized message if available
       if ('normalized' in row && row.normalized?.message) {
@@ -128,10 +182,7 @@ export class AnalyseLogTable {
     }
   }
 
-  /**
-   * Get environment for the log entry using normalized structure
-   */
-  public formatEnvironment(row: ParsedLogEntry): string {
+  private computeEnvironment(row: ParsedLogEntry): string {
     try {
       // Use normalized environment if available
       if ('normalized' in row && row.normalized?.environment) {
@@ -142,16 +193,5 @@ export class AnalyseLogTable {
     } catch {
       return 'unknown';
     }
-  }
-
-  /**
-   * Get kind/format of the log entry
-   */
-  public formatKind(row: ParsedLogEntry): string {
-    return row.kind;
-  }
-
-  public formatSource(row: ParsedLogEntry): string {
-    return formatSourceForIndex(row);
   }
 }

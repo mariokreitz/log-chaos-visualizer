@@ -13,6 +13,12 @@
     />
   }
 
+  @if (isLoading()) {
+    <div aria-live="polite" class="loading-container" role="status">
+      <p class="loading-message">Loading log entries...</p>
+    </div>
+  }
+
   <section aria-label="Experimental analysis" class="experimental-analysis">
     <app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
   </section>
