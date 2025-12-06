@@ -32,7 +32,7 @@
       }
     </span>
   </div>
-  @defer (on immediate) {
+  @defer {
     <cdk-virtual-scroll-viewport
       [itemSize]="itemSize"
       [maxBufferPx]="maxBufferPx"
@@ -85,7 +85,7 @@
         </div>
       }
     </cdk-virtual-scroll-viewport>
-  } @placeholder {
+  } @placeholder (minimum 330ms) {
     <div aria-label="Loading log entries" class="loading-state">
       @for (i of [1, 2, 3, 4, 5]; track i) {
         <div class="skeleton-row">
