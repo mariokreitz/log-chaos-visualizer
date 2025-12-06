@@ -9,7 +9,7 @@
   .table-header-row,
   .table-row {
     display: grid;
-    grid-template-columns: 90px 100px 140px 90px 1fr 140px;
+    grid-template-columns: 90px 100px 140px 100px 1fr 2fr;
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
@@ -129,31 +129,32 @@
     color: var(--color-text-primary);
 
     &.kind {
-      min-width: 80px;
+      min-width: 70px;
     }
 
     &.environment {
-      min-width: 90px;
+      min-width: 85px;
     }
 
     &.timestamp {
-      min-width: 130px;
+      min-width: 115px;
       font-size: var(--font-size-meta);
       color: var(--color-text-secondary);
     }
 
     &.level {
-      min-width: 80px;
+      min-width: 75px;
     }
 
     &.message {
+      min-width: 250px;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
     }
 
     &.source {
-      min-width: 130px;
+      min-width: 80px;
       font-size: var(--font-size-meta);
       color: var(--color-text-secondary);
     }
@@ -251,7 +252,7 @@
 
   .skeleton-row {
     display: grid;
-    grid-template-columns: 90px 100px 140px 90px 1fr 140px;
+    grid-template-columns: 85px 95px 130px 85px 2fr 1fr;
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
@@ -266,28 +267,28 @@
     animation: skeleton-loading 1.5s ease-in-out infinite;
 
     &.skeleton-kind {
-      width: 60px;
+      width: 55px;
     }
 
     &.skeleton-environment {
-      width: 70px;
+      width: 65px;
     }
 
     &.skeleton-timestamp {
-      width: 110px;
+      width: 100px;
     }
 
     &.skeleton-level {
-      width: 60px;
+      width: 50px;
     }
 
     &.skeleton-message {
       width: 100%;
-      max-width: 400px;
+      max-width: 600px;
     }
 
     &.skeleton-source {
-      width: 110px;
+      width: 70px;
     }
   }
 
