@@ -12,6 +12,7 @@ import type {
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 import { FieldIndexer } from '../utils/field-indexer';
+import { normalizeLogEntry } from '../utils/log-normalizer';
 import { evaluateQuery } from '../utils/query-evaluator';
 import { parseQuery } from '../utils/query-parser';
 import { computeSearchText, getNormalizedEnvironment, getNormalizedLevel } from '../utils/search-utils';
@@ -84,32 +85,38 @@ function isDockerLogLine(candidate: unknown): candidate is DockerLogLine {
 }
 
 function mapJsonObjectToParsed(candidate: unknown): ParsedLogEntry {
+  let kind: ParsedKind;
+  let entry: PinoEntry | WinstonEntry | LokiEntry | DockerLogLine | PromtailTextLine | unknown;
+
   if (isPinoEntry(candidate)) {
-    return { kind: 'pino', entry: candidate };
+    kind = 'pino';
+    entry = candidate;
+  } else if (isDockerLogLine(candidate)) {
+    kind = 'docker';
+    entry = candidate;
+  } else if (isPromtailTextLine(candidate)) {
+    kind = 'promtail';
+    entry = candidate;
+  } else if (isWinstonEntry(candidate)) {
+    kind = 'winston';
+    entry = candidate;
+  } else if (isLokiEntry(candidate)) {
+    kind = 'loki';
+    entry = candidate;
+  } else {
+    kind = 'unknown-json';
+    entry = candidate;
   }
-  if (isDockerLogLine(candidate)) {
-    return { kind: 'docker', entry: candidate };
-  }
-  // Promtail entries are a subset of what Winston accepts (level+message) but
-  // additionally have 'ts', so check Promtail before Winston.
-  if (isPromtailTextLine(candidate)) {
-    return { kind: 'promtail', entry: candidate };
-  }
-  if (isWinstonEntry(candidate)) {
-    return { kind: 'winston', entry: candidate };
-  }
-  if (isLokiEntry(candidate)) {
-    return { kind: 'loki', entry: candidate };
-  }
-  return { kind: 'unknown-json', entry: candidate };
+
+  const normalized = normalizeLogEntry(kind, entry);
+  return { kind, entry, normalized } as ParsedLogEntry;
 }
 
 function mapTextLine(line: string): ParsedLogEntry {
   const trimmed = line.trim();
-  if (!trimmed) {
-    return { kind: 'text', entry: { line: '' } };
-  }
-  return { kind: 'text', entry: { line: trimmed } };
+  const entry = { line: trimmed };
+  const normalized = normalizeLogEntry('text', entry);
+  return { kind: 'text', entry, normalized } as ParsedLogEntry;
 }
 
 const allEntries: ParsedLogEntry[] = [];

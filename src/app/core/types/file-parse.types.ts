@@ -1,5 +1,12 @@
 import type { ParsingSpeed } from '../../shared/config/settings-config.types';
-import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from './log-entries';
+import type {
+  DockerLogLine,
+  LokiEntry,
+  NormalizedLogEntry,
+  PinoEntry,
+  PromtailTextLine,
+  WinstonEntry,
+} from './log-entries';
 
 export interface ParseProgress {
   processedBytes: number;
@@ -10,13 +17,13 @@ export interface ParseProgress {
 export type ParsedKind = 'pino' | 'winston' | 'loki' | 'promtail' | 'docker' | 'unknown-json' | 'text';
 
 export type ParsedLogEntry =
-  | ({ kind: 'pino'; entry: PinoEntry } & { searchText?: string })
-  | ({ kind: 'winston'; entry: WinstonEntry } & { searchText?: string })
-  | ({ kind: 'loki'; entry: LokiEntry } & { searchText?: string })
-  | ({ kind: 'promtail'; entry: PromtailTextLine } & { searchText?: string })
-  | ({ kind: 'docker'; entry: DockerLogLine } & { searchText?: string })
-  | ({ kind: 'unknown-json'; entry: unknown } & { searchText?: string })
-  | ({ kind: 'text'; entry: { line: string } } & { searchText?: string });
+  | ({ kind: 'pino'; entry: PinoEntry; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'winston'; entry: WinstonEntry; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'loki'; entry: LokiEntry; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'promtail'; entry: PromtailTextLine; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'docker'; entry: DockerLogLine; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'unknown-json'; entry: unknown; normalized: NormalizedLogEntry } & { searchText?: string })
+  | ({ kind: 'text'; entry: { line: string }; normalized: NormalizedLogEntry } & { searchText?: string });
 
 export type NormalizedLogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'unknown';
 

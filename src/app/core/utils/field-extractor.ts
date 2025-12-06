@@ -10,16 +10,13 @@ import type { NormalizedLogEntry } from '../types/log-entries';
  * @returns The field value or null if not found
  */
 export function extractFieldValue(entry: ParsedLogEntry, fieldName: string): string | number | boolean | null {
-  // TODO: Will be implemented once ParsedLogEntry includes normalized field
-  // For now, use the legacy extraction logic
-
-  // Common fields that should be on normalized entry
-  switch (fieldName) {
-    case 'kind':
-      return entry.kind;
-    default:
-      return extractFromRawEntry(entry, fieldName);
+  // Use normalized structure if available
+  if ('normalized' in entry && entry.normalized) {
+    return extractFromNormalized(entry.normalized, fieldName);
   }
+
+  // Fallback to raw entry extraction (legacy support)
+  return extractFromRawEntry(entry, fieldName);
 }
 
 /**
