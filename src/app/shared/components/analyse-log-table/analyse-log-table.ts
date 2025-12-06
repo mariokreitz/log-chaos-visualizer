@@ -41,8 +41,9 @@ export class AnalyseLogTable {
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
 
-  // Memoization cache for formatted values
-  private formatCache = new WeakMap<ParsedLogEntry, FormattedEntry>();
+  // Memoization cache for formatted values - use Map for better performance
+  private formatCache = new Map<ParsedLogEntry, FormattedEntry>();
+  private readonly MAX_CACHE_SIZE = 10000; // Limit cache to prevent memory issues
 
   public onSearchInput(value: string): void {
     // Just update the input value, don't trigger search
@@ -50,6 +51,8 @@ export class AnalyseLogTable {
   }
 
   public onSearchSubmit(): void {
+    // Clear cache on new search to prevent stale data
+    this.formatCache.clear();
     // Trigger search when user presses Enter
     const trimmedQuery = this.searchQuery().trim();
     this.fileParse.setFilterQuery(trimmedQuery);
@@ -57,6 +60,7 @@ export class AnalyseLogTable {
 
   public onSearchClear(): void {
     this.searchQuery.set('');
+    this.formatCache.clear();
     this.fileParse.setFilterQuery('');
   }
 
@@ -106,6 +110,16 @@ export class AnalyseLogTable {
   private getFormattedEntry(row: ParsedLogEntry): FormattedEntry {
     let cached = this.formatCache.get(row);
     if (!cached) {
+      // Implement cache size limit to prevent memory issues with large datasets
+      if (this.formatCache.size >= this.MAX_CACHE_SIZE) {
+        // Remove oldest entries (first entries in the Map)
+        const iterator = this.formatCache.keys();
+        for (let i = 0; i < 1000; i++) {
+          const key = iterator.next().value;
+          if (key) this.formatCache.delete(key);
+        }
+      }
+
       cached = {
         timestamp: this.computeTimestamp(row),
         level: this.computeLevel(row),

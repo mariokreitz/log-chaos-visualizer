@@ -15,12 +15,15 @@ import { WarningBanner } from '../../shared/components/warning-banner/warning-ba
 export default class Analyse {
   // Warning banner state
   protected readonly showExperimentalWarning = signal(true);
+  protected readonly renderProgress = signal(0);
+  protected readonly isFullyRendered = signal(false);
   // Check if any data is available
   protected readonly hasData = computed(() => this.allEntries().length > 0);
-  // Optimize table entries computation - only recalculate when necessary
-  protected readonly tableEntries = computed(() => {
+  // Total count for display (always show full count)
+  protected readonly totalEntryCount = computed(() => {
     const filtered = this.filteredEntries();
-    return filtered !== null ? filtered : this.allEntries();
+    const all = filtered !== null ? filtered : this.allEntries();
+    return all.length;
   });
   // Loading state for better UX (used in template)
   protected readonly isLoading = computed(() => {
@@ -34,14 +37,47 @@ export default class Analyse {
   private readonly router = inject(Router);
   private readonly featureFlags = inject(FeatureFlagsService);
   readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;
+  // Progressive rendering configuration
+  private readonly INITIAL_CHUNK_SIZE = 100; // Show first 100 entries immediately
+  // Table entries with progressive loading - only show initial chunk, then load rest
+  protected readonly tableEntries = computed(() => {
+    const filtered = this.filteredEntries();
+    const all = filtered !== null ? filtered : this.allEntries();
+
+    // If we're still loading progressively, return only the chunk
+    if (!this.isFullyRendered() && all.length > this.INITIAL_CHUNK_SIZE) {
+      const progress = this.renderProgress();
+      const chunkSize = Math.min(all.length, this.INITIAL_CHUNK_SIZE + progress);
+      return all.slice(0, chunkSize);
+    }
+
+    return all;
+  });
 
   constructor() {
+    // Progressive rendering effect - load data in chunks
+    effect(() => {
+      const allData = this.filteredEntries() ?? this.allEntries();
+
+      if (allData.length > this.INITIAL_CHUNK_SIZE && !this.isFullyRendered()) {
+        // Reset rendering state
+        this.renderProgress.set(0);
+        this.isFullyRendered.set(false);
+
+        // Schedule progressive loading
+        this.loadRemainingChunks(allData.length);
+      } else if (allData.length <= this.INITIAL_CHUNK_SIZE) {
+        // Small dataset, no need for progressive loading
+        this.isFullyRendered.set(true);
+      }
+    });
+
     // Log performance metrics in development
     effect(() => {
       const entries = this.tableEntries();
       if (entries.length > 0) {
         const now = performance.now();
-        console.log(`[Analyse] Rendered ${entries.length} entries at ${now.toFixed(2)}ms`);
+        console.log(`[Analyse] Rendered ${entries.length} of ${this.totalEntryCount()} entries at ${now.toFixed(2)}ms`);
       }
     });
   }
@@ -58,5 +94,38 @@ export default class Analyse {
    */
   protected goToDashboard(): void {
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Load remaining data chunks progressively using requestIdleCallback
+   */
+  private loadRemainingChunks(totalSize: number): void {
+    const CHUNK_SIZE = 1000; // Load 1000 more entries per chunk
+    let currentProgress = 0;
+
+    const loadNextChunk = () => {
+      currentProgress += CHUNK_SIZE;
+      this.renderProgress.set(currentProgress);
+
+      if (this.INITIAL_CHUNK_SIZE + currentProgress < totalSize) {
+        // More chunks to load
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => loadNextChunk(), { timeout: 50 });
+        } else {
+          setTimeout(() => loadNextChunk(), 0);
+        }
+      } else {
+        // All data loaded
+        this.isFullyRendered.set(true);
+        console.log(`[Analyse] Fully rendered ${totalSize} entries`);
+      }
+    };
+
+    // Start loading chunks after initial render
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => loadNextChunk(), { timeout: 50 });
+    } else {
+      setTimeout(() => loadNextChunk(), 0);
+    }
   }
 }
