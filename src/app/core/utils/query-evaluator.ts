@@ -1,11 +1,5 @@
 import type { ParsedLogEntry } from '../types/file-parse.types';
-import type {
-  ASTNode,
-  BinaryExpression,
-  ComparisonExpression,
-  FunctionCall,
-  NotExpression,
-} from '../types/query-language.types';
+import type { ASTNode, BinaryExpression, ComparisonExpression, FunctionCall, NotExpression } from '../types/query-language.types';
 import type { FieldIndexer } from './field-indexer';
 import { getNormalizedEnvironment, getNormalizedLevel } from './search-utils';
 
@@ -197,63 +191,109 @@ function extractFieldValue(entry: ParsedLogEntry, fieldName: string): string | n
 
       // Winston specific
       case 'requestId':
-        if (entry.kind === 'winston') return (entry.entry.meta as any)?.requestId || null;
+        if (entry.kind === 'winston') {
+          const meta = entry.entry.meta as unknown as Record<string, unknown> | undefined;
+          return (meta?.['requestId'] as string) || null;
+        }
         return null;
       case 'userId':
-        if (entry.kind === 'winston') return (entry.entry.meta as any)?.userId || null;
+        if (entry.kind === 'winston') {
+          const meta = entry.entry.meta as unknown as Record<string, unknown> | undefined;
+          return (meta?.['userId'] as string) || null;
+        }
         return null;
       case 'traceId':
-        if (entry.kind === 'winston') return (entry.entry.meta as any)?.traceId || null;
+        if (entry.kind === 'winston') {
+          const meta = entry.entry.meta as unknown as Record<string, unknown> | undefined;
+          return (meta?.['traceId'] as string) || null;
+        }
         return null;
 
       // Loki specific
-      case 'line':
-        if (entry.kind === 'loki') return (entry.entry as any).line;
+      case 'line': {
+        if (entry.kind === 'loki') {
+          const lokiEntry = entry.entry as unknown as { line?: string };
+          return lokiEntry.line ?? null;
+        }
         return null;
-      case 'job':
-        if (entry.kind === 'loki') return (entry.entry as any).labels?.job || null;
+      }
+      case 'job': {
+        if (entry.kind === 'loki') {
+          const lokiEntry = entry.entry as unknown as { labels?: { job?: string } };
+          return lokiEntry.labels?.job ?? null;
+        }
         return null;
-      case 'instance':
-        if (entry.kind === 'loki') return (entry.entry as any).labels?.instance || null;
+      }
+      case 'instance': {
+        if (entry.kind === 'loki') {
+          const lokiEntry = entry.entry as unknown as { labels?: { instance?: string } };
+          return lokiEntry.labels?.instance ?? null;
+        }
         return null;
-      case 'app':
-        if (entry.kind === 'loki') return (entry.entry as any).labels?.app || null;
+      }
+      case 'app': {
+        if (entry.kind === 'loki') {
+          const lokiEntry = entry.entry as unknown as { labels?: { app?: string } };
+          return lokiEntry.labels?.app ?? null;
+        }
         return null;
+      }
 
       // Docker specific
-      case 'log':
-        if (entry.kind === 'docker') return (entry.entry as any).log;
+      case 'log': {
+        if (entry.kind === 'docker') {
+          const dockerEntry = entry.entry as unknown as { log?: string };
+          return dockerEntry.log ?? null;
+        }
         return null;
-      case 'stream':
-        if (entry.kind === 'docker') return (entry.entry as any).stream;
+      }
+      case 'stream': {
+        if (entry.kind === 'docker') {
+          const dockerEntry = entry.entry as unknown as { stream?: string };
+          return dockerEntry.stream ?? null;
+        }
         return null;
+      }
 
       // HTTP fields (when available in pino)
-      case 'statusCode':
-        if (entry.kind === 'pino' && (entry.entry as any).res) {
-          return (entry.entry as any).res.statusCode;
+      case 'statusCode': {
+        if (entry.kind === 'pino') {
+          const pinoEntry = entry.entry as unknown as { res?: { statusCode?: number } };
+          return pinoEntry.res?.statusCode ?? null;
         }
         return null;
-      case 'method':
-        if (entry.kind === 'pino' && (entry.entry as any).req) {
-          return (entry.entry as any).req.method;
+      }
+      case 'method': {
+        if (entry.kind === 'pino') {
+          const pinoEntry = entry.entry as unknown as { req?: { method?: string } };
+          return pinoEntry.req?.method ?? null;
         }
         return null;
-      case 'url':
-        if (entry.kind === 'pino' && (entry.entry as any).req) {
-          return (entry.entry as any).req.url;
+      }
+      case 'url': {
+        if (entry.kind === 'pino') {
+          const pinoEntry = entry.entry as unknown as { req?: { url?: string } };
+          return pinoEntry.req?.url ?? null;
         }
         return null;
-      case 'responseTime':
-        if (entry.kind === 'pino' && (entry.entry as any).res) {
-          return (entry.entry as any).res.responseTimeMs;
+      }
+      case 'responseTime': {
+        if (entry.kind === 'pino') {
+          const pinoEntry = entry.entry as unknown as { res?: { responseTimeMs?: number } };
+          return pinoEntry.res?.responseTimeMs ?? null;
         }
         return null;
+      }
 
-      default:
+      default: {
         // Try to extract from generic entry object
-        const anyEntry = entry.entry as any;
-        return anyEntry?.[fieldName] ?? null;
+        const genericEntry = entry.entry as unknown as Record<string, unknown>;
+        const value = genericEntry?.[fieldName];
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          return value;
+        }
+        return null;
+      }
     }
   } catch {
     return null;
@@ -267,14 +307,22 @@ function extractMessage(entry: ParsedLogEntry): string | null {
         return entry.entry.msg || null;
       case 'winston':
         return entry.entry.message || null;
-      case 'loki':
-        return (entry.entry as any).line || null;
-      case 'promtail':
-        return (entry.entry as any).message || null;
-      case 'docker':
-        return (entry.entry as any).log || null;
-      case 'text':
-        return (entry.entry as any).line || null;
+      case 'loki': {
+        const lokiEntry = entry.entry as unknown as { line?: string };
+        return lokiEntry.line ?? null;
+      }
+      case 'promtail': {
+        const promtailEntry = entry.entry as unknown as { message?: string };
+        return promtailEntry.message ?? null;
+      }
+      case 'docker': {
+        const dockerEntry = entry.entry as unknown as { log?: string };
+        return dockerEntry.log ?? null;
+      }
+      case 'text': {
+        const textEntry = entry.entry as unknown as { line?: string };
+        return textEntry.line ?? null;
+      }
       default:
         return null;
     }
@@ -291,10 +339,14 @@ function extractTimestamp(entry: ParsedLogEntry): number | null {
       case 'winston':
         return Date.parse(entry.entry.timestamp);
       case 'loki':
-      case 'promtail':
-        return Date.parse((entry.entry as any).ts);
-      case 'docker':
-        return Date.parse((entry.entry as any).time);
+      case 'promtail': {
+        const entryWithTs = entry.entry as unknown as { ts?: string };
+        return entryWithTs.ts ? Date.parse(entryWithTs.ts) : null;
+      }
+      case 'docker': {
+        const dockerEntry = entry.entry as unknown as { time?: string };
+        return dockerEntry.time ? Date.parse(dockerEntry.time) : null;
+      }
       default:
         return null;
     }

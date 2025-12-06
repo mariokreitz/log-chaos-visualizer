@@ -4,7 +4,6 @@ import type {
   BinaryOperator,
   ComparisonExpression,
   ComparisonOperator,
-  FieldReference,
   FunctionCall,
   FunctionOperator,
   Literal,

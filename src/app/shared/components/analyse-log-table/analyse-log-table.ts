@@ -102,18 +102,28 @@ export class AnalyseLogTable {
           50: 'error',
           60: 'fatal',
         };
-        return map[(row.entry as any).level] ?? 'unknown';
+        const pinoEntry = row.entry as unknown as { level?: number };
+        return map[pinoEntry.level ?? 0] ?? 'unknown';
       }
-      case 'winston':
-        return (row.entry as any).level ?? 'unknown';
-      case 'loki':
-        return ((row.entry as any).labels?.level as string) ?? 'unknown';
-      case 'promtail':
-        return (row.entry as any).level ?? 'unknown';
-      case 'docker':
-        return (row.entry as any).stream === 'stderr' ? 'error' : 'info';
+      case 'winston': {
+        const winstonEntry = row.entry as unknown as { level?: string };
+        return winstonEntry.level ?? 'unknown';
+      }
+      case 'loki': {
+        const lokiEntry = row.entry as unknown as { labels?: { level?: string } };
+        return (lokiEntry.labels?.level as string) ?? 'unknown';
+      }
+      case 'promtail': {
+        const promtailEntry = row.entry as unknown as { level?: string };
+        return promtailEntry.level ?? 'unknown';
+      }
+      case 'docker': {
+        const dockerEntry = row.entry as unknown as { stream?: string };
+        return dockerEntry.stream === 'stderr' ? 'error' : 'info';
+      }
       case 'text': {
-        const line = String((row.entry as any).line ?? '');
+        const textEntry = row.entry as unknown as { line?: string };
+        const line = String(textEntry.line ?? '');
         const firstToken = line.split(/\s+/, 1)[0];
         const upperToken = String(firstToken).toUpperCase();
         if (upperToken === 'TRACE') return 'trace';
@@ -131,21 +141,33 @@ export class AnalyseLogTable {
 
   public formatMessage(row: ParsedLogEntry): string {
     switch (row.kind) {
-      case 'pino':
-        return String((row.entry as any).msg ?? '');
-      case 'winston':
-        return String((row.entry as any).message ?? '');
-      case 'loki':
-        return String((row.entry as any).line ?? '');
-      case 'promtail':
-        return String((row.entry as any).message ?? '');
-      case 'docker':
-        return String((row.entry as any).log ?? '');
-      case 'text':
-        return String((row.entry as any).line ?? '');
+      case 'pino': {
+        const pinoEntry = row.entry as unknown as { msg?: string };
+        return String(pinoEntry.msg ?? '');
+      }
+      case 'winston': {
+        const winstonEntry = row.entry as unknown as { message?: string };
+        return String(winstonEntry.message ?? '');
+      }
+      case 'loki': {
+        const lokiEntry = row.entry as unknown as { line?: string };
+        return String(lokiEntry.line ?? '');
+      }
+      case 'promtail': {
+        const promtailEntry = row.entry as unknown as { message?: string };
+        return String(promtailEntry.message ?? '');
+      }
+      case 'docker': {
+        const dockerEntry = row.entry as unknown as { log?: string };
+        return String(dockerEntry.log ?? '');
+      }
+      case 'text': {
+        const textEntry = row.entry as unknown as { line?: string };
+        return String(textEntry.line ?? '');
+      }
       case 'unknown-json':
       default:
-        return JSON.stringify((row as any).entry ?? '');
+        return JSON.stringify(row.entry ?? '');
     }
   }
 

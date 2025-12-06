@@ -193,10 +193,14 @@ export class FieldIndexer {
         case 'winston':
           return Date.parse(entry.entry.timestamp);
         case 'loki':
-        case 'promtail':
-          return Date.parse((entry.entry as any).ts);
-        case 'docker':
-          return Date.parse((entry.entry as any).time);
+        case 'promtail': {
+          const promtailEntry = entry.entry as unknown as { ts?: string };
+          return promtailEntry.ts ? Date.parse(promtailEntry.ts) : null;
+        }
+        case 'docker': {
+          const dockerEntry = entry.entry as unknown as { time?: string };
+          return dockerEntry.time ? Date.parse(dockerEntry.time) : null;
+        }
         default:
           return null;
       }
@@ -212,14 +216,22 @@ export class FieldIndexer {
           return entry.entry.msg || null;
         case 'winston':
           return entry.entry.message || null;
-        case 'loki':
-          return (entry.entry as any).line || null;
-        case 'promtail':
-          return (entry.entry as any).message || null;
-        case 'docker':
-          return (entry.entry as any).log || null;
-        case 'text':
-          return (entry.entry as any).line || null;
+        case 'loki': {
+          const lokiEntry = entry.entry as unknown as { line?: string };
+          return lokiEntry.line ?? null;
+        }
+        case 'promtail': {
+          const promtailEntry = entry.entry as unknown as { message?: string };
+          return promtailEntry.message ?? null;
+        }
+        case 'docker': {
+          const dockerEntry = entry.entry as unknown as { log?: string };
+          return dockerEntry.log ?? null;
+        }
+        case 'text': {
+          const textEntry = entry.entry as unknown as { line?: string };
+          return textEntry.line ?? null;
+        }
         default:
           return null;
       }

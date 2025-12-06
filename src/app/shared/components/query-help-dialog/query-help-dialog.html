@@ -1,7 +1,7 @@
 <div class="query-help-dialog">
   <div class="dialog-header">
     <h2 mat-dialog-title>Query Syntax Reference</h2>
-    <button mat-icon-button (click)="close()" aria-label="Close dialog">
+    <button (click)="close()" aria-label="Close dialog" mat-icon-button>
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -173,13 +173,13 @@
             <p>Match a field against a regular expression pattern.</p>
             <div class="examples">
               <code>message.matches(/timeout/i)</code>
-              <code>message.matches(/\d{3}\s+error/)</code>
+              <code>message.matches(/\d{{ '{' }}3{{ '}' }}\s+error/)</code>
               <code>message.matches(/^ERROR.*timeout$/)</code>
               <code>message.matches(/api|database|connection/)</code>
             </div>
             <p class="note">
-              <strong>Note:</strong> Use <code>/pattern/flags</code> syntax. Common flags: <code>i</code> (case-insensitive),
-              <code>g</code> (global).
+              <strong>Note:</strong> Use <code>/pattern/flags</code> syntax. Common flags:
+              <code>i</code> (case-insensitive), <code>g</code> (global).
             </p>
           </div>
         </div>
@@ -545,7 +545,9 @@
               <tr>
                 <td><code>\d</code></td>
                 <td>Any digit (0-9)</td>
-                <td><code>/\d{3}/</code> matches "404", "500"</td>
+                <td>
+                  <code>/\d{{ '{' }}3{{ '}' }}/</code> matches "404", "500"
+                </td>
               </tr>
               <tr>
                 <td><code>\w</code></td>
@@ -604,19 +606,31 @@
             </thead>
             <tbody>
               <tr>
-                <td><code>&#123;'&#123;n&#125;'&#125;</code></td>
+                <td>
+                  <code>{{ '{' }}n{{ '}' }}</code>
+                </td>
                 <td>Exactly n times</td>
-                <td><code>/\d{'{3}'}/</code> matches exactly 3 digits</td>
+                <td>
+                  <code>/\d{{ '{' }}3{{ '}' }}/</code> matches exactly 3 digits
+                </td>
               </tr>
               <tr>
-                <td><code>{'{n,}'}</code></td>
+                <td>
+                  <code>{{ '{' }}n,{{ '}' }}</code>
+                </td>
                 <td>n or more times</td>
-                <td><code>/\d{'{2,}'}/</code> matches 2 or more digits</td>
+                <td>
+                  <code>/\d{{ '{' }}2,{{ '}' }}/</code> matches 2 or more digits
+                </td>
               </tr>
               <tr>
-                <td><code>{'{n,m}'}</code></td>
+                <td>
+                  <code>{{ '{' }}n,m{{ '}' }}</code>
+                </td>
                 <td>Between n and m times</td>
-                <td><code>/\d{'{2,4}'}/</code> matches 2-4 digits</td>
+                <td>
+                  <code>/\d{{ '{' }}2,4{{ '}' }}/</code> matches 2-4 digits
+                </td>
               </tr>
             </tbody>
           </table>
@@ -649,7 +663,7 @@
             <code>message.matches(/timeout/i)</code>
             <p class="description">Case-insensitive search for "timeout"</p>
 
-            <code>message.matches(/\d{3}\s+error/)</code>
+            <code>message.matches(/\d{{ '{' }}3{{ '}' }}\s+error/)</code>
             <p class="description">3 digits followed by whitespace and "error"</p>
 
             <code>message.matches(/^ERROR.*timeout$/)</code>
@@ -681,12 +695,8 @@
               fields when possible.
             </p>
             <div class="examples">
-              <div class="good">
-                <strong>✓ Good:</strong> <code>level=error AND message.contains(api)</code>
-              </div>
-              <div class="bad">
-                <strong>✗ Slow:</strong> <code>message.contains(api) AND level=error</code>
-              </div>
+              <div class="good"><strong>✓ Good:</strong> <code>level=error AND message.contains(api)</code></div>
+              <div class="bad"><strong>✗ Slow:</strong> <code>message.contains(api) AND level=error</code></div>
             </div>
           </div>
 
@@ -694,12 +704,8 @@
             <h4>2. Narrow Before Regex</h4>
             <p>Regex queries require full scans. Filter with simpler conditions first to reduce the dataset.</p>
             <div class="examples">
-              <div class="good">
-                <strong>✓ Good:</strong> <code>level=error AND message.matches(/timeout/i)</code>
-              </div>
-              <div class="bad">
-                <strong>✗ Slow:</strong> <code>message.matches(/timeout/i)</code>
-              </div>
+              <div class="good"><strong>✓ Good:</strong> <code>level=error AND message.matches(/timeout/i)</code></div>
+              <div class="bad"><strong>✗ Slow:</strong> <code>message.matches(/timeout/i)</code></div>
             </div>
           </div>
 
@@ -709,12 +715,8 @@
               <code>contains()</code>, <code>startsWith()</code>, and <code>endsWith()</code> are faster than regex.
             </p>
             <div class="examples">
-              <div class="good">
-                <strong>✓ Good:</strong> <code>message.contains(timeout)</code>
-              </div>
-              <div class="bad">
-                <strong>✗ Slower:</strong> <code>message.matches(/timeout/)</code>
-              </div>
+              <div class="good"><strong>✓ Good:</strong> <code>message.contains(timeout)</code></div>
+              <div class="bad"><strong>✗ Slower:</strong> <code>message.matches(/timeout/)</code></div>
             </div>
           </div>
 
@@ -722,12 +724,8 @@
             <h4>4. Quote Multi-Word Strings</h4>
             <p>Use quotes for phrases to ensure proper parsing.</p>
             <div class="examples">
-              <div class="good">
-                <strong>✓ Good:</strong> <code>message.contains("connection timeout")</code>
-              </div>
-              <div class="bad">
-                <strong>✗ Error:</strong> <code>message.contains(connection timeout)</code>
-              </div>
+              <div class="good"><strong>✓ Good:</strong> <code>message.contains("connection timeout")</code></div>
+              <div class="bad"><strong>✗ Error:</strong> <code>message.contains(connection timeout)</code></div>
             </div>
           </div>
 
@@ -779,7 +777,6 @@
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button (click)="close()">Close</button>
+    <button (click)="close()" mat-button>Close</button>
   </mat-dialog-actions>
 </div>
-

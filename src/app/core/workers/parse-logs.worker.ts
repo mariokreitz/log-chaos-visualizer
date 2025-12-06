@@ -114,7 +114,6 @@ function mapTextLine(line: string): ParsedLogEntry {
 
 const allEntries: ParsedLogEntry[] = [];
 const fieldIndexer = new FieldIndexer();
-const queryCache = new Map<string, { ast: any; timestamp: number }>();
 
 function tokenizeQuery(query: string): { tokens: string[]; phrases: string[] } {
   const trimmed = query.trim().toLowerCase();
@@ -181,7 +180,7 @@ function calculateRelevance(searchText: string, tokens: string[], phrases: strin
   return score;
 }
 
-function fuzzyMatch(text: string, query: string, maxDistance: number = 2): boolean {
+function fuzzyMatch(text: string, query: string, maxDistance = 2): boolean {
   if (Math.abs(text.length - query.length) > maxDistance) return false;
 
   let distance = 0;
@@ -276,7 +275,9 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
     }
 
     const lowerQuery = query.toLowerCase();
-    let { tokens, phrases } = tokenizeQuery(lowerQuery);
+    const queryResult = tokenizeQuery(lowerQuery);
+    let tokens = queryResult.tokens;
+    const phrases = queryResult.phrases;
 
     let unknownRequested = false;
     if (tokens.includes('unknown')) {
@@ -293,11 +294,11 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
 
     const scoredResults = allEntries
       .map((entry) => {
-        const search = (entry as any).searchText as string | undefined;
-        if (typeof search !== 'string') return null;
+        const entryWithSearch = entry as ParsedLogEntry & { searchText?: string };
+        if (typeof entryWithSearch.searchText !== 'string') return null;
 
-        if (hasSearchTokens && matchesQuery(search, tokens, phrases)) {
-          const score = calculateRelevance(search, tokens, phrases);
+        if (hasSearchTokens && matchesQuery(entryWithSearch.searchText, tokens, phrases)) {
+          const score = calculateRelevance(entryWithSearch.searchText, tokens, phrases);
           return { entry, score };
         }
 
@@ -305,7 +306,7 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
           try {
             const lvl = getNormalizedLevel(entry);
             const env = getNormalizedEnvironment(entry);
-            if (lvl === 'unknown' || env === 'unknown' || search.includes('unknown')) {
+            if (lvl === 'unknown' || env === 'unknown' || entryWithSearch.searchText.includes('unknown')) {
               let score = 30;
               if (lvl === 'unknown') score += 10;
               if (env === 'unknown') score += 10;
@@ -405,7 +406,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
         }
 
         // compute a lightweight search index for fast client-side filtering
-        (parsed as any).searchText = computeSearchText(parsed);
+        (parsed as ParsedLogEntry & { searchText?: string }).searchText = computeSearchText(parsed);
 
         allEntries.push(parsed);
         batchEntries.push(parsed);
@@ -459,7 +460,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
       } else {
         parsed = mapTextLine(trimmed);
       }
-      (parsed as any).searchText = computeSearchText(parsed);
+      (parsed as ParsedLogEntry & { searchText?: string }).searchText = computeSearchText(parsed);
       allEntries.push(parsed);
       batchEntries.push(parsed);
       batchRawCount += 1;

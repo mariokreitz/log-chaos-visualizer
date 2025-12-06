@@ -1,18 +1,18 @@
 <section class="help-page">
   <div class="page-header">
     <h1 class="app-section-title">Query Syntax Help</h1>
-    <button mat-raised-button color="primary" (click)="openQueryHelp()">
+    <button (click)="openQueryHelp()" color="primary" mat-raised-button>
       <mat-icon>help</mat-icon>
       Open Full Reference
     </button>
   </div>
 
   <!-- Quick Start Section -->
-  <section class="app-card" aria-labelledby="quick-start-heading">
+  <section aria-labelledby="quick-start-heading" class="app-card">
     <h2 id="quick-start-heading">Quick Start</h2>
     <p>
-      Log Chaos Visualizer supports a powerful query language for filtering and searching logs. You can use field-specific
-      searches, boolean operators, and regular expressions to find exactly what you need.
+      Log Chaos Visualizer supports a powerful query language for filtering and searching logs. You can use
+      field-specific searches, boolean operators, and regular expressions to find exactly what you need.
     </p>
 
     <div class="quick-examples">
@@ -32,7 +32,7 @@
   </section>
 
   <!-- Operators Section -->
-  <section class="app-card" aria-labelledby="operators-heading">
+  <section aria-labelledby="operators-heading" class="app-card">
     <h2 id="operators-heading">Operators</h2>
 
     <h3>Comparison Operators</h3>
@@ -85,7 +85,7 @@
   </section>
 
   <!-- Functions Section -->
-  <section class="app-card" aria-labelledby="functions-heading">
+  <section aria-labelledby="functions-heading" class="app-card">
     <h2 id="functions-heading">String Functions</h2>
 
     <div class="function-list">
@@ -114,30 +114,22 @@
         <h3>matches(regex)</h3>
         <p>Match a field against a regular expression pattern.</p>
         <code>message.matches(/timeout/i)</code>
-        <code>message.matches(/\d{'{3}'}\s+error/)</code>
+        <code>message.matches(/\d{{ '{' }}3{{ '}' }}\s+error/)</code>
         <code>message.matches(/api|database|connection/)</code>
       </div>
     </div>
   </section>
 
   <!-- Common Fields Section -->
-  <section class="app-card" aria-labelledby="fields-heading">
+  <section aria-labelledby="fields-heading" class="app-card">
     <h2 id="fields-heading">Common Fields</h2>
     <p>These fields are available in all log formats:</p>
 
     <div class="field-list">
-      <div class="field-item">
-        <strong>level</strong> - Log level (trace, debug, info, warn, error, fatal, unknown)
-      </div>
-      <div class="field-item">
-        <strong>message</strong> - Log message text
-      </div>
-      <div class="field-item">
-        <strong>timestamp</strong> - Log timestamp (supports date comparisons)
-      </div>
-      <div class="field-item">
-        <strong>environment</strong> - Environment (dev, staging, prod, unknown)
-      </div>
+      <div class="field-item"><strong>level</strong> - Log level (trace, debug, info, warn, error, fatal, unknown)</div>
+      <div class="field-item"><strong>message</strong> - Log message text</div>
+      <div class="field-item"><strong>timestamp</strong> - Log timestamp (supports date comparisons)</div>
+      <div class="field-item"><strong>environment</strong> - Environment (dev, staging, prod, unknown)</div>
       <div class="field-item">
         <strong>kind</strong> - Log format type (pino, winston, loki, docker, promtail, text)
       </div>
@@ -151,7 +143,7 @@
   </section>
 
   <!-- Examples Section -->
-  <section class="app-card" aria-labelledby="examples-heading">
+  <section aria-labelledby="examples-heading" class="app-card">
     <h2 id="examples-heading">Common Examples</h2>
 
     <div class="examples-grid">
@@ -196,15 +188,13 @@
   </section>
 
   <!-- Performance Tips Section -->
-  <section class="app-card" aria-labelledby="performance-heading">
+  <section aria-labelledby="performance-heading" class="app-card">
     <h2 id="performance-heading">Performance Tips</h2>
 
     <div class="tips-list">
       <div class="tip-item">
         <h3>1. Use indexed fields first</h3>
-        <p>
-          Queries on <code>level</code> and <code>environment</code> are fastest. Start with these when possible.
-        </p>
+        <p>Queries on <code>level</code> and <code>environment</code> are fastest. Start with these when possible.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
           <code>level=error AND message.contains(api)</code>
@@ -222,9 +212,7 @@
 
       <div class="tip-item">
         <h3>3. Use simple functions when possible</h3>
-        <p>
-          <code>contains()</code>, <code>startsWith()</code>, and <code>endsWith()</code> are faster than regex.
-        </p>
+        <p><code>contains()</code>, <code>startsWith()</code>, and <code>endsWith()</code> are faster than regex.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
           <code>message.contains(timeout)</code>
@@ -247,7 +235,7 @@
   </section>
 
   <!-- Legacy Search Section -->
-  <section class="app-card" aria-labelledby="legacy-heading">
+  <section aria-labelledby="legacy-heading" class="app-card">
     <h2 id="legacy-heading">Legacy Text Search</h2>
     <p>
       Simple text without operators automatically falls back to full-text search for backward compatibility. This is
@@ -262,13 +250,10 @@
 
   <!-- CTA Section -->
   <section class="cta-section">
-    <p>
-      For complete documentation including regex patterns, all available fields by log format, and more examples:
-    </p>
-    <button mat-raised-button color="primary" (click)="openQueryHelp()">
+    <p>For complete documentation including regex patterns, all available fields by log format, and more examples:</p>
+    <button (click)="openQueryHelp()" color="primary" mat-raised-button>
       <mat-icon>help</mat-icon>
       Open Full Query Reference
     </button>
   </section>
 </section>
-

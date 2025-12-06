@@ -23,6 +23,9 @@ import { computeSearchText } from '../utils/search-utils';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
 
+// Extended type for entries with computed searchText
+type ParsedLogEntryWithSearch = ParsedLogEntry & { searchText?: string };
+
 const DEFAULT_TIMELINE_BUCKET_MS = 60_000; // 1 minute
 const DEFAULT_TOP_N_PEAKS = 5;
 
@@ -332,22 +335,22 @@ export class FileParseService {
       } else {
         // Ensure entries have a computed searchText when worker isn't available
         for (const ent of this.allEntries()) {
-          const existing = (ent as any).searchText as string | undefined;
-          if (typeof existing !== 'string') {
+          const entryWithSearch = ent as ParsedLogEntryWithSearch;
+          if (typeof entryWithSearch.searchText !== 'string') {
             try {
-              (ent as any).searchText = computeSearchTextForEntry(ent);
+              entryWithSearch.searchText = computeSearchTextForEntry(ent);
             } catch {
-              (ent as any).searchText = '';
+              entryWithSearch.searchText = '';
             }
           }
 
           const scoredResults = this.allEntries()
             .map((entry) => {
-              const search = (entry as any).searchText as string | undefined;
-              if (typeof search !== 'string') return null;
+              const entryWithSearch = entry as ParsedLogEntryWithSearch;
+              if (typeof entryWithSearch.searchText !== 'string') return null;
 
-              if (matchesQueryFallback(search, _tokens, phrases)) {
-                const score = calculateRelevanceFallback(search, _tokens, phrases);
+              if (matchesQueryFallback(entryWithSearch.searchText, _tokens, phrases)) {
+                const score = calculateRelevanceFallback(entryWithSearch.searchText, _tokens, phrases);
                 return { entry, score };
               }
 
@@ -355,7 +358,7 @@ export class FileParseService {
                 try {
                   const lvl = normalizeLogLevel(entry);
                   const env = normalizeEnvironment(entry);
-                  if (lvl === 'unknown' || env === 'unknown' || search.includes('unknown')) {
+                  if (lvl === 'unknown' || env === 'unknown' || entryWithSearch.searchText.includes('unknown')) {
                     let score = 30;
                     if (lvl === 'unknown') score += 10;
                     if (env === 'unknown') score += 10;
@@ -448,11 +451,12 @@ function normalizeLogLevel(entry: ParsedLogEntry): NormalizedLogLevel {
   // Docker logs: derive level from stream (stderr -> error, stdout -> info)
   if (entry.kind === 'docker') {
     try {
-      const stream = String((entry.entry as any).stream ?? '').toLowerCase();
+      const dockerEntry = entry.entry as unknown as { stream?: string; log?: string };
+      const stream = String(dockerEntry.stream ?? '').toLowerCase();
       if (stream === 'stderr') return 'error';
       if (stream === 'stdout') return 'info';
       // Fallback: attempt to extract level token from the log text
-      const log = (entry.entry as any).log ?? '';
+      const log = dockerEntry.log ?? '';
       const m = /level=(trace|debug|info|warn|error|fatal)\b/i.exec(String(log));
       if (m) return m[1].toLowerCase() as NormalizedLogLevel;
     } catch {
@@ -702,7 +706,7 @@ function computeSearchTextForEntry(entry: ParsedLogEntry): string {
 
     switch (entry.kind) {
       case 'pino': {
-        const e = entry.entry as any;
+        const e = entry.entry;
         parts.push(safeString(e.msg));
         parts.push(safeString(e.hostname));
         parts.push(safeString(e.pid));
@@ -711,37 +715,39 @@ function computeSearchTextForEntry(entry: ParsedLogEntry): string {
         break;
       }
       case 'winston': {
-        const e = entry.entry as any;
+        const e = entry.entry;
+        const meta = e.meta as unknown as Record<string, unknown> | undefined;
         parts.push(safeString(e.message));
         parts.push(safeString(e.level));
-        parts.push(safeString((e.meta as any)?.requestId));
-        parts.push(safeString((e.meta as any)?.userId));
+        parts.push(safeString(meta?.['requestId']));
+        parts.push(safeString(meta?.['userId']));
         break;
       }
       case 'loki': {
-        const e = entry.entry as any;
+        const e = entry.entry as unknown as { line?: string; labels?: Record<string, unknown>; ts?: string };
         parts.push(safeString(e.line));
-        parts.push(safeString((e.labels as any)?.['job']));
-        parts.push(safeString((e.labels as any)?.['level']));
+        parts.push(safeString(e.labels?.['job']));
+        parts.push(safeString(e.labels?.['level']));
         parts.push(safeString(e.ts));
         break;
       }
       case 'promtail': {
-        const e = entry.entry as any;
+        const e = entry.entry as unknown as { message?: string; level?: string; ts?: string };
         parts.push(safeString(e.message));
         parts.push(safeString(e.level));
         parts.push(safeString(e.ts));
         break;
       }
       case 'docker': {
-        const e = entry.entry as any;
+        const e = entry.entry as unknown as { log?: string; stream?: string; time?: string };
         parts.push(safeString(e.log));
         parts.push(safeString(e.stream));
         parts.push(safeString(e.time));
         break;
       }
       case 'text': {
-        parts.push(safeString((entry.entry as any).line));
+        const textEntry = entry.entry as unknown as { line?: string };
+        parts.push(safeString(textEntry.line));
         break;
       }
       case 'unknown-json':

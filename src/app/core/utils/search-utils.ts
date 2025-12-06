@@ -101,7 +101,8 @@ export function getNormalizedLevel(parsed: ParsedLogEntry): string {
         return 'unknown';
       }
       case 'text': {
-        const line = String((parsed.entry as any).line ?? '');
+        const textEntry = parsed.entry as unknown as { line?: string };
+        const line = String(textEntry.line ?? '');
         const firstToken = line.split(/\s+/, 1)[0];
         const upperToken = String(firstToken).toUpperCase();
         if (upperToken === 'TRACE') return 'trace';
@@ -174,7 +175,8 @@ export function getNormalizedEnvironment(parsed: ParsedLogEntry): string {
         return 'unknown';
       }
       case 'text': {
-        const line = String((parsed.entry as any).line ?? '');
+        const textEntry = parsed.entry as unknown as { line?: string };
+        const line = String(textEntry.line ?? '');
         const m = /env=(dev|staging|prod)\b/i.exec(line);
         if (m) return m[1].toLowerCase();
         return 'unknown';
@@ -212,7 +214,8 @@ function timestampTokens(parsed: ParsedLogEntry): string[] {
     }
 
     if (parsed.kind === 'loki' || parsed.kind === 'promtail') {
-      const ts = (parsed.entry as any).ts as unknown;
+      const entryWithTs = parsed.entry as unknown as { ts?: string };
+      const ts = entryWithTs.ts;
       if (typeof ts === 'string') {
         tokens.push(ts);
         const ms = Date.parse(ts);
@@ -222,7 +225,8 @@ function timestampTokens(parsed: ParsedLogEntry): string[] {
     }
 
     if (parsed.kind === 'docker') {
-      const ts = (parsed.entry as any).time as unknown;
+      const dockerEntry = parsed.entry as unknown as { time?: string };
+      const ts = dockerEntry.time;
       if (typeof ts === 'string') {
         tokens.push(ts);
         const ms = Date.parse(ts);
@@ -252,17 +256,19 @@ export function computeSearchText(parsed: ParsedLogEntry): string {
     }
     case 'winston': {
       const e = parsed.entry as WinstonEntry & Record<string, unknown>;
+      const meta = e.meta as unknown as Record<string, unknown> | undefined;
       parts.push(safeString(e.message));
       parts.push(safeString(e.level));
-      parts.push(safeString((e.meta as any)?.requestId));
-      parts.push(safeString((e.meta as any)?.userId));
+      parts.push(safeString(meta?.['requestId']));
+      parts.push(safeString(meta?.['userId']));
       break;
     }
     case 'loki': {
       const e = parsed.entry as LokiEntry & Record<string, unknown>;
+      const labels = e.labels as unknown as Record<string, unknown> | undefined;
       parts.push(safeString(e.line));
-      parts.push(safeString((e.labels as any)?.['job']));
-      parts.push(safeString((e.labels as any)?.['level']));
+      parts.push(safeString(labels?.['job']));
+      parts.push(safeString(labels?.['level']));
       break;
     }
     case 'promtail': {
@@ -278,7 +284,8 @@ export function computeSearchText(parsed: ParsedLogEntry): string {
       break;
     }
     case 'text': {
-      parts.push(safeString((parsed.entry as any).line));
+      const textEntry = parsed.entry as unknown as { line?: string };
+      parts.push(safeString(textEntry.line));
       break;
     }
     case 'unknown-json':
