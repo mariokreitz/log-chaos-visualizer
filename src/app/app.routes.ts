@@ -21,6 +21,10 @@ export const routes: Routes = [
         path: 'about',
         loadComponent: () => import('./pages/about/about'),
       },
+      {
+        path: 'help',
+        loadComponent: () => import('./pages/help-me/help-me'),
+      },
     ],
   },
 ];

@@ -27,6 +27,14 @@ export const NAV_ITEMS: NavItems = [
   },
   {
     id: 4,
+    label: 'Help Me',
+    route: '/help',
+    icon: 'help',
+    ariaLabel: 'Go to help',
+    exact: true,
+  },
+  {
+    id: 5,
     label: 'About',
     route: '/about',
     icon: 'info',

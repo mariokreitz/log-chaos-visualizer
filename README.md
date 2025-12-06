@@ -15,8 +15,49 @@ What it does
 
 - Visualizes log files (Pino, Winston, Loki/Promtail, Docker JSON, and plain text).
 - Provides charts and tables to explore log levels, kinds, and timelines.
+- **Powerful query language** for filtering logs with field-specific searches, boolean operators, and regex support.
 - Supports loading large sample logs (20k — 200k lines) located in `public/data`.
 - Comes with a Python helper (`generate_logs.py`) to generate synthetic logs for testing.
+
+## Query Language
+
+The application features a structured query language for advanced log filtering:
+
+### Basic Syntax
+
+```
+level=error                           # Field comparison
+message.contains(timeout)             # String function
+level=error AND environment=prod      # Boolean logic
+message.matches(/api.*error/i)        # Regex matching
+```
+
+### Key Features
+
+- **Field-specific searches**: Query by level, message, timestamp, environment, and format-specific fields
+- **Comparison operators**: `=`, `!=`, `>`, `>=`, `<`, `<=`
+- **String functions**: `contains()`, `startsWith()`, `endsWith()`, `matches()`
+- **Boolean operators**: `AND`, `OR`, `NOT`, parentheses for grouping
+- **Performance optimized**: Indexed fields for O(1) lookups, queries run in Web Worker
+- **Real-time validation**: Syntax errors shown immediately with helpful messages
+
+### Examples
+
+```
+# Find production errors
+level=error AND environment=prod
+
+# API timeout issues
+message.contains(api) AND message.matches(/timeout/i)
+
+# Failed HTTP requests
+(statusCode>=500 OR statusCode=404) AND method=GET
+
+# Time range filtering
+timestamp>="2024-12-01" AND timestamp<"2024-12-07"
+```
+
+For complete query syntax documentation, visit the **Help** page in the application.
 
 Prerequisites
 
