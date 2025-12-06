@@ -45,7 +45,7 @@
 
   @if (!isValid() && hasValue()) {
     <div class="search-error-message" role="alert">
-      @for (error of validationErrors(); track error) {
+      @for (error of validationErrors(); track $index) {
         <div>{{ error }}</div>
       }
     </div>

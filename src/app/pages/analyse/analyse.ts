@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { FileParseService } from '../../core/services/file-parse.service';
 import { AnalyseLogTable } from '../../shared/components/analyse-log-table/analyse-log-table';
@@ -14,12 +15,14 @@ import { WarningBanner } from '../../shared/components/warning-banner/warning-ba
 export default class Analyse {
   // Warning banner state
   protected readonly showExperimentalWarning = signal(true);
+  // Check if any data is available
+  protected readonly hasData = computed(() => this.allEntries().length > 0);
   // Optimize table entries computation - only recalculate when necessary
   protected readonly tableEntries = computed(() => {
     const filtered = this.filteredEntries();
     return filtered !== null ? filtered : this.allEntries();
   });
-  // Loading state for better UX
+  // Loading state for better UX (used in template)
   protected readonly isLoading = computed(() => {
     return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
   });
@@ -28,6 +31,7 @@ export default class Analyse {
   protected readonly filteredEntries = this.fileParse.filteredEntries;
   protected readonly isSearching = this.fileParse.isSearching;
   protected readonly isParsing = this.fileParse.isParsing;
+  private readonly router = inject(Router);
   private readonly featureFlags = inject(FeatureFlagsService);
   readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;
 
@@ -47,5 +51,12 @@ export default class Analyse {
    */
   protected onDismissExperimentalWarning(): void {
     this.showExperimentalWarning.set(false);
+  }
+
+  /**
+   * Navigate to dashboard to upload files
+   */
+  protected goToDashboard(): void {
+    this.router.navigate(['/']);
   }
 }

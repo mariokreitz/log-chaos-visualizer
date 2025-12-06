@@ -23,6 +23,7 @@ export class SearchInput {
   public readonly valueChange = output<string>();
   public readonly clear = output<void>();
   public readonly openHelp = output<void>();
+  public readonly searchSubmit = output<void>();
 
   protected readonly validationErrors = signal<string[]>([]);
   protected readonly isValid = computed(() => this.validationErrors().length === 0);
@@ -50,6 +51,10 @@ export class SearchInput {
   public onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
       event.preventDefault();
+      // Only submit if query is valid
+      if (this.isValid()) {
+        this.searchSubmit.emit();
+      }
     }
   }
 

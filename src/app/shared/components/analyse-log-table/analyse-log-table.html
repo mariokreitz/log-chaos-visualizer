@@ -1,11 +1,12 @@
 <app-search-input
   (clear)="onSearchClear()"
   (openHelp)="onOpenHelp()"
+  (searchSubmit)="onSearchSubmit()"
   (valueChange)="onSearchInput($event)"
   [isSearching]="isSearching()"
   [value]="searchQuery()"
   ariaLabel="Search through log entries"
-  placeholder="Search logs..."
+  placeholder="Search logs... (press Enter to search)"
 ></app-search-input>
 
 <div aria-label="Parsed log entries table" class="mat-elevation-z8 analyse-table" role="table">

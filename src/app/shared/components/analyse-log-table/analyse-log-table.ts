@@ -1,18 +1,7 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  InputSignal,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, InputSignal, signal } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import { extractFieldValue } from '../../../core/utils/field-extractor';
@@ -51,33 +40,24 @@ export class AnalyseLogTable {
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
-  private readonly searchSubject = new Subject<string>();
 
   // Memoization cache for formatted values
   private formatCache = new WeakMap<ParsedLogEntry, FormattedEntry>();
 
-  constructor() {
-    effect((onCleanup) => {
-      const sub = this.searchSubject.pipe(debounceTime(200), distinctUntilChanged()).subscribe((query) => {
-        const trimmedQuery = query.trim();
-        this.fileParse.setFilterQuery(trimmedQuery);
-      });
-
-      onCleanup(() => {
-        sub.unsubscribe();
-        this.searchSubject.complete();
-      });
-    });
+  public onSearchInput(value: string): void {
+    // Just update the input value, don't trigger search
+    this.searchQuery.set(value);
   }
 
-  public onSearchInput(value: string): void {
-    this.searchQuery.set(value);
-    this.searchSubject.next(value);
+  public onSearchSubmit(): void {
+    // Trigger search when user presses Enter
+    const trimmedQuery = this.searchQuery().trim();
+    this.fileParse.setFilterQuery(trimmedQuery);
   }
 
   public onSearchClear(): void {
     this.searchQuery.set('');
-    this.searchSubject.next('');
+    this.fileParse.setFilterQuery('');
   }
 
   public onOpenHelp(): void {

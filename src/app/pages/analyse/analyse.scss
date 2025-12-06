@@ -36,3 +36,59 @@
     color: var(--color-text-secondary);
   }
 }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  margin-top: var(--space-4);
+  background: var(--color-surface-mid);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  text-align: center;
+
+  &__icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-4);
+    opacity: 0.6;
+  }
+
+  &__title {
+    margin: 0 0 var(--space-2) 0;
+    font-size: var(--font-size-title);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__description {
+    margin: 0 0 var(--space-4) 0;
+    font-size: var(--font-size-body);
+    color: var(--color-text-secondary);
+    max-width: 500px;
+    line-height: 1.6;
+  }
+
+  &__button {
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-body);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-bottom: var(--space-4);
+
+    &:hover {
+      background: var(--color-accent-soft);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: 2px;
+    }
+  }
+}

@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { dataReadyGuard } from './core/guards/data-ready.guard';
 
 export const routes: Routes = [
   {
@@ -13,7 +12,6 @@ export const routes: Routes = [
       {
         path: 'analyse',
         loadComponent: () => import('./pages/analyse/analyse'),
-        canActivate: [dataReadyGuard],
       },
       {
         path: 'settings',

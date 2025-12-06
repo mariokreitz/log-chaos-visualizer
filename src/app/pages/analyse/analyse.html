@@ -13,13 +13,22 @@
     />
   }
 
-  @if (isLoading()) {
-    <div aria-live="polite" class="loading-container" role="status">
-      <p class="loading-message">Loading log entries...</p>
+  @if (!hasData() && !isParsing()) {
+    <div class="empty-state" role="status">
+      <div class="empty-state__icon">📊</div>
+      <h2 class="empty-state__title">No Log Data Available</h2>
+      <p class="empty-state__description">To analyze log files, please upload a log file from the dashboard first.</p>
+      <button (click)="goToDashboard()" class="empty-state__button" type="button">Go to Dashboard</button>
     </div>
-  }
+  } @else {
+    @if (isLoading()) {
+      <div aria-live="polite" class="loading-container" role="status">
+        <p class="loading-message">Loading log entries...</p>
+      </div>
+    }
 
-  <section aria-label="Experimental analysis" class="experimental-analysis">
-    <app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
-  </section>
+    <section aria-label="Experimental analysis" class="experimental-analysis">
+      <app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
+    </section>
+  }
 }
