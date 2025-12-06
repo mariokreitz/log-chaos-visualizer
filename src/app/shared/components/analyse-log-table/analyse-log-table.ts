@@ -1,6 +1,15 @@
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, InputSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  InputSignal,
+  signal,
+} from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
@@ -44,6 +53,18 @@ export class AnalyseLogTable {
   // Memoization cache for formatted values - use Map for better performance
   private formatCache = new Map<ParsedLogEntry, FormattedEntry>();
   private readonly MAX_CACHE_SIZE = 10000; // Limit cache to prevent memory issues
+
+  constructor() {
+    // Sync searchQuery with FileParseService filterQuery
+    // This ensures quick filters update the search input
+    effect(() => {
+      const currentFilterQuery = this.fileParse.filterQuery();
+      // Only update if different to avoid circular updates
+      if (currentFilterQuery !== this.searchQuery()) {
+        this.searchQuery.set(currentFilterQuery);
+      }
+    });
+  }
 
   public onSearchInput(value: string): void {
     // Just update the input value, don't trigger search
