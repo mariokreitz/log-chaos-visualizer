@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
@@ -30,7 +31,7 @@ interface FormattedEntry {
 
 @Component({
   selector: 'app-analyse-log-table',
-  imports: [SearchInput, ScrollingModule, MatProgressSpinnerModule, DecimalPipe],
+  imports: [SearchInput, ScrollingModule, MatProgressSpinnerModule, MatProgressBarModule, DecimalPipe],
   templateUrl: './analyse-log-table.html',
   styleUrls: ['./analyse-log-table.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
