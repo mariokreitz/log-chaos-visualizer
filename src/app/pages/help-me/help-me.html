@@ -135,7 +135,7 @@
       </div>
     </div>
 
-    <p class="info-note">
+    <p class="info-note info-callout">
       <mat-icon>info</mat-icon>
       Additional fields are available depending on your log format. Click "Open Full Reference" above to see all
       available fields for Pino, Winston, Loki, Docker, and Promtail logs.
@@ -192,43 +192,49 @@
     <h2 id="performance-heading">Performance Tips</h2>
 
     <div class="tips-list">
-      <div class="tip-item">
+      <div class="tip-item tip-callout">
         <h3>1. Use indexed fields first</h3>
-        <p>Queries on <code>level</code> and <code>environment</code> are fastest. Start with these when possible.</p>
+        <p>
+          Queries on <code class="code-inline">level</code> and <code class="code-inline">environment</code> are
+          fastest. Start with these when possible.
+        </p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code>level=error AND message.contains(api)</code>
+          <code class="code-inline">level=error AND message.contains(api)</code>
         </div>
       </div>
 
-      <div class="tip-item">
+      <div class="tip-item tip-callout">
         <h3>2. Narrow before regex</h3>
         <p>Filter with simpler conditions before using regex patterns.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code>level=error AND message.matches(/timeout/i)</code>
+          <code class="code-inline">level=error AND message.matches(/timeout/i)</code>
         </div>
       </div>
 
-      <div class="tip-item">
+      <div class="tip-item tip-callout">
         <h3>3. Use simple functions when possible</h3>
-        <p><code>contains()</code>, <code>startsWith()</code>, and <code>endsWith()</code> are faster than regex.</p>
+        <p>
+          <code class="code-inline">contains()</code>, <code class="code-inline">startsWith()</code>, and
+          <code class="code-inline">endsWith()</code> are faster than regex.
+        </p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code>message.contains(timeout)</code>
+          <code class="code-inline">message.contains(timeout)</code>
         </div>
         <div class="tip-example">
           <span class="slower">⚠ Slower:</span>
-          <code>message.matches(/timeout/)</code>
+          <code class="code-inline">message.matches(/timeout/)</code>
         </div>
       </div>
 
-      <div class="tip-item">
+      <div class="tip-item tip-callout">
         <h3>4. Quote multi-word strings</h3>
         <p>Use quotes for phrases to ensure proper parsing.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code>message.contains("connection timeout")</code>
+          <code class="code-inline">message.contains("connection timeout")</code>
         </div>
       </div>
     </div>
