@@ -10,11 +10,13 @@ import {
   InputSignal,
   signal,
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FileParseService } from '../../../core/services/file-parse.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import { extractFieldValue } from '../../../core/utils/field-extractor';
 import { formatSourceForIndex } from '../../../core/utils/search-utils';
+import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
 import { SearchInput } from '../search-input/search-input'; // Formatting cache to avoid repeated computations
 
 // Formatting cache to avoid repeated computations
@@ -53,6 +55,7 @@ export class AnalyseLogTable {
   // Memoization cache for formatted values - use Map for better performance
   private formatCache = new Map<ParsedLogEntry, FormattedEntry>();
   private readonly MAX_CACHE_SIZE = 10000; // Limit cache to prevent memory issues
+  private readonly dialog = inject(MatDialog);
 
   constructor() {
     // Sync searchQuery with FileParseService filterQuery
@@ -86,8 +89,12 @@ export class AnalyseLogTable {
   }
 
   public onOpenHelp(): void {
-    // TODO: Open query help dialog (will be implemented in next step)
-    console.log('[AnalyseLogTable] Help requested - dialog component pending');
+    this.dialog.open(QueryHelpDialog, {
+      width: '90vw',
+      maxWidth: '1200px',
+      maxHeight: '90vh',
+      panelClass: 'query-help-dialog-container',
+    });
   }
 
   /**
