@@ -12,6 +12,7 @@
   <div class="table-header" role="rowgroup">
     <div class="table-header-row" role="row">
       <div class="col kind" role="columnheader">Kind</div>
+      <div class="col environment" role="columnheader">Environment</div>
       <div class="col timestamp" role="columnheader">Timestamp</div>
       <div class="col level" role="columnheader">Level</div>
       <div class="col message" role="columnheader">Message</div>
@@ -40,12 +41,38 @@
       role="rowgroup"
     >
       @for (row of entries(); track $index) {
-        <div class="table-row" role="row" tabindex="0">
-          <div class="col kind" role="cell">{{ row.kind }}</div>
-          <div class="col timestamp" role="cell">{{ formatTimestamp(row) }}</div>
-          <div class="col level" role="cell">{{ formatLevel(row) }}</div>
-          <div class="col message" role="cell">{{ formatMessage(row) }}</div>
-          <div class="col source" role="cell">{{ formatSource(row) }}</div>
+        <div
+          [class.env-dev]="formatEnvironment(row) === 'dev'"
+          [class.env-prod]="formatEnvironment(row) === 'prod'"
+          [class.env-staging]="formatEnvironment(row) === 'staging'"
+          [class.level-error]="formatLevel(row) === 'error' || formatLevel(row) === 'fatal'"
+          [class.level-warn]="formatLevel(row) === 'warn'"
+          class="table-row"
+          role="row"
+          tabindex="0"
+        >
+          <div [title]="row.kind" class="col kind" role="cell">
+            <span class="kind-badge">{{ row.kind }}</span>
+          </div>
+          <div [title]="'Environment: ' + formatEnvironment(row)" class="col environment" role="cell">
+            <span [class]="'env-' + formatEnvironment(row)" class="env-badge">
+              {{ formatEnvironment(row) }}
+            </span>
+          </div>
+          <div [title]="formatTimestamp(row)" class="col timestamp" role="cell">
+            {{ formatTimestamp(row) }}
+          </div>
+          <div [title]="'Level: ' + formatLevel(row)" class="col level" role="cell">
+            <span [class]="'level-' + formatLevel(row)" class="level-badge">
+              {{ formatLevel(row) }}
+            </span>
+          </div>
+          <div [title]="formatMessage(row)" class="col message" role="cell">
+            {{ formatMessage(row) }}
+          </div>
+          <div [title]="formatSource(row)" class="col source" role="cell">
+            {{ formatSource(row) }}
+          </div>
         </div>
       }
 
@@ -60,6 +87,7 @@
       @for (i of [1, 2, 3, 4, 5]; track i) {
         <div class="skeleton-row">
           <div class="skeleton-cell skeleton-kind"></div>
+          <div class="skeleton-cell skeleton-environment"></div>
           <div class="skeleton-cell skeleton-timestamp"></div>
           <div class="skeleton-cell skeleton-level"></div>
           <div class="skeleton-cell skeleton-message"></div>
