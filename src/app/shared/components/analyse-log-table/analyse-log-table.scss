@@ -267,28 +267,27 @@
     animation: skeleton-loading 1.5s ease-in-out infinite;
 
     &.skeleton-kind {
-      width: 55px;
+      width: 85px;
     }
 
     &.skeleton-environment {
-      width: 65px;
+      width: 95px;
     }
 
     &.skeleton-timestamp {
-      width: 100px;
+      width: 130px;
     }
 
     &.skeleton-level {
-      width: 50px;
-    }
-
-    &.skeleton-message {
-      width: 100%;
-      max-width: 600px;
+      width: 85px;
     }
 
     &.skeleton-source {
-      width: 70px;
+      width: 2fr;
+    }
+
+    &.skeleton-message {
+      width: 1fr;
     }
   }
 
