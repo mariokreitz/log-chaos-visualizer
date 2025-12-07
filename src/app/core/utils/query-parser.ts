@@ -9,7 +9,7 @@ import type {
   NotExpression,
   ParsedQuery,
   QueryValidationError,
-  RegexPattern
+  RegexPattern,
 } from '../types/query-language.types';
 import { FIELD_ALIASES } from '../types/query-language.types';
 

@@ -12,7 +12,26 @@ import type { NormalizedLogEntry } from '../types/log-entries';
 export function extractFieldValue(entry: ParsedLogEntry, fieldName: string): string | number | boolean | null {
   // Use normalized structure if available
   if ('normalized' in entry && entry.normalized) {
-    return extractFromNormalized(entry.normalized, fieldName);
+    // Try direct field first
+    const normalizedValue = extractFromNormalized(entry.normalized, fieldName);
+    if (normalizedValue !== null && normalizedValue !== undefined) return normalizedValue;
+    // Try aliases for flat field names in normalized
+    const aliasPaths = FIELD_ALIASES[fieldName];
+    if (aliasPaths) {
+      for (const path of aliasPaths) {
+        const aliasValue = extractFromNormalized(entry.normalized, path);
+        if (aliasValue !== null && aliasValue !== undefined) return aliasValue;
+      }
+    }
+  }
+
+  // Try aliases for flat field names in raw entry
+  const aliasPaths = FIELD_ALIASES[fieldName];
+  if (aliasPaths) {
+    for (const path of aliasPaths) {
+      const value = extractFromRawEntryDot(entry, path);
+      if (value !== null && value !== undefined) return value;
+    }
   }
 
   // Fallback to raw entry extraction (legacy support)
@@ -134,5 +153,43 @@ export function extractFromNormalized(
     return value;
   }
 
+  // Fallback: support dot notation for nested fields in normalized
+  const dotValue = extractFromObjectByPath(normalized, fieldName);
+  if (typeof dotValue === 'string' || typeof dotValue === 'number' || typeof dotValue === 'boolean') {
+    return dotValue;
+  }
+
   return null;
 }
+
+/**
+ * Helper to extract a value from an object using dot notation (e.g., 'http.statusCode')
+ */
+function extractFromObjectByPath(obj: unknown, path: string): unknown {
+  if (!obj || typeof obj !== 'object') return null;
+  const parts = path.split('.');
+  let value: unknown = obj;
+  for (const part of parts) {
+    if (value && typeof value === 'object' && part in value) {
+      value = (value as Record<string, unknown>)[part];
+    } else {
+      return null;
+    }
+  }
+  return value;
+}
+
+/**
+ * Map flat field names to possible nested paths for extraction.
+ */
+const FIELD_ALIASES: Record<string, string[]> = {
+  statusCode: ['http.statusCode', 'res.statusCode', 'meta.statusCode', 'statusCode'],
+  responseTime: ['http.responseTime', 'res.responseTimeMs', 'meta.responseTime', 'responseTime'],
+  hostname: ['hostname', 'meta.hostname'],
+  environment: ['meta.environment', 'environment'],
+  userId: ['meta.userId', 'userId'],
+  traceId: ['meta.traceId', 'traceId'],
+  spanId: ['meta.spanId', 'spanId'],
+  message: ['msg', 'message'],
+  // Add more aliases as needed
+};
