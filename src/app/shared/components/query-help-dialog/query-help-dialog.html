@@ -18,6 +18,14 @@
         <div class="sidebar-header">
           <h3>Quick Filters</h3>
           <p class="muted">One-click examples — copy or insert into the search bar</p>
+          <mat-form-field appearance="outline" class="merge-select" style="width: 100%; margin-top: 8px">
+            <mat-label>Insert mode</mat-label>
+            <mat-select (selectionChange)="setMergeMode($event.value)" [value]="mergeMode()">
+              <mat-option value="replace">Replace</mat-option>
+              <mat-option value="append-space">Append (space)</mat-option>
+              <mat-option value="append-and">Append (AND)</mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
         <div class="sidebar-examples">

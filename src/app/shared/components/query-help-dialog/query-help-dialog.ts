@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { NotificationService } from '../../../core/services/notification.service';
 import { SearchService } from '../../../core/services/search.service';
 
 @Component({
   selector: 'app-query-help-dialog',
-  imports: [MatDialogModule, MatTabsModule, MatButtonModule, MatIconModule],
+  imports: [MatDialogModule, MatTabsModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule],
   templateUrl: './query-help-dialog.html',
   styleUrl: './query-help-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -15,6 +18,8 @@ import { SearchService } from '../../../core/services/search.service';
 export class QueryHelpDialog {
   // Live announcement for accessibility (aria-live)
   protected readonly liveAnnouncement = signal<string>('');
+  // Merge mode for inserting examples: 'replace' | 'append-space' | 'append-and'
+  protected readonly mergeMode = signal<'replace' | 'append-space' | 'append-and'>('append-space');
   // Examples structured data (raw query strings are used when inserting/copying)
   protected readonly exampleSections = [
     {
@@ -37,7 +42,7 @@ export class QueryHelpDialog {
       title: 'Complex Filters',
       items: [
         {
-          query: '(level=error OR level=fatal) AND contains(message, /database|connection/)',
+          query: '(level=error OR level=fatal) AND contains(message, /database|connection/i)',
           description: 'Critical logs with database/connection issues',
         },
         {
@@ -53,6 +58,7 @@ export class QueryHelpDialog {
   ] as const;
   private readonly dialogRef = inject(MatDialogRef<QueryHelpDialog>);
   private readonly searchService = inject(SearchService);
+  private readonly notification = inject(NotificationService);
 
   close(): void {
     this.dialogRef.close();
@@ -63,8 +69,14 @@ export class QueryHelpDialog {
     if (navigator.clipboard?.writeText) {
       navigator.clipboard
         .writeText(text)
-        .then(() => this.announce('Copied example to clipboard'))
-        .catch(() => this.announce('Failed to copy example'));
+        .then(() => {
+          this.announce('Copied example to clipboard');
+          this.notification.success('Copied example to clipboard');
+        })
+        .catch(() => {
+          this.announce('Failed to copy example');
+          this.notification.error('Failed to copy example');
+        });
     } else {
       // Fallback: attempt execCommand
       const el = document.createElement('textarea');
@@ -74,18 +86,41 @@ export class QueryHelpDialog {
       try {
         document.execCommand('copy');
         this.announce('Copied example to clipboard');
+        this.notification.success('Copied example to clipboard');
       } catch {
         this.announce('Failed to copy example');
+        this.notification.error('Failed to copy example');
       }
       document.body.removeChild(el);
     }
   }
 
   protected insertExample(query: string): void {
-    this.searchService.setQuery(query);
+    // Merge logic based on selected mode
+    const current = this.searchService.query();
+    const mode = this.mergeMode();
+    let newQuery: string;
+    if (mode === 'append-space') {
+      newQuery = current && current.trim() ? `${current.trim()} ${query}` : query;
+    } else if (mode === 'append-and') {
+      // If current contains logical operators or spaces, wrap in parentheses for clarity
+      const shouldWrap = /\b(AND|OR|NOT)\b|\(|\)/i.test(current);
+      const left = current && current.trim() ? (shouldWrap ? `(${current.trim()})` : current.trim()) : '';
+      newQuery = left ? `${left} AND ${query}` : query;
+    } else {
+      // replace
+      newQuery = query;
+    }
+
+    this.searchService.setQuery(newQuery);
     this.announce('Inserted example into search bar');
+    this.notification.success('Inserted example into search bar');
     // Close dialog after inserting to reduce friction
     this.dialogRef.close();
+  }
+
+  protected setMergeMode(value: 'replace' | 'append-space' | 'append-and'): void {
+    this.mergeMode.set(value);
   }
 
   private announce(message: string): void {
