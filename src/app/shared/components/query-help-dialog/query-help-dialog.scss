@@ -241,6 +241,19 @@
         padding: calc(var(--space-1));
       }
     }
+
+    /* Examples list styling */
+    .examples-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+    }
+
+    .example-item {
+      /* allow the inner component styles to control visuals, but provide fallback spacing */
+      width: 100%;
+    }
   }
 
   .visually-hidden {
