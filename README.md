@@ -32,6 +32,8 @@ Log Chaos Visualizer is a proof-of-concept Angular application intended to demon
 visualization of large, mixed-format log files. It was implemented as a one-week hackathon/demonstration project and is
 not intended for production use.
 
+![screenshot1](https://raw.githubusercontent.com/mariokreitz/log-chaos-visualizer/refs/heads/master/screenshots/screen_1.png)
+
 Key features
 
 - Support for multiple log formats: Pino, Winston, Loki/Promtail, Docker JSON, and plain text.
@@ -41,6 +43,8 @@ Key features
 - Convenience Python script (`generate_logs.py`) to generate synthetic log files for testing.
 
 Demo and purpose
+
+![screenshot2](https://raw.githubusercontent.com/mariokreitz/log-chaos-visualizer/refs/heads/master/screenshots/screen_2.png)
 
 This repository demonstrates approaches for:
 
