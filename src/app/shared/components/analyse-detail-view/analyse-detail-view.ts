@@ -1,13 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, InputSignal, output, signal } from '@angular/core';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
-import type {
-  DockerLogLine,
-  LokiEntry,
-  PinoEntry,
-  PromtailTextLine,
-  WinstonEntry,
-} from '../../../core/types/log-entries';
+import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../../core/types/log-entries';
 
 @Component({
   selector: 'app-analyse-detail-view',
@@ -17,52 +11,80 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyseDetailView {
-  // Entry to display (signal input) - ensure correct generic typing
   public readonly entry: InputSignal<ParsedLogEntry | null> = input<ParsedLogEntry | null>(null);
-  // Whether the panel is expanded (kept for compatibility with external callers)
   public readonly expanded: InputSignal<boolean> = input<boolean>(false);
-  // Output event when the user closes the detail
   public readonly closed = output<void>();
 
-  // Local UI state: toggles for raw JSON and stack trace visibility
-  public readonly showRawJson = signal<boolean>(false);
-  public readonly showStack = signal<boolean>(false);
-
-  // Computed formatted timestamp
+  public readonly showStack = signal(false);
   public readonly formattedTimestamp = computed(() => {
     const e = this.entry();
     if (!e) return '';
     const ts = e.normalized?.timestamp;
     return ts ? new Date(ts).toLocaleString() : '';
   });
-
-  // Computed array of normalized entries for safe iteration in template
   public readonly normalizedEntries = computed(() => {
     const e = this.entry();
     if (!e || !e.normalized) return [] as [string, unknown][];
     return Object.entries(e.normalized) as [string, unknown][];
   });
-
-  // Computed entries for normalized.meta specifically
   public readonly metaEntries = computed(() => {
     const e = this.entry();
     if (!e || !e.normalized?.meta) return [] as [string, unknown][];
     return Object.entries(e.normalized.meta) as [string, unknown][];
   });
-
-  // Preferred human-readable message extracted from the entry (safe typing)
   public readonly messageText = computed(() => {
     const e = this.entry();
-    if (!e) return '';
-    // Prefer normalized message
-    const normMsg = e.normalized?.message;
-    if (typeof normMsg === 'string' && normMsg.length > 0) return normMsg;
+    return e ? this.extractMessageFromEntry(e) : '';
+  });
+  public readonly stackText = computed(() => {
+    const e = this.entry();
+    return e ? this.extractStackFromEntry(e) : null;
+  });
+  public readonly httpInfo = computed(() => {
+    const e = this.entry();
+    return e ? this.extractHttpInfo(e) : null;
+  });
+  public readonly hasStack = computed(() => {
+    const st = this.stackText();
+    if (st && st.length > 0) return true;
+    const raw = this.rawJson;
+    return typeof raw === 'string' && raw.includes('\n');
+  });
+  public readonly stackPreview = computed(() => {
+    const st = this.stackText();
+    const src = typeof st === 'string' && st.length > 0 ? st : (this.rawJson ?? '');
+    if (!src) return '';
+    return src.length > 1000 ? src.slice(0, 1000) + '\n... (truncated)' : src;
+  });
 
-    // Fallback based on original kind
+  public get rawJson(): string | null {
+    const e = this.entry();
+    if (!e) return null;
+    try {
+      return JSON.stringify(e, null, 2);
+    } catch {
+      return null;
+    }
+  }
+
+  private isObject(v: unknown): v is Record<string, unknown> {
+    return v !== null && typeof v === 'object';
+  }
+
+  private safeGet(obj: Record<string, unknown> | undefined, key: string): unknown {
+    return obj && Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
+  }
+
+  private extractMessageFromEntry(e: ParsedLogEntry): string {
+    const nm = e.normalized?.message;
+    if (typeof nm === 'string' && nm.length > 0) return nm;
+
     switch (e.kind) {
       case 'pino': {
         const p = e.entry as PinoEntry;
-        return (p.msg ?? JSON.stringify(p)) as string;
+        if (p.msg && p.msg.length > 0) return p.msg;
+        // try common fields
+        return JSON.stringify(p);
       }
       case 'winston': {
         const w = e.entry as WinstonEntry;
@@ -78,48 +100,45 @@ export class AnalyseDetailView {
       }
       case 'promtail': {
         const p = e.entry as PromtailTextLine;
-        return (p as PromtailTextLine).message ?? '';
+        return p.message ?? '';
       }
       default:
-        // unknown-json or text
         return (e.entry as { line?: string }).line ?? '';
     }
-  });
+  }
 
-  // Extract a stack trace-like string if available from common locations
-  public readonly stackText = computed(() => {
-    const e = this.entry();
-    if (!e) return null;
-
-    // Check normalized first
+  private extractStackFromEntry(e: ParsedLogEntry): string | null {
+    // Normalized stack first
     const norm = e.normalized as { stack?: string } | undefined;
     if (norm && typeof norm.stack === 'string' && norm.stack.length > 0) return norm.stack;
 
-    // Check known entry shapes
+    // Known shapes: check common meta locations
     if (e.kind === 'pino') {
       const p = e.entry as PinoEntry;
-      // pino often stores stack in `err` or in `meta`
-      const maybeMeta = (p.meta ?? {}) as Record<string, unknown>;
-      if (typeof maybeMeta['stack'] === 'string') return maybeMeta['stack'] as string;
-      if (typeof (p as unknown as Record<string, unknown>)['stack'] === 'string')
-        return (p as unknown as Record<string, unknown>)['stack'] as string;
+      const meta = (p.meta ?? {}) as Record<string, unknown>;
+      const metaStack = this.safeGet(meta, 'stack');
+      if (typeof metaStack === 'string') return metaStack;
+      const alt = this.safeGet(p as unknown as Record<string, unknown>, 'stack');
+      if (typeof alt === 'string') return alt;
     }
 
     if (e.kind === 'winston') {
       const w = e.entry as WinstonEntry;
-      const maybeMeta = (w.meta ?? {}) as Record<string, unknown>;
-      if (typeof maybeMeta['stack'] === 'string') return maybeMeta['stack'] as string;
+      const meta = (w.meta ?? {}) as Record<string, unknown>;
+      const metaStack = this.safeGet(meta, 'stack');
+      if (typeof metaStack === 'string') return metaStack;
     }
 
-    // Generic fallback: stringify certain fields that often contain traces
+    // Generic scan for common keys
     const entryObj = e.entry as Record<string, unknown>;
-    for (const key of ['stack', 'error', 'err', 'trace']) {
+    const candidates = ['stack', 'error', 'err', 'trace'];
+    for (const key of candidates) {
       const v = entryObj[key];
       if (typeof v === 'string' && v.length > 0) return v;
-      if (v && typeof v === 'object') {
+      if (this.isObject(v)) {
         try {
-          const asStr = JSON.stringify(v, null, 2);
-          if (asStr.length > 0) return asStr;
+          const s = JSON.stringify(v, null, 2);
+          if (s.length > 0) return s;
         } catch {
           // ignore
         }
@@ -127,12 +146,9 @@ export class AnalyseDetailView {
     }
 
     return null;
-  });
+  }
 
-  // Helper to surface HTTP info in a typed way (reads from normalized.http)
-  public readonly httpInfo = computed(() => {
-    const e = this.entry();
-    if (!e) return null;
+  private extractHttpInfo(e: ParsedLogEntry) {
     const h = e.normalized?.http;
     if (!h) return null;
     return {
@@ -141,64 +157,5 @@ export class AnalyseDetailView {
       statusCode: h.statusCode ?? null,
       responseTime: h.responseTime ?? null,
     } as { method: string | null; url: string | null; statusCode: number | null; responseTime: number | null };
-  });
-
-  // Update existing hasStack/stackPreview to use stackText when available
-  public readonly hasStack = computed(() => {
-    const st = this.stackText();
-    if (st && st.length > 0) return true;
-    const raw = this.rawJson;
-    return typeof raw === 'string' && raw.includes('\n');
-  });
-
-  public readonly stackPreview = computed(() => {
-    const st = this.stackText();
-    const src = typeof st === 'string' && st.length > 0 ? st : (this.rawJson ?? '');
-    if (!src) return '';
-    return src.length > 1000 ? src.slice(0, 1000) + '\n... (truncated)' : src;
-  });
-  // This is a non-invasive, no-op reference.
-  private readonly _templateRefs = [
-    this.hasStack,
-    this.stackPreview,
-    this.stackText,
-    this.rawJson,
-    this.toggleRawJson,
-    this.toggleStack,
-    this.onClose,
-    this.copyRawJson,
-  ];
-
-  // Small helper to get a pretty-printed JSON string lazily
-  public get rawJson(): string | null {
-    const e = this.entry();
-    if (!e) return null;
-    try {
-      return JSON.stringify(e, null, 2);
-    } catch {
-      return null;
-    }
-  }
-
-  public toggleRawJson(): void {
-    this.showRawJson.update((v) => !v);
-  }
-
-  public toggleStack(): void {
-    this.showStack.update((v) => !v);
-  }
-
-  public onClose(): void {
-    this.closed.emit();
-  }
-
-  // Reference template-facing members in a private field so the TS analyzer
-  // recognizes them as used (the template consumes them at runtime).
-
-  public copyRawJson(): void {
-    const txt = this.rawJson ?? '';
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      void navigator.clipboard.writeText(txt);
-    }
   }
 }
