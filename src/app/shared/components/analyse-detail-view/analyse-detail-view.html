@@ -1,78 +1,86 @@
 @let e = entry();
 @if (e) {
-  <div class="detail-container" tabindex="-1">
-    <div class="detail-header">
-      <div class="summary">
-        <div class="summary-left">
-          <div class="timestamp" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() }}</div>
-          <div class="level">{{ e.normalized.level }}</div>
-          <div class="environment">{{ e.normalized.environment }}</div>
+  @let h = httpInfo();
+  <article aria-labelledby="detail-summary" class="detail-container" tabindex="-1">
+    <header class="detail-header">
+      <div class="summary-left">
+        <div class="summary-title" id="detail-summary">
+          <div class="message">{{ messageText() || 'No message' }}</div>
+          <div class="meta-small">
+            <span class="ts" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() }}</span>
+            <span class="divider">•</span>
+            <span class="kind">{{ e.kind }}</span>
+          </div>
         </div>
-        <div class="summary-right">
-          <button (click)="onClose()" aria-label="Close details" class="action-btn" data-focus-first type="button">
-            Close
-          </button>
-          <button
-            (click)="toggleRawJson()"
-            [attr.aria-pressed]="showRawJson()"
-            aria-label="Toggle raw JSON"
-            class="action-btn"
-            type="button"
-          >
-            @if (showRawJson()) {
-              Hide JSON
-            } @else {
-              Show JSON
-            }
-          </button>
-          <button (click)="copyRawJson()" aria-label="Copy JSON" class="action-btn" type="button">Copy JSON</button>
+        <div class="summary-chips">
+          <span aria-label="Level {{ e.normalized.level }}" class="chip level">{{ e.normalized.level }}</span>
+          <span aria-label="Environment {{ e.normalized.environment }}" class="chip env">{{
+            e.normalized.environment
+          }}</span>
+          <span aria-label="Source {{ e.normalized.kind }}" class="chip source">{{ e.normalized.kind }}</span>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="detail-body">
-      <section aria-label="Metadata" class="metadata">
-        <h3>Metadata</h3>
-        <dl>
+    <section aria-label="Log details" class="detail-grid">
+      <div class="panel panel-main">
+        <h3 class="panel-title">Details</h3>
+        <dl class="meta-list">
           @for (pair of normalizedEntries(); track $index) {
             <div class="meta-row">
-              <dt>{{ pair[0] }}</dt>
-              <dd>{{ pair[1] }}</dd>
+              <dt class="meta-key">{{ pair[0] }}</dt>
+              <dd class="meta-value">{{ pair[1] }}</dd>
             </div>
           }
-          @if (normalizedEntries().length === 0) {
-            <div>No metadata available</div>
-          }
         </dl>
-      </section>
+      </div>
 
-      @if (hasStack()) {
-        <section class="stack-trace">
-          <h3>Stack trace</h3>
-          <div class="stack-preview">
-            <pre>{{ stackPreview() }}</pre>
-            <button (click)="toggleStack()" aria-label="Toggle full stack trace" type="button">
-              @if (showStack()) {
-                Hide
-              } @else {
-                Show full
-              }
-            </button>
+      <div class="panel panel-context">
+        <h3 class="panel-title">Context</h3>
+        @if (h) {
+          <div class="http">
+            <div><strong>Method:</strong> {{ h.method ?? '-' }}</div>
+            <div>
+              <strong>URL:</strong> <code>{{ h.url ?? '-' }}</code>
+            </div>
+            <div><strong>Status:</strong> {{ h.statusCode ?? '-' }}</div>
+            <div><strong>Response time:</strong> {{ h.responseTime ?? '-' }} ms</div>
           </div>
-          @if (showStack()) {
-            <pre class="stack-full">{{ rawJson }}</pre>
-          }
-        </section>
-      }
+        } @else {
+          <div class="no-context">No structured HTTP context</div>
+        }
 
-      @if (showRawJson()) {
-        <section class="raw-json">
-          <h3>Raw JSON</h3>
-          <pre>{{ rawJson }}</pre>
-        </section>
-      }
-    </div>
-  </div>
+        @if (metaEntries().length > 0) {
+          <div class="tags">
+            <h4>Metadata</h4>
+            <div class="tags-wrap">
+              @for (pair of metaEntries(); track $index) {
+                <span class="tag">{{ pair[0] }}: {{ pair[1] }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (hasStack()) {
+      <section aria-label="Stack trace" class="panel panel-stack">
+        <h3 class="panel-title">Stack trace</h3>
+        @if (showStack()) {
+          <pre class="stack-full">{{ stackText() ?? rawJson }}</pre>
+        } @else {
+          <pre class="stack-preview">{{ stackPreview() }}</pre>
+        }
+      </section>
+    }
+
+    @if (showRawJson()) {
+      <section aria-label="Raw JSON" class="panel panel-raw">
+        <h3 class="panel-title">Raw JSON</h3>
+        <pre class="raw-json">{{ rawJson }}</pre>
+      </section>
+    }
+  </article>
 } @else {
   <div class="detail-empty">No entry selected</div>
 }
