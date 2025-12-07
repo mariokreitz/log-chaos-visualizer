@@ -7,24 +7,69 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--color-border-subtle);
 
-    h2 {
-      margin: 0;
-      font-size: var(--font-size-title);
-      font-weight: 500;
+    .header-left {
+      display: flex;
+      flex-direction: column;
+
+      h2 {
+        margin: 0;
+        font-size: calc(var(--font-size-title) - 2px);
+        font-weight: 600;
+      }
+
+      .muted {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-meta);
+      }
     }
 
-    button {
-      margin-left: auto;
-      outline: none;
-      border-radius: 50%;
-      transition: box-shadow 0.2s;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
 
-      &:focus-visible {
-        box-shadow: 0 0 0 2px var(--color-accent);
+      .insert-mode {
+        display: inline-flex;
         background: var(--color-surface-low);
+        border: 1px solid var(--color-border-subtle);
+        padding: 4px;
+        border-radius: 8px;
+
+        .seg-btn {
+          --btn-padding: 6px 8px;
+          padding: var(--btn-padding);
+          min-width: 0;
+          height: 32px;
+          border-radius: 6px;
+          font-weight: 600;
+          color: var(--color-text-secondary);
+          background: transparent;
+        }
+
+        .seg-btn[aria-pressed='true'] {
+          background: var(--color-accent);
+          color: var(--color-on-accent);
+        }
+
+        .seg-btn:focus-visible {
+          outline: 2px solid var(--color-accent);
+          outline-offset: 2px;
+        }
+      }
+
+      .merge-mode-indicator {
+        font-size: 0.9rem;
+        color: var(--color-text-muted);
+        padding-left: var(--space-2);
+      }
+
+      button[mat-icon-button] {
+        width: 36px;
+        height: 36px;
       }
     }
   }
@@ -35,11 +80,11 @@
 
     .dialog-body {
       display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: var(--space-4);
-      padding: var(--space-4);
+      grid-template-columns: 280px 1fr;
+      gap: var(--space-3);
+      padding: var(--space-3);
       align-items: start;
-      min-height: 48vh;
+      min-height: 44vh;
     }
 
     mat-tab-group {
@@ -65,42 +110,30 @@
   .sidebar {
     background: var(--color-surface-low);
     border-radius: var(--radius-md);
-    padding: var(--space-3);
+    padding: var(--space-2);
     border: 1px solid var(--color-border-subtle);
     height: calc(80vh - 64px);
-    overflow: auto;
+    overflow: hidden;
+
+    .sidebar-scroll {
+      height: 100%;
+      overflow: auto;
+      padding-right: 6px;
+    }
 
     .sidebar-header {
-      /* make header sticky so insert-mode remains available while scrolling examples */
       position: sticky;
       top: 0;
       background: transparent;
       padding-bottom: var(--space-2);
       z-index: 2;
-
-      h3 {
-        margin: 0 0 var(--space-1) 0;
-        font-size: 1rem;
-        color: var(--color-text-primary);
-      }
-
-      .muted {
-        margin: 0;
-        color: var(--color-text-muted);
-        font-size: var(--font-size-meta);
-      }
-
-      .merge-select {
-        width: 100%;
-        margin-top: var(--space-2);
-      }
     }
 
     .sidebar-section {
-      margin-top: var(--space-3);
+      margin-top: var(--space-2);
 
       h4 {
-        margin: 0 0 var(--space-2) 0;
+        margin: 0 0 var(--space-1) 0;
         font-size: 0.95rem;
         color: var(--color-text-primary);
       }
@@ -133,7 +166,7 @@
             font-family:
               var(--font-mono-stack), ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New',
               monospace;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -142,7 +175,7 @@
           .description {
             margin: 0;
             color: var(--color-text-muted);
-            font-size: 0.82rem;
+            font-size: 0.78rem;
           }
         }
 
@@ -154,8 +187,8 @@
           button[mat-icon-button] {
             color: var(--color-text-secondary);
             background: transparent;
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -166,13 +199,13 @@
             }
           }
 
-          button[mat-button] {
+          button[mat-stroked-button] {
             font-weight: 600;
-            height: 36px;
+            height: 34px;
             line-height: 32px;
-            padding: 0 var(--space-3);
+            padding: 0 var(--space-2);
             border-radius: var(--radius-sm);
-            min-width: 64px;
+            min-width: 56px;
           }
         }
       }
@@ -185,7 +218,7 @@
     max-height: calc(80vh - 64px);
 
     .tab-content {
-      padding: var(--space-3);
+      padding: var(--space-2);
       background: transparent;
     }
 
@@ -195,7 +228,6 @@
       font-weight: 600;
     }
 
-    /* make tables more readable */
     .operators-table,
     .fields-table,
     .regex-table {
@@ -206,12 +238,11 @@
 
       td,
       th {
-        padding: calc(var(--space-2) - 2px);
+        padding: calc(var(--space-1));
       }
     }
   }
 
-  /* Visually hidden utility (redefine locally if global not available) */
   .visually-hidden {
     position: absolute !important;
     height: 1px;
@@ -224,7 +255,6 @@
     margin: -1px;
   }
 
-  /* keep existing .function-group, .operators-table styles but tweak code font */
   .tab-content {
     h3 {
       margin-top: 0;
@@ -237,7 +267,7 @@
   }
 
   mat-dialog-actions {
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-3);
     border-top: 1px solid var(--color-border-subtle);
 
     button {
@@ -264,13 +294,12 @@
       order: 1;
     }
 
-    /* allow code examples to wrap on narrow screens for readability */
     .sidebar .sidebar-item .sidebar-item-main code {
       white-space: normal;
       overflow-wrap: anywhere;
     }
 
-    .sidebar .sidebar-item-actions button[mat-button] {
+    .sidebar .sidebar-item-actions button[mat-stroked-button] {
       min-width: 56px;
       height: 40px;
     }

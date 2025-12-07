@@ -1,25 +1,45 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchService } from '../../../core/services/search.service';
+import { QueryExampleItem } from './query-example-item';
 
 @Component({
   selector: 'app-query-help-dialog',
-  imports: [MatDialogModule, MatTabsModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule],
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    MatTabsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatTooltipModule,
+    QueryExampleItem,
+  ],
   templateUrl: './query-help-dialog.html',
-  styleUrl: './query-help-dialog.scss',
+  styleUrls: ['./query-help-dialog.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QueryHelpDialog {
   // Live announcement for accessibility (aria-live)
   protected readonly liveAnnouncement = signal<string>('');
   // Merge mode for inserting examples: 'replace' | 'append-space' | 'append-and'
-  protected readonly mergeMode = signal<'replace' | 'append-space' | 'append-and'>('append-space');
+  protected readonly mergeMode = signal<'replace' | 'append-space' | 'append-and'>('replace');
+
+  // Human readable label for current merge mode (used by template if needed)
+  protected readonly mergeModeLabel = computed(() => {
+    const m = this.mergeMode();
+    return m === 'replace' ? 'Replace' : m === 'append-and' ? 'Append AND' : 'Append';
+  });
+
   // Examples structured data (raw query strings are used when inserting/copying)
   protected readonly exampleSections = [
     {
