@@ -139,7 +139,7 @@ export function extractFromNormalized(
   if (fieldName === 'ts') return normalized.promtail?.ts ?? null;
 
   // Try to extract from meta or raw entry
-  if (normalized.meta?.[fieldName]) {
+  if (normalized.meta?.[fieldName] !== undefined) {
     const value = normalized.meta[fieldName];
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       return value;
@@ -148,13 +148,18 @@ export function extractFromNormalized(
 
   // Try raw entry as last resort
   const raw = normalized.raw as Record<string, unknown>;
-  const value = raw?.[fieldName];
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return value;
+  if (raw && raw[fieldName] !== undefined) {
+    const value = raw[fieldName];
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return value;
+    }
   }
 
-  // Fallback: support dot notation for nested fields in normalized
-  const dotValue = extractFromObjectByPath(normalized, fieldName);
+  // Fallback: support dot notation for nested fields in normalized, meta, and raw
+  const dotValue =
+    extractFromObjectByPath(normalized, fieldName) ??
+    (normalized.meta ? extractFromObjectByPath(normalized.meta, fieldName) : null) ??
+    (raw ? extractFromObjectByPath(raw, fieldName) : null);
   if (typeof dotValue === 'string' || typeof dotValue === 'number' || typeof dotValue === 'boolean') {
     return dotValue;
   }
