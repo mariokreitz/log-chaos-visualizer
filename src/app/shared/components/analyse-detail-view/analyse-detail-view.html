@@ -1,1 +1,76 @@
-<p>analyse-detail-view works!</p>
+@let e = entry();
+@if (e) {
+  <div class="detail-container">
+    <div class="detail-header">
+      <div class="summary">
+        <div class="summary-left">
+          <div class="timestamp" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() }}</div>
+          <div class="level">{{ e.normalized.level }}</div>
+          <div class="environment">{{ e.normalized.environment }}</div>
+        </div>
+        <div class="summary-right">
+          <button (click)="onClose()" aria-label="Close details" class="action-btn" type="button">Close</button>
+          <button
+            (click)="toggleRawJson()"
+            [attr.aria-pressed]="showRawJson()"
+            aria-label="Toggle raw JSON"
+            class="action-btn"
+            type="button"
+          >
+            @if (showRawJson()) {
+              Hide JSON
+            } @else {
+              Show JSON
+            }
+          </button>
+          <button (click)="copyRawJson()" aria-label="Copy JSON" class="action-btn" type="button">Copy JSON</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <section aria-label="Metadata" class="metadata">
+        <h3>Metadata</h3>
+        <dl>
+          @for (pair of normalizedEntries(); track $index) {
+            <div class="meta-row">
+              <dt>{{ pair[0] }}</dt>
+              <dd>{{ pair[1] }}</dd>
+            </div>
+          }
+          @if (normalizedEntries().length === 0) {
+            <div>No metadata available</div>
+          }
+        </dl>
+      </section>
+
+      @if (hasStack()) {
+        <section class="stack-trace">
+          <h3>Stack trace</h3>
+          <div class="stack-preview">
+            <pre>{{ stackPreview() }}</pre>
+            <button (click)="toggleStack()" aria-label="Toggle full stack trace" type="button">
+              @if (showStack()) {
+                Hide
+              } @else {
+                Show full
+              }
+            </button>
+          </div>
+          @if (showStack()) {
+            <pre class="stack-full">{{ rawJson }}</pre>
+          }
+        </section>
+      }
+
+      @if (showRawJson()) {
+        <section class="raw-json">
+          <h3>Raw JSON</h3>
+          <pre>{{ rawJson }}</pre>
+        </section>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="detail-empty">No entry selected</div>
+}

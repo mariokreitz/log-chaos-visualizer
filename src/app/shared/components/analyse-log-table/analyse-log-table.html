@@ -44,12 +44,18 @@
         @let env = row.normalized.environment;
         @let level = row.normalized.level;
         <div
+          (click)="selectEntry(row, $index)"
+          (keydown.enter)="selectEntry(row, $index)"
+          (keydown.space)="selectEntry(row, $index); $event.preventDefault()"
+          [attr.aria-controls]="selectedIndex() === $index ? 'detail-' + $index : null"
+          [attr.aria-selected]="selectedIndex() === $index"
           [class.env-dev]="env === 'dev'"
           [class.env-prod]="env === 'prod'"
           [class.env-staging]="env === 'staging'"
           [class.level-error]="level === 'error' || level === 'fatal'"
           [class.level-warn]="level === 'warn'"
           class="table-row"
+          id="row-{{ $index }}"
           role="row"
           tabindex="0"
         >
@@ -76,6 +82,16 @@
             {{ formatMessage(row) }}
           </div>
         </div>
+
+        @if (selectedIndex() === $index) {
+          <div aria-labelledby="row-{{ $index }}" class="table-row-detail" id="detail-{{ $index }}" role="region">
+            <app-analyse-detail-view
+              (closed)="clearSelection()"
+              [entry]="selectedEntry()"
+              [expanded]="true"
+            ></app-analyse-detail-view>
+          </div>
+        }
       }
 
       @if (shouldShowEmpty()) {

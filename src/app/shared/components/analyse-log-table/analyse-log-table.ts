@@ -1,12 +1,13 @@
-import { ScrollingModule } from '@angular/cdk/scrolling';
+import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, InputSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, InputSignal, signal, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import { AnalyseDetailView } from '../analyse-detail-view/analyse-detail-view';
 import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
 import { SearchInput } from '../search-input/search-input';
 
@@ -28,6 +29,7 @@ interface FormattedEntry {
     MatProgressBarModule,
     DecimalPipe,
     MatPaginatorModule,
+    AnalyseDetailView,
   ],
   templateUrl: './analyse-log-table.html',
   styleUrls: ['./analyse-log-table.scss'],
@@ -55,11 +57,20 @@ export class AnalyseLogTable {
     const end = start + size;
     return all.slice(start, end);
   });
+  // Selection state for inline detail expansion (Option A)
+  public readonly selectedIndex = signal<number | null>(null);
+  public readonly selectedEntry = computed<ParsedLogEntry | null>(() => {
+    const idx = this.selectedIndex();
+    return idx === null ? null : (this.paginatedEntries()[idx] ?? null);
+  });
+
   private readonly search = inject(SearchService);
   protected readonly query = this.search.query;
   public readonly lastSearchDurationMs = this.search.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.search.lastSearchResultCount;
   private readonly dialog = inject(MatDialog);
+  // Viewport reference so we can ensure selected row is visible before opening details
+  @ViewChild(CdkVirtualScrollViewport, { static: false }) private viewport?: CdkVirtualScrollViewport;
 
   public onOpenHelp(): void {
     this.dialog.open(QueryHelpDialog, {
@@ -68,6 +79,33 @@ export class AnalyseLogTable {
       maxHeight: '90vh',
       panelClass: 'query-help-dialog-container',
     });
+  }
+
+  /**
+   * Select a row (by entry and index inside the current paginatedEntries).
+   * Ensures the selected row is scrolled into view and the inline detail can be focused.
+   */
+  public selectEntry(entry: ParsedLogEntry, index: number): void {
+    // If clicking the already-selected row, toggle close
+    if (this.selectedIndex() === index) {
+      this.clearSelection();
+      return;
+    }
+
+    this.selectedIndex.set(index);
+
+    // Ensure the row is visible in the viewport. Schedule after microtask so the index is set.
+    queueMicrotask(() => {
+      try {
+        this.viewport?.scrollToIndex(index, 'smooth');
+      } catch {
+        // ignore - viewport may not yet be available
+      }
+    });
+  }
+
+  public clearSelection(): void {
+    this.selectedIndex.set(null);
   }
 
   /**
@@ -96,6 +134,8 @@ export class AnalyseLogTable {
   public handlePageEvent(event: PageEvent): void {
     this.currentPage.set(event.pageIndex + 1);
     this.pageSize.set(event.pageSize);
+    // Reset selection when changing page to avoid stale indices
+    this.clearSelection();
   }
 
   /**
