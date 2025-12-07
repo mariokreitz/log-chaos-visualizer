@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,7 +9,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchService } from '../../../core/services/search.service';
-import { QueryExampleItem } from './query-example-item';
 
 @Component({
   selector: 'app-query-help-dialog',
@@ -22,7 +21,6 @@ import { QueryExampleItem } from './query-example-item';
     MatFormFieldModule,
     MatSelectModule,
     MatTooltipModule,
-    QueryExampleItem,
   ],
   templateUrl: './query-help-dialog.html',
   styleUrls: ['./query-help-dialog.scss'],
@@ -33,13 +31,6 @@ export class QueryHelpDialog {
   protected readonly liveAnnouncement = signal<string>('');
   // Merge mode for inserting examples: 'replace' | 'append-space' | 'append-and'
   protected readonly mergeMode = signal<'replace' | 'append-space' | 'append-and'>('replace');
-
-  // Human readable label for current merge mode (used by template if needed)
-  protected readonly mergeModeLabel = computed(() => {
-    const m = this.mergeMode();
-    return m === 'replace' ? 'Replace' : m === 'append-and' ? 'Append AND' : 'Append';
-  });
-
   // Examples structured data (raw query strings are used when inserting/copying)
   protected readonly exampleSections = [
     {
@@ -76,12 +67,50 @@ export class QueryHelpDialog {
       ],
     },
   ] as const;
+  // Examples per tab so examples appear where users expect them
+  protected readonly operatorsExamples = [
+    { query: 'level=error', description: 'All error logs' },
+    { query: 'level!=debug', description: 'Exclude debug logs' },
+    { query: 'statusCode>=500', description: 'Server errors (5xx)' },
+    { query: '(level=error OR level=fatal) AND environment=prod', description: 'Critical production errors' },
+  ] as const;
+  protected readonly functionsExamples = [
+    { query: 'contains(message, "timeout")', description: 'Logs containing "timeout"' },
+    { query: 'startsWith(url, "/api")', description: 'Requests starting with /api' },
+    { query: 'matches(message, /api.*timeout/i)', description: 'API timeout errors (regex)' },
+  ] as const;
+  protected readonly fieldsExamples = [
+    { query: 'hostname=web-1', description: 'Logs from a specific host' },
+    { query: 'statusCode>=400', description: 'Client and server errors (4xx/5xx)' },
+    { query: 'pid=12345', description: 'Filter by process id' },
+  ] as const;
+  protected readonly regexExamples = [
+    { query: 'matches(message, /timeout/i)', description: 'Case-insensitive "timeout"' },
+    { query: 'matches(message, /\d{3}\s+error/)', description: 'Three digits followed by "error"' },
+    { query: 'matches(message, /^ERROR.*timeout$/)', description: 'Starts with ERROR and ends with timeout' },
+  ] as const;
+  protected readonly performanceExamples = [
+    { query: 'level=error AND environment=prod', description: 'Indexed fields first for speed' },
+    { query: 'level=error AND contains(message, "api")', description: 'Narrow before regex' },
+  ] as const;
+  protected readonly referenceExamples = [
+    { query: 'level=error AND contains(message, "exception")', description: 'Find errors with exceptions' },
+    { query: 'timestamp>="2024-12-01" AND timestamp<"2024-12-07"', description: 'Logs within a date range' },
+  ] as const;
+  // no-op field to keep file stable
+  private readonly _noop = 0;
   private readonly dialogRef = inject(MatDialogRef<QueryHelpDialog>);
   private readonly searchService = inject(SearchService);
   private readonly notification = inject(NotificationService);
 
   close(): void {
     this.dialogRef.close();
+  }
+
+  // Human readable label for current merge mode (used by template as a function)
+  protected mergeModeLabel(): string {
+    const m = this.mergeMode();
+    return m === 'replace' ? 'Replace' : m === 'append-and' ? 'Append AND' : 'Append';
   }
 
   protected copyExample(query: string): void {

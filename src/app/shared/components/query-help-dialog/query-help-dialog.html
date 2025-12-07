@@ -36,6 +36,8 @@
         </button>
       </div>
 
+      <div aria-hidden="true" class="merge-mode-indicator">{{ mergeModeLabel() }}</div>
+
       <button (click)="close()" aria-label="Close dialog" aria-labelledby="query-help-dialog-title" mat-icon-button>
         <mat-icon>close</mat-icon>
       </button>
@@ -49,16 +51,7 @@
           @for (section of exampleSections; track section.title) {
             <section class="sidebar-section">
               <h4>{{ section.title }}</h4>
-              <div class="sidebar-list">
-                @for (item of section.items; track item.query) {
-                  <app-query-example-item
-                    (onCopy)="copyExample(item.query)"
-                    (onInsert)="insertExample(item.query)"
-                    [description]="item.description"
-                    [query]="item.query"
-                  />
-                }
-              </div>
+              <p class="description">{{ section.items[0]?.description }}</p>
             </section>
           }
         </div>
@@ -73,6 +66,30 @@
                 Use the left column for quick examples. This reference contains field/operation descriptions and
                 advanced patterns.
               </p>
+
+              <div class="examples-list">
+                @for (item of referenceExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
           </mat-tab>
 
@@ -107,6 +124,31 @@
                 </tbody>
               </table>
 
+              <h3 class="examples-heading">Examples</h3>
+              <div class="examples-list">
+                @for (item of operatorsExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <h3>Boolean Operators</h3>
               <table class="operators-table">
                 <thead>
@@ -127,10 +169,8 @@
             </div>
           </mat-tab>
 
-          <!-- Remaining tabs remain functionally the same to preserve content -->
           <mat-tab label="Functions">
             <div class="tab-content">
-              <!-- content omitted for brevity; unchanged -->
               <h3>String Functions</h3>
               <div class="function-group">
                 <h4>contains(text)</h4>
@@ -140,6 +180,31 @@
                   <code>contains(message, "connection error")</code>
                   <code>contains(hostname, "api")</code>
                 </div>
+              </div>
+
+              <h3 class="examples-heading">Examples</h3>
+              <div class="examples-list">
+                @for (item of functionsExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </mat-tab>
@@ -163,16 +228,30 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </mat-tab>
 
-          <mat-tab label="Examples">
-            <div class="tab-content">
-              <h3>Common Use Cases</h3>
-              <div class="example-group">
-                <h4>Find Errors</h4>
-                <code>level=error</code>
-                <p class="description">All error logs</p>
+              <h3 class="examples-heading">Examples</h3>
+              <div class="examples-list">
+                @for (item of fieldsExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
           </mat-tab>
@@ -181,12 +260,62 @@
             <div class="tab-content">
               <h3>Regular Expression Patterns</h3>
               <p>Use regex patterns with the <code>matches()</code> function for advanced text matching.</p>
+
+              <h3 class="examples-heading">Examples</h3>
+              <div class="examples-list">
+                @for (item of regexExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
           </mat-tab>
 
           <mat-tab label="Performance">
             <div class="tab-content">
               <h3>Query Optimization Tips</h3>
+
+              <h3 class="examples-heading">Examples</h3>
+              <div class="examples-list">
+                @for (item of performanceExamples; track item.query) {
+                  <div class="example-item">
+                    <div class="example-main">
+                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
+                      <p class="description">{{ item.description }}</p>
+                    </div>
+                    <div class="example-actions">
+                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                        <mat-icon>content_copy</mat-icon>
+                      </button>
+                      <button
+                        (click)="insertExample(item.query)"
+                        aria-label="Insert example"
+                        color="primary"
+                        mat-stroked-button
+                      >
+                        Insert
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
             </div>
           </mat-tab>
         </mat-tab-group>
