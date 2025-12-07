@@ -1,7 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, input, InputSignal, output, signal } from '@angular/core';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
-import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../../../core/types/log-entries';
+import type {
+  DockerLogLine,
+  LokiEntry,
+  PinoEntry,
+  PromtailTextLine,
+  WinstonEntry,
+} from '../../../core/types/log-entries';
 
 @Component({
   selector: 'app-analyse-detail-view',

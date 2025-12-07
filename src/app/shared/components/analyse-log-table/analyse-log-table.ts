@@ -1,15 +1,6 @@
 import { CdkVirtualScrollViewport, ScrollingModule, VIRTUAL_SCROLL_STRATEGY } from '@angular/cdk/scrolling';
 import { DecimalPipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  InputSignal,
-  signal,
-  ViewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, InputSignal, signal, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -115,41 +106,31 @@ export class AnalyseLogTable {
       return;
     }
 
+    // Set the selection immediately but do NOT trigger any automatic scrolling.
+    // Automatic scrolling caused the virtual viewport to miscalculate and jump.
     this.selectedIndex.set(index);
     this.lastSelectedIndex = index;
 
-    // Ensure the row is visible in the viewport. Schedule after microtask so the index is set.
+    // After the detail is rendered, ask the viewport to recalc and move focus
     queueMicrotask(() => {
       try {
-        this.viewport?.scrollToIndex(index, 'smooth');
+        this.viewport?.checkViewportSize();
       } catch {
         // ignore
       }
 
-      // Give Angular a small tick to render the expanded content, then measure and focus it.
-      setTimeout(() => {
-        try {
-          const detailEl = document.getElementById(`detail-${index}`);
-          if (detailEl) {
-            // Measure the new height of the row + detail and set itemSize accordingly (approximation)
-            const measuredHeight = detailEl.getBoundingClientRect().height || this.baseItemSize;
-            const newSize = Math.max(this.baseItemSize, measuredHeight);
-            this.itemSize.set(newSize);
-          }
-
-          // Focus first interactive element inside the detail, or the detail itself
-          const focusEl = detailEl?.querySelector('[data-focus-first]') as HTMLElement | null;
-          (focusEl ?? (detailEl as HTMLElement | null))?.focus?.();
-        } catch {
-          // ignore focus/measurement errors
+      try {
+        const detailEl = document.getElementById(`detail-${index}`) as HTMLElement | null;
+        const focusEl = detailEl?.querySelector('[data-focus-first]') as HTMLElement | null;
+        const toFocus = (focusEl ?? detailEl) as HTMLElement | null;
+        if (toFocus) {
+          // Focus without scrolling to avoid changing viewport position
+          const opts: FocusOptions = { preventScroll: true };
+          toFocus.focus(opts);
         }
-
-        try {
-          this.viewport?.checkViewportSize();
-        } catch {
-          // ignore
-        }
-      }, 120);
+      } catch {
+        // ignore focus errors
+      }
     });
   }
 
@@ -159,8 +140,7 @@ export class AnalyseLogTable {
     this.selectedIndex.set(null);
     this.lastSelectedIndex = null;
 
-    // restore default size and ask viewport to recalc
-    this.itemSize.set(this.baseItemSize);
+    // Ask viewport to recalc; do not change global item size which may cause jumps
     queueMicrotask(() => {
       try {
         this.viewport?.checkViewportSize();
@@ -172,7 +152,13 @@ export class AnalyseLogTable {
       try {
         const prev = this.previousFocus;
         if (prev && document.body.contains(prev)) {
-          prev.focus();
+          // Restore focus without scrolling (if supported)
+          try {
+            const opts: FocusOptions = { preventScroll: true };
+            prev.focus(opts);
+          } catch {
+            prev.focus();
+          }
           return;
         }
       } catch {
@@ -182,7 +168,14 @@ export class AnalyseLogTable {
       if (lastIndex !== null) {
         try {
           const rowEl = document.getElementById(`row-${lastIndex}`) as HTMLElement | null;
-          rowEl?.focus?.();
+          if (rowEl) {
+            try {
+              const opts: FocusOptions = { preventScroll: true };
+              rowEl.focus(opts);
+            } catch {
+              rowEl.focus();
+            }
+          }
         } catch {
           // ignore
         }
