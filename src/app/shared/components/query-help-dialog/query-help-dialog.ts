@@ -9,6 +9,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NotificationService } from '../../../core/services/notification.service';
 import { SearchService } from '../../../core/services/search.service';
+import { QueryExampleItem } from './query-example-item';
 
 @Component({
   selector: 'app-query-help-dialog',
@@ -21,6 +22,7 @@ import { SearchService } from '../../../core/services/search.service';
     MatFormFieldModule,
     MatSelectModule,
     MatTooltipModule,
+    QueryExampleItem,
   ],
   templateUrl: './query-help-dialog.html',
   styleUrls: ['./query-help-dialog.scss'],
@@ -86,7 +88,7 @@ export class QueryHelpDialog {
   ] as const;
   protected readonly regexExamples = [
     { query: 'matches(message, /timeout/i)', description: 'Case-insensitive "timeout"' },
-    { query: 'matches(message, /\d{3}\s+error/)', description: 'Three digits followed by "error"' },
+    { query: 'matches(message, /\\d{3}\\s+error/)', description: 'Three digits followed by "error"' },
     { query: 'matches(message, /^ERROR.*timeout$/)', description: 'Starts with ERROR and ends with timeout' },
   ] as const;
   protected readonly performanceExamples = [
@@ -97,8 +99,6 @@ export class QueryHelpDialog {
     { query: 'level=error AND contains(message, "exception")', description: 'Find errors with exceptions' },
     { query: 'timestamp>="2024-12-01" AND timestamp<"2024-12-07"', description: 'Logs within a date range' },
   ] as const;
-  // no-op field to keep file stable
-  private readonly _noop = 0;
   private readonly dialogRef = inject(MatDialogRef<QueryHelpDialog>);
   private readonly searchService = inject(SearchService);
   private readonly notification = inject(NotificationService);

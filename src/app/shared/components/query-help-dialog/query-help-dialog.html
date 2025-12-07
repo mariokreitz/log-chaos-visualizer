@@ -67,25 +67,12 @@
 
               <div class="examples-list">
                 @for (item of referenceExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
             </div>
@@ -125,25 +112,12 @@
               <h3 class="examples-heading">Examples</h3>
               <div class="examples-list">
                 @for (item of operatorsExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
 
@@ -183,25 +157,12 @@
               <h3 class="examples-heading">Examples</h3>
               <div class="examples-list">
                 @for (item of functionsExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
             </div>
@@ -230,25 +191,12 @@
               <h3 class="examples-heading">Examples</h3>
               <div class="examples-list">
                 @for (item of fieldsExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
             </div>
@@ -262,25 +210,12 @@
               <h3 class="examples-heading">Examples</h3>
               <div class="examples-list">
                 @for (item of regexExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
             </div>
@@ -293,25 +228,12 @@
               <h3 class="examples-heading">Examples</h3>
               <div class="examples-list">
                 @for (item of performanceExamples; track item.query) {
-                  <div class="example-item">
-                    <div class="example-main">
-                      <code class="code-inline" title="{{ item.query }}">{{ item.query }}</code>
-                      <p class="description">{{ item.description }}</p>
-                    </div>
-                    <div class="example-actions">
-                      <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
-                        <mat-icon>content_copy</mat-icon>
-                      </button>
-                      <button
-                        (click)="insertExample(item.query)"
-                        aria-label="Insert example"
-                        color="primary"
-                        mat-stroked-button
-                      >
-                        Insert
-                      </button>
-                    </div>
-                  </div>
+                  <app-query-example-item
+                    (copyRequested)="copyExample(item.query)"
+                    (insertRequested)="insertExample(item.query)"
+                    [description]="item.description"
+                    [query]="item.query"
+                  ></app-query-example-item>
                 }
               </div>
             </div>

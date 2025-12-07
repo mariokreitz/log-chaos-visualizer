@@ -65,14 +65,14 @@ export class QueryExampleItem {
   readonly description = input<string>('');
 
   // outputs: use the output helper which provides an emitter with .emit()
-  readonly onCopy = output<void>();
-  readonly onInsert = output<void>();
+  readonly copyRequested = output<void>();
+  readonly insertRequested = output<void>();
 
   handleCopy(): void {
-    this.onCopy.emit();
+    this.copyRequested.emit();
   }
 
   handleInsert(): void {
-    this.onInsert.emit();
+    this.insertRequested.emit();
   }
 }
