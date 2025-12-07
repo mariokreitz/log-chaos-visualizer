@@ -14,74 +14,40 @@
 
   <mat-dialog-content aria-labelledby="query-help-dialog-title" role="document">
     <mat-tab-group>
-      <!-- Quick Start Tab -->
       <mat-tab label="Quick Start">
         <div class="tab-content">
-          <h3>Basic Queries</h3>
-          <p>Search logs using field-specific queries with operators and functions.</p>
+          <h3>Quick Filters & Examples</h3>
+          <p>
+            Use the Quick Filters in the toolbar to apply common filters instantly. You can also copy or insert the
+            example queries below into the search bar.
+          </p>
 
-          <div class="example-group">
-            <h4>Quick Filters</h4>
-            <p>
-              Use the Quick Filters in the toolbar to add common field filters with a single click. Quick filters are
-              translated into the equivalent query expression and inserted into the query bar so you can refine them
-              further or combine them with free-form query text.
-            </p>
-            <div class="examples">
-              <code>level=error</code>
-              <p class="description">Quick filter: "Errors" — shows only error-level logs</p>
+          <div class="examples-panel">
+            @for (section of exampleSections; track section.title) {
+              <section aria-labelledby="{{ section.title }}-heading" class="example-section">
+                <h4 id="{{ section.title }}-heading">{{ section.title }}</h4>
+                <div class="example-list">
+                  @for (item of section.items; track item.query) {
+                    <div class="example-item">
+                      <div class="example-main">
+                        <code aria-hidden="true">{{ item.query }}</code>
+                        <p class="description">{{ item.description }}</p>
+                      </div>
 
-              <code>environment=prod</code>
-              <p class="description">Quick filter: "Production" — filter logs from production</p>
-
-              <code>statusCode&gt;=500</code>
-              <p class="description">Quick filter: "5xx" — common quick filter for server errors</p>
-
-              <code>startsWith(hostname, "web")</code>
-              <p class="description">Quick filter: "Web" — filter hostnames that start with "web"</p>
-            </div>
-
-            <p class="note">
-              Tip: Combine quick filters and typed queries. Example: apply the "Errors" quick filter, then add
-              <code>contains(message, "api")</code> in the query bar to find production API errors.
-            </p>
+                      <div class="example-actions">
+                        <button (click)="copyExample(item.query)" aria-label="Copy example" mat-icon-button>
+                          <mat-icon>content_copy</mat-icon>
+                        </button>
+                        <button (click)="insertExample(item.query)" color="primary" mat-button>Use</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+            }
           </div>
 
-          <div class="example-group">
-            <h4>Field Comparisons</h4>
-            <code>level=error</code>
-            <p class="description">Exact match on log level</p>
-
-            <code>statusCode&gt;500</code>
-            <p class="description">Numeric comparison</p>
-
-            <code>timestamp&gt;="2024-12-01"</code>
-            <p class="description">Date/time range filtering</p>
-          </div>
-
-          <div class="example-group">
-            <h4>String Functions</h4>
-            <code>contains(message, "timeout")</code>
-            <p class="description">Check if message contains text</p>
-
-            <code>startsWith(hostname, "web")</code>
-            <p class="description">Check if hostname starts with text</p>
-
-            <code>endsWith(line, "failed")</code>
-            <p class="description">Check if line ends with text</p>
-          </div>
-
-          <div class="example-group">
-            <h4>Boolean Logic</h4>
-            <code>level=error AND contains(message, "api")</code>
-            <p class="description">Combine multiple conditions</p>
-
-            <code>level=error OR level=fatal</code>
-            <p class="description">Match either condition</p>
-
-            <code>NOT level=debug</code>
-            <p class="description">Exclude matches</p>
-          </div>
+          <div aria-live="polite" class="visually-hidden" role="status">{{ liveAnnouncement() }}</div>
         </div>
       </mat-tab>
 
