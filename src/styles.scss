@@ -41,6 +41,16 @@
   --color-accent: #64dfdf;
   --color-accent-soft: rgba(100, 223, 223, 0.16);
 
+  /* Semantic status colors */
+  --color-error: #ff6b6b;
+  --color-error-soft: rgba(255, 107, 107, 0.12);
+  --color-warning: #ffd166;
+  --color-warning-soft: rgba(255, 209, 102, 0.12);
+  --color-info: #56cfe1;
+  --color-info-soft: rgba(86, 207, 225, 0.12);
+  --color-success: #80ffdb;
+  --color-success-soft: rgba(128, 255, 219, 0.12);
+
   /* Focus */
   --focus-ring: 2px solid var(--color-accent);
 
