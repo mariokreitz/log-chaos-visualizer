@@ -28,7 +28,7 @@ export class SearchInput {
   protected readonly query = computed(() => this.searchService.query());
 
   // Debounced input value
-  private debounceTimeout: any;
+  private debounceTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
   public onInput(event: Event): void {
     const target = event.target as HTMLInputElement;
