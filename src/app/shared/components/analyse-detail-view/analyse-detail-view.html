@@ -13,22 +13,6 @@
             <span class="kind">{{ e.kind || '—' }}</span>
           </div>
         </h3>
-
-        <ul aria-label="Entry metadata" class="summary-chips" role="list">
-          <li aria-label="Level {{ e.normalized?.level || 'unknown' }}" class="mat-chip level" role="listitem">
-            {{ e.normalized?.level || '—' }}
-          </li>
-          <li
-            aria-label="Environment {{ e.normalized?.environment || 'unknown' }}"
-            class="mat-chip env"
-            role="listitem"
-          >
-            {{ e.normalized?.environment || '—' }}
-          </li>
-          <li aria-label="Source {{ e.normalized?.kind || 'unknown' }}" class="mat-chip source" role="listitem">
-            {{ e.normalized?.kind || '—' }}
-          </li>
-        </ul>
       </div>
     </header>
 
