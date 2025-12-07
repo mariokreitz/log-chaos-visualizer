@@ -1,27 +1,26 @@
 @let e = entry();
 @if (e) {
-  @let h = httpInfo();
   <article [attr.aria-labelledby]="headingId()" class="detail-container" role="region" tabindex="-1">
     <header class="detail-header">
       <div class="summary-left">
         <div [id]="headingId()" class="summary-title">
           <div class="message" title="{{ messageText() || 'No message' }}">
-            {{ (messageText() || 'No message').slice(0, 200) }}{{ (messageText() || '').length > 200 ? '…' : '' }}
+            {{ (messageText() || 'No message').slice(0, 200) }}{{ (messageText() || '').length > 200 ? '\u2026' : '' }}
           </div>
           <div class="meta-small">
             <span class="ts" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() }}</span>
-            <span aria-hidden="true" class="divider">•</span>
+            <span aria-hidden="true" class="divider">\u2022</span>
             <span class="kind">{{ e.kind }}</span>
           </div>
         </div>
-        <div class="summary-chips" role="list">
-          <span aria-label="Level {{ e.normalized.level }}" class="chip level" role="listitem">{{
+        <div aria-label="Entry metadata" class="summary-chips" role="list">
+          <span aria-label="Level {{ e.normalized.level }}" class="mat-chip level" role="listitem">{{
             e.normalized.level
           }}</span>
-          <span aria-label="Environment {{ e.normalized.environment }}" class="chip env" role="listitem">{{
+          <span aria-label="Environment {{ e.normalized.environment }}" class="mat-chip env" role="listitem">{{
             e.normalized.environment
           }}</span>
-          <span aria-label="Source {{ e.normalized.kind }}" class="chip source" role="listitem">{{
+          <span aria-label="Source {{ e.normalized.kind }}" class="mat-chip source" role="listitem">{{
             e.normalized.kind
           }}</span>
         </div>
@@ -29,96 +28,47 @@
           <pre aria-hidden="true" class="stack-preview">{{ stackPreview() }}</pre>
         }
       </div>
-
       <div class="summary-actions">
-        <button
-          (click)="toggleStack()"
-          [attr.aria-pressed]="showStack()"
-          aria-controls="stack-panel"
-          class="action-btn"
-          type="button"
-        >
-          {{ showStack() ? 'Hide stack' : 'Show stack' }}
-        </button>
-        <button
-          (click)="toggleRaw()"
-          [attr.aria-pressed]="showRaw()"
-          aria-controls="raw-panel"
-          class="action-btn"
-          type="button"
-        >
-          {{ showRaw() ? 'Hide raw' : 'Show raw' }}
-        </button>
-        <div class="copy-wrap">
-          <button (click)="copyRawJson()" class="action-btn" type="button">Copy JSON</button>
-        </div>
-        <button (click)="closed.emit()" class="action-btn" type="button">Close</button>
+        @if (hasStack()) {
+          <div
+            (click)="toggleStack()"
+            (keyup)="($event.key === 'Enter' || $event.key === ' ') && toggleStack()"
+            [attr.aria-expanded]="showStack()"
+            aria-controls="stack-panel"
+            class="stack-toggle"
+            role="button"
+            tabindex="0"
+            title="Toggle stack preview"
+          >
+            <mat-icon aria-hidden="true">expand_more</mat-icon>
+            <span class="stack-toggle-label">{{ showStack() ? 'Hide details' : 'Show details' }}</span>
+          </div>
+        }
       </div>
     </header>
-
     <section aria-label="Log details" class="detail-grid">
       <div class="panel panel-main">
-        <h3 class="panel-title">Details</h3>
-        <dl class="meta-list">
-          @for (pair of normalizedEntries(); track $index) {
-            <div class="meta-row">
-              <dt class="meta-key">{{ pair[0] }}</dt>
-              <dd class="meta-value">{{ formatValue(pair[1]) }}</dd>
-            </div>
-          }
+        <!-- Main log details go here -->
+        <dl>
+          <dt>Message</dt>
+          <dd>{{ messageText() }}</dd>
+          <dt>Timestamp</dt>
+          <dd>{{ formattedTimestamp() }}</dd>
+          <dt>Level</dt>
+          <dd>{{ e.normalized.level }}</dd>
+          <dt>Environment</dt>
+          <dd>{{ e.normalized.environment }}</dd>
+          <dt>Source</dt>
+          <dd>{{ e.normalized.kind }}</dd>
         </dl>
-      </div>
-
-      <div class="panel panel-context">
-        <h3 class="panel-title">Context</h3>
-        @if (h) {
-          <div class="http">
-            <div><strong>Method:</strong> {{ h.method ?? '-' }}</div>
-            <div>
-              <strong>URL:</strong> <code>{{ h.url ?? '-' }}</code>
-            </div>
-            <div><strong>Status:</strong> {{ h.statusCode ?? '-' }}</div>
-            <div><strong>Response time:</strong> {{ h.responseTime ?? '-' }} ms</div>
-          </div>
-        } @else {
-          <div class="no-context">No structured HTTP context</div>
+        @if (showStack()) {
+          <pre class="stack-full" id="stack-panel" tabindex="0">{{ stackFull() }}</pre>
         }
-
-        @if (metaEntries().length > 0) {
-          <div class="tags">
-            <h4>Metadata</h4>
-            <div class="tags-wrap">
-              @for (pair of metaEntries(); track $index) {
-                <span class="tag">{{ pair[0] }}: {{ formatValue(pair[1]) }}</span>
-              }
-            </div>
-          </div>
+        @if (showRaw()) {
+          <pre class="raw-json" tabindex="0">{{ rawJson() }}</pre>
         }
       </div>
     </section>
-
-    @if (hasStack() && (showStack() || showRaw())) {
-      <section aria-label="Stack and raw data" class="panel panel-stack" id="stack-panel">
-        <h3 class="panel-title">Stack / Raw</h3>
-        <div class="panel-toolbar">
-          <button (click)="toggleStack()" [attr.aria-pressed]="showStack()" class="action-btn" type="button">
-            {{ showStack() ? 'Collapse stack' : 'Expand stack' }}
-          </button>
-          <button (click)="toggleRaw()" [attr.aria-pressed]="showRaw()" class="action-btn" type="button">
-            {{ showRaw() ? 'Hide raw' : 'Show raw' }}
-          </button>
-          <div class="copy-wrap">
-            <button (click)="copyRawJson()" class="action-btn" type="button">Copy JSON</button>
-          </div>
-        </div>
-
-        @if (showRaw()) {
-          <pre class="raw-json" id="raw-panel">{{ rawJson }}</pre>
-        } @else {
-          <pre class="stack-full">{{ stackText() ?? rawJson }}</pre>
-        }
-      </section>
-    }
   </article>
 } @else {
   <div class="detail-empty">No entry selected</div>

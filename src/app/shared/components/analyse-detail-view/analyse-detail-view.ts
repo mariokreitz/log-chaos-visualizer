@@ -10,6 +10,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import type {
@@ -22,7 +24,7 @@ import type {
 
 @Component({
   selector: 'app-analyse-detail-view',
-  imports: [CommonModule],
+  imports: [CommonModule, MatChipsModule, MatIconModule],
   templateUrl: './analyse-detail-view.html',
   styleUrls: ['./analyse-detail-view.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,62 +57,44 @@ export class AnalyseDetailView {
     if (!e || !e.normalized?.meta) return [] as [string, unknown][];
     return Object.entries(e.normalized.meta) as [string, unknown][];
   });
-  public readonly messageText = computed(() => {
-    const e = this.entry();
-    return e ? this.extractMessageFromEntry(e) : '';
-  });
-  public readonly stackText = computed(() => {
-    const e = this.entry();
-    return e ? this.extractStackFromEntry(e) : null;
-  });
-  public readonly httpInfo = computed(() => {
-    const e = this.entry();
-    return e ? this.extractHttpInfo(e) : null;
-  });
-  public readonly hasStack = computed(() => {
-    const st = this.stackText();
-    if (st && st.length > 0) return true;
-    const raw = this.rawJson;
-    return typeof raw === 'string' && raw.includes('\n');
-  });
-  public readonly stackPreview = computed(() => {
-    const st = this.stackText();
-    const src = typeof st === 'string' && st.length > 0 ? st : (this.rawJson ?? '');
-    if (!src) return '';
-    return src.length > 1000 ? src.slice(0, 1000) + '\n... (truncated)' : src;
+  // Effect: reset UI state on entry change
+  private readonly resetEffect = effect(() => {
+    this.showStack.set(false);
+    this.showRaw.set(false);
   });
   private readonly notification = inject(NotificationService);
 
-  public get rawJson(): string | null {
+  // Stack preview logic
+  public hasStack(): boolean {
     const e = this.entry();
-    if (!e) return null;
-    try {
-      return JSON.stringify(e, null, 2);
-    } catch {
-      return null;
-    }
+    return !!this.extractStackFromEntry(e);
   }
 
-  // Reset UI state whenever entry changes
-  constructor() {
-    effect(() => {
-      // read entry to track changes
-      this.entry();
-      // collapse extended views when a new entry is selected
-      this.showStack.set(false);
-      this.showRaw.set(false);
-    });
+  public stackPreview(): string {
+    const e = this.entry();
+    const stack = this.extractStackFromEntry(e);
+    if (!stack) return '';
+    return stack.split('\n').slice(0, 3).join('\n');
+  }
 
-    // Reference template-bound members so the TypeScript static analyzer doesn't mark them as unused
-    // These are no-op references and intentionally do not change runtime behavior.
-    // Call only pure/computed helpers to avoid side effects at construction
-    void this.headingId();
-    void this.formatValue('');
-    void this.stackPreview();
-    // keep references to methods so tooling knows they are used in template
-    void this.copyRawJson;
-    void this.toggleStack;
-    void this.toggleRaw;
+  public stackFull(): string {
+    const e = this.entry();
+    return this.extractStackFromEntry(e) ?? '';
+  }
+
+  public rawJson(): string {
+    const e = this.entry();
+    return e ? JSON.stringify(e, null, 2) : '';
+  }
+
+  public messageText(): string {
+    const e = this.entry();
+    return e?.normalized?.message ?? '';
+  }
+
+  public toggleStack(): void {
+    this.showStack.update((v) => !v);
+    this.showRaw.set(false);
   }
 
   // Helper to present values safely in the UI
@@ -127,7 +111,7 @@ export class AnalyseDetailView {
 
   // Copy raw JSON to clipboard (graceful in non-browser envs)
   public async copyRawJson(): Promise<boolean> {
-    const raw = this.rawJson;
+    const raw = this.rawJson();
     if (!raw) return false;
     try {
       if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
@@ -141,15 +125,6 @@ export class AnalyseDetailView {
       this.notification.error('Failed to copy JSON');
       return false;
     }
-  }
-
-  // UI toggles
-  public toggleStack(): void {
-    this.showStack.update((v) => !v);
-  }
-
-  public toggleRaw(): void {
-    this.showRaw.update((v) => !v);
   }
 
   private isObject(v: unknown): v is Record<string, unknown> {
@@ -192,25 +167,15 @@ export class AnalyseDetailView {
     }
   }
 
-  private extractStackFromEntry(e: ParsedLogEntry): string | null {
+  private extractStackFromEntry(e: ParsedLogEntry | null): string | null {
+    if (!e) return null;
     // Normalized stack first
     const norm = e.normalized as { stack?: string } | undefined;
     if (norm && typeof norm.stack === 'string' && norm.stack.length > 0) return norm.stack;
 
     // Known shapes: check common meta locations
-    if (e.kind === 'pino') {
-      const p = e.entry as PinoEntry;
-      const meta = (p.meta ?? {}) as Record<string, unknown>;
-      const metaStack = this.safeGet(meta, 'stack');
-      if (typeof metaStack === 'string') return metaStack;
-      const alt = this.safeGet(p as unknown as Record<string, unknown>, 'stack');
-      if (typeof alt === 'string') return alt;
-    }
-
-    if (e.kind === 'winston') {
-      const w = e.entry as WinstonEntry;
-      const meta = (w.meta ?? {}) as Record<string, unknown>;
-      const metaStack = this.safeGet(meta, 'stack');
+    if ('meta' in e.normalized && e.normalized.meta) {
+      const metaStack = this.safeGet(e.normalized.meta, 'stack');
       if (typeof metaStack === 'string') return metaStack;
     }
 
