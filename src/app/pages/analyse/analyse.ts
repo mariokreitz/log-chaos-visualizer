@@ -18,21 +18,19 @@ export default class Analyse {
   protected readonly showExperimentalWarning = signal(true);
   protected readonly renderProgress = signal(0);
   protected readonly isFullyRendered = signal(false);
+  protected readonly filterQuery = signal<string>('');
+  protected readonly filterSource = signal<'quick-filter' | 'user-input' | null>(null);
+  private readonly fileParse = inject(FileParseService);
+  protected readonly allEntries = this.fileParse.allEntries;
   // Check if any data is available
   protected readonly hasData = computed(() => this.allEntries().length > 0);
+  protected readonly filteredEntries = this.fileParse.filteredEntries;
   // Total count for display (always show full count)
   protected readonly totalEntryCount = computed(() => {
     const filtered = this.filteredEntries();
     const all = filtered !== null ? filtered : this.allEntries();
     return all.length;
   });
-  // Loading state for better UX (used in template)
-  protected readonly isLoading = computed(() => {
-    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
-  });
-  private readonly fileParse = inject(FileParseService);
-  protected readonly allEntries = this.fileParse.allEntries;
-  protected readonly filteredEntries = this.fileParse.filteredEntries;
   protected readonly isSearching = this.fileParse.isSearching;
   protected readonly isParsing = this.fileParse.isParsing;
   private readonly router = inject(Router);
@@ -53,6 +51,10 @@ export default class Analyse {
     }
 
     return all;
+  });
+  // Loading state for better UX (used in template)
+  protected readonly isLoading = computed(() => {
+    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
   });
 
   constructor() {
@@ -83,6 +85,14 @@ export default class Analyse {
         );
       }
     });
+
+    effect(() => {
+      // Sync filterQuery signal with FileParseService
+      const currentFilterQuery = this.fileParse.filterQuery();
+      if (currentFilterQuery !== this.filterQuery()) {
+        this.filterQuery.set(currentFilterQuery);
+      }
+    });
   }
 
   /**
@@ -102,8 +112,52 @@ export default class Analyse {
   /**
    * Handle quick filter selection
    */
-  protected onQuickFilterSelected(query: string): void {
-    this.fileParse.setFilterQuery(query);
+  protected onQuickFilterSelected(event: Event): void {
+    // Defensive: extract query string if event is not string
+    let query = '';
+    if (typeof event === 'string') {
+      query = event;
+    } else if (event && 'target' in event && (event.target as HTMLInputElement).value) {
+      query = (event.target as HTMLInputElement).value;
+    }
+    // Only apply quick filter if no user input is active
+    if (this.filterSource() !== 'user-input') {
+      this.filterSource.set('quick-filter');
+      this.filterQuery.set(query);
+      this.fileParse.setFilterQuery(query);
+    }
+  }
+
+  /**
+   * Handle search bar input (update value only)
+   */
+  protected onSearchInput(value: string): void {
+    this.filterQuery.set(value);
+    // If user types, mark as user input
+    if (value.trim().length > 0) {
+      this.filterSource.set('user-input');
+    } else {
+      this.filterSource.set(null);
+    }
+  }
+
+  /**
+   * Handle search bar submit (apply filter)
+   */
+  protected onSearchSubmit(query: string): void {
+    const trimmedQuery = query.trim();
+    this.filterQuery.set(trimmedQuery);
+    this.filterSource.set(trimmedQuery.length > 0 ? 'user-input' : null);
+    this.fileParse.setFilterQuery(trimmedQuery);
+  }
+
+  /**
+   * Handle search bar clear
+   */
+  protected onSearchClear(): void {
+    this.filterQuery.set('');
+    this.filterSource.set(null);
+    this.fileParse.setFilterQuery('');
   }
 
   /**

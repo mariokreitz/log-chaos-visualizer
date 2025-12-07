@@ -170,38 +170,54 @@ function compareValues(
   targetValue: string | number | boolean,
 ): boolean {
   // Type coercion for comparison
-  const fieldStr = String(fieldValue);
-  const targetStr = String(targetValue);
-
-  switch (operator) {
-    case '=':
-      return fieldStr === targetStr;
-    case '!=':
-      return fieldStr !== targetStr;
-    case '>':
-      // Try numeric comparison first
-      if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-        return fieldValue > targetValue;
-      }
-      return fieldStr > targetStr;
-    case '<':
-      if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-        return fieldValue < targetValue;
-      }
-      return fieldStr < targetStr;
-    case '>=':
-      if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-        return fieldValue >= targetValue;
-      }
-      return fieldStr >= targetStr;
-    case '<=':
-      if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-        return fieldValue <= targetValue;
-      }
-      return fieldStr <= targetStr;
-    default:
-      return false;
+  if (typeof fieldValue === 'string' && typeof targetValue === 'string') {
+    const fieldStr = fieldValue.toLowerCase();
+    const targetStr = targetValue.toLowerCase();
+    switch (operator) {
+      case '=':
+        return fieldStr === targetStr;
+      case '!=':
+        return fieldStr !== targetStr;
+      case '>':
+        return fieldStr > targetStr;
+      case '<':
+        return fieldStr < targetStr;
+      case '>=':
+        return fieldStr >= targetStr;
+      case '<=':
+        return fieldStr <= targetStr;
+    }
+  } else {
+    const fieldStr = String(fieldValue);
+    const targetStr = String(targetValue);
+    switch (operator) {
+      case '=':
+        return fieldStr === targetStr;
+      case '!=':
+        return fieldStr !== targetStr;
+      case '>':
+        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
+          return fieldValue > targetValue;
+        }
+        return fieldStr > targetStr;
+      case '<':
+        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
+          return fieldValue < targetValue;
+        }
+        return fieldStr < targetStr;
+      case '>=':
+        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
+          return fieldValue >= targetValue;
+        }
+        return fieldStr >= targetStr;
+      case '<=':
+        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
+          return fieldValue <= targetValue;
+        }
+        return fieldStr <= targetStr;
+    }
   }
+  return false;
 }
 
 function applyFunction(

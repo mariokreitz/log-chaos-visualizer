@@ -6,7 +6,7 @@
       [attr.aria-invalid]="!isValid() && hasValue()"
       [attr.aria-label]="ariaLabel()"
       [placeholder]="placeholder()"
-      [value]="value()"
+      [value]="query()"
       aria-describedby="search-input-help"
       class="search-input"
       type="text"
@@ -20,7 +20,7 @@
           diameter="18"
           mode="indeterminate"
         ></mat-progress-spinner>
-      } @else if (value()) {
+      } @else if (hasValue()) {
         <button
           (click)="onClear()"
           aria-label="Clear search"

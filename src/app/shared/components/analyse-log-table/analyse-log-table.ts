@@ -8,6 +8,7 @@ import {
   inject,
   input,
   InputSignal,
+  output,
   signal,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,6 +16,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FileParseService } from '../../../core/services/file-parse.service';
+import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import { extractFieldValue } from '../../../core/utils/field-extractor';
 import { formatSourceForIndex } from '../../../core/utils/search-utils';
@@ -74,20 +76,30 @@ export class AnalyseLogTable {
   });
   public readonly pageSizeOptions = [2000, 5000, 10000];
   public readonly showFirstLastButtons = true;
+  // Outputs for parent component
+  public readonly searchSubmit = output<string>();
+  public readonly valueChange = output<string>();
+  public readonly clear = output<void>();
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
+  private readonly searchService = inject(SearchService);
   // Memoization cache for formatted values - use Map for better performance
   private formatCache = new Map<ParsedLogEntry, FormattedEntry>();
   private readonly MAX_CACHE_SIZE = 10000; // Limit cache to prevent memory issues
   private readonly dialog = inject(MatDialog);
 
   constructor() {
+    // Sync searchQuery with SearchService
+    effect(() => {
+      const serviceQuery = this.searchService.query();
+      if (serviceQuery !== this.searchQuery()) {
+        this.searchQuery.set(serviceQuery);
+      }
+    });
     // Sync searchQuery with FileParseService filterQuery
-    // This ensures quick filters update the search input
     effect(() => {
       const currentFilterQuery = this.fileParse.filterQuery();
-      // Only update if different to avoid circular updates
       if (currentFilterQuery !== this.searchQuery()) {
         this.searchQuery.set(currentFilterQuery);
       }
@@ -97,20 +109,26 @@ export class AnalyseLogTable {
   public onSearchInput(value: string): void {
     // Just update the input value, don't trigger search
     this.searchQuery.set(value);
+    this.searchService.setQuery(value);
+    this.valueChange.emit(value);
   }
 
-  public onSearchSubmit(): void {
-    // Clear cache on new search to prevent stale data
+  public onSearchSubmit(value: string): void {
+    const trimmedQuery = value.trim();
+    console.log('[AnalyseLogTable] Search submitted:', trimmedQuery);
+    this.searchQuery.set(trimmedQuery);
+    this.searchService.setQuery(trimmedQuery);
     this.formatCache.clear();
-    // Trigger search when user presses Enter
-    const trimmedQuery = this.searchQuery().trim();
     this.fileParse.setFilterQuery(trimmedQuery);
+    this.searchSubmit.emit(trimmedQuery);
   }
 
   public onSearchClear(): void {
     this.searchQuery.set('');
+    this.searchService.setQuery('');
     this.formatCache.clear();
     this.fileParse.setFilterQuery('');
+    this.clear.emit();
   }
 
   public onOpenHelp(): void {

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { SearchService } from '../../../core/services/search.service';
 
 export interface QuickFilter {
   label: string;
@@ -19,8 +20,6 @@ export interface QuickFilter {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuickFilters {
-  public readonly filterSelected = output<string>();
-
   protected readonly quickFilters: QuickFilter[] = [
     // Level-based filters
     {
@@ -135,8 +134,9 @@ export class QuickFilters {
       category: 'advanced',
     },
   ];
+  private readonly searchService = inject(SearchService);
 
   protected onFilterClick(filter: QuickFilter): void {
-    this.filterSelected.emit(filter.query);
+    this.searchService.setQuery(filter.query);
   }
 }

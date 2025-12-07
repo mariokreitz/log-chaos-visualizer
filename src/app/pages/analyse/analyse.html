@@ -28,7 +28,7 @@
     }
 
     <section aria-label="Experimental analysis" class="experimental-analysis">
-      <app-quick-filters (filterSelected)="onQuickFilterSelected($event)" />
+      <app-quick-filters />
       <app-analyse-log-table [entries]="tableEntries()" [isSearching]="isSearching()" />
     </section>
   }
