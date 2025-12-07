@@ -1,12 +1,18 @@
 <div class="query-help-dialog">
-  <div class="dialog-header">
-    <h2 mat-dialog-title>Query Syntax Reference</h2>
-    <button (click)="close()" aria-label="Close dialog" mat-icon-button>
+  <div class="dialog-header" role="banner">
+    <h2 id="query-help-dialog-title" mat-dialog-title>Query Syntax Reference</h2>
+    <button
+      (click)="close()"
+      aria-label="Close dialog"
+      aria-labelledby="query-help-dialog-title"
+      mat-icon-button
+      tabindex="0"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <mat-dialog-content>
+  <mat-dialog-content aria-labelledby="query-help-dialog-title" role="document">
     <mat-tab-group>
       <!-- Quick Start Tab -->
       <mat-tab label="Quick Start">

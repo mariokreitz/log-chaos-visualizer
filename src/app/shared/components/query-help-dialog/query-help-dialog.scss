@@ -18,6 +18,14 @@
 
     button {
       margin-left: auto;
+      outline: none;
+      border-radius: 50%;
+      transition: box-shadow 0.2s;
+
+      &:focus-visible {
+        box-shadow: 0 0 0 2px var(--color-accent);
+        background: var(--color-surface-low);
+      }
     }
   }
 
@@ -31,11 +39,21 @@
       ::ng-deep .mat-mdc-tab-body-wrapper {
         flex: 1;
       }
+
+      ::ng-deep .mat-mdc-tab-label {
+        font-weight: 500;
+        color: var(--color-text-primary);
+
+        &:focus-visible {
+          outline: 2px solid var(--color-accent);
+          outline-offset: 2px;
+        }
+      }
     }
   }
 
   .tab-content {
-    padding: var(--space-4);
+    padding: calc(var(--space-4) + 2px);
     max-height: 60vh;
     overflow-y: auto;
 
@@ -43,6 +61,7 @@
       margin-top: 0;
       margin-bottom: var(--space-3);
       color: var(--color-accent);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
       font-size: 1.25rem;
       font-weight: 500;
     }
@@ -52,12 +71,21 @@
       margin-bottom: var(--space-2);
       font-size: 1.1rem;
       font-weight: 500;
+      color: var(--color-text-primary);
     }
 
     p {
       margin: var(--space-2) 0;
       line-height: var(--line-height-body);
       color: var(--color-text-secondary);
+    }
+
+    code {
+      background: var(--color-surface-low);
+      border-radius: var(--radius-sm);
+      padding: 2px 6px;
+      font-size: 1rem;
+      color: var(--color-accent);
     }
   }
 
@@ -153,9 +181,7 @@
   }
 
   .operators-table,
-  .fields-table,
-  .regex-table,
-  .performance-table {
+  .fields-table {
     width: 100%;
     border-collapse: collapse;
     margin: var(--space-3) 0;
@@ -168,7 +194,8 @@
         text-align: left;
         font-weight: 600;
         border-bottom: 2px solid var(--color-border-subtle);
-        color: var(--color-text-primary);
+        color: var(--color-accent);
+        font-size: 1rem;
       }
     }
 
@@ -177,12 +204,13 @@
         border-bottom: 1px solid var(--color-border-subtle);
 
         &:hover {
-          background-color: var(--color-surface-low);
+          background-color: var(--color-accent-bg, #e0f7fa);
         }
 
         td {
           padding: var(--space-2);
           color: var(--color-text-secondary);
+          font-size: 0.98rem;
 
           code {
             display: inline;
@@ -196,5 +224,32 @@
   mat-dialog-actions {
     padding: var(--space-3) var(--space-4);
     border-top: 1px solid var(--color-border-subtle);
+
+    button {
+      outline: none;
+
+      &:focus-visible {
+        box-shadow: 0 0 0 2px var(--color-accent);
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    .tab-content {
+      padding: var(--space-2);
+      font-size: 0.95rem;
+    }
+
+    .dialog-header h2 {
+      font-size: 1.1rem;
+    }
+
+    .operators-table th,
+    .fields-table th,
+    .operators-table td,
+    .fields-table td {
+      font-size: 0.92rem;
+      padding: var(--space-1);
+    }
   }
 }
