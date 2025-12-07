@@ -17,7 +17,6 @@ export class AnalyseDetailView {
   public readonly closed = output<void>();
 
   // UI state
-  public readonly showStack = signal(false);
   public readonly showRaw = signal(false);
   // Unique heading id for aria
   public readonly headingId = computed(
@@ -63,11 +62,6 @@ export class AnalyseDetailView {
   public messageText(): string {
     const e = this.entry();
     return e?.normalized?.message ?? '';
-  }
-
-  public toggleStack(): void {
-    this.showStack.update((v) => !v);
-    this.showRaw.set(false);
   }
 
   // Helper to present values safely in the UI

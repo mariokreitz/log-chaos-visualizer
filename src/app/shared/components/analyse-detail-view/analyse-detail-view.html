@@ -24,26 +24,6 @@
             e.normalized.kind
           }}</span>
         </div>
-        @if (hasStack() && !showStack() && !showRaw()) {
-          <pre aria-hidden="true" class="stack-preview">{{ stackPreview() }}</pre>
-        }
-      </div>
-      <div class="summary-actions">
-        @if (hasStack()) {
-          <div
-            (click)="toggleStack()"
-            (keyup)="($event.key === 'Enter' || $event.key === ' ') && toggleStack()"
-            [attr.aria-expanded]="showStack()"
-            aria-controls="stack-panel"
-            class="stack-toggle"
-            role="button"
-            tabindex="0"
-            title="Toggle stack preview"
-          >
-            <mat-icon aria-hidden="true">expand_more</mat-icon>
-            <span class="stack-toggle-label">{{ showStack() ? 'Hide details' : 'Show details' }}</span>
-          </div>
-        }
       </div>
     </header>
     <section aria-label="Log details" class="detail-grid">
@@ -79,6 +59,4 @@
       </div>
     </section>
   </article>
-} @else {
-  <div class="detail-empty">No entry selected</div>
 }
