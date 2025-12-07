@@ -346,3 +346,50 @@
     transform: scaleY(1);
   }
 }
+
+.mat-paginator {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 1rem;
+  color: var(--color-text-primary, #222);
+  min-height: 56px;
+  padding: 8px 0 0 0;
+}
+
+.mat-paginator .mat-paginator-range-label {
+  font-weight: 500;
+  color: var(--color-text-secondary, #666);
+}
+
+.mat-paginator .mat-paginator-page-size {
+  margin-left: 16px;
+}
+
+.mat-paginator .mat-paginator-navigation-previous,
+.mat-paginator .mat-paginator-navigation-next,
+.mat-paginator .mat-paginator-navigation-first,
+.mat-paginator .mat-paginator-navigation-last {
+  color: var(--color-primary, #1976d2);
+  background: none;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.mat-paginator .mat-paginator-navigation-previous:disabled,
+.mat-paginator .mat-paginator-navigation-next:disabled,
+.mat-paginator .mat-paginator-navigation-first:disabled,
+.mat-paginator .mat-paginator-navigation-last:disabled {
+  color: var(--color-disabled, #bbb);
+}
+
+.mat-paginator .mat-paginator-navigation-previous:hover,
+.mat-paginator .mat-paginator-navigation-next:hover,
+.mat-paginator .mat-paginator-navigation-first:hover,
+.mat-paginator .mat-paginator-navigation-last:hover {
+  background: var(--color-hover, #e3f2fd);
+}
