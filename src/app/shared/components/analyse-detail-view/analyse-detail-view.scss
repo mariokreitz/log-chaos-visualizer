@@ -2,19 +2,20 @@
 .detail-container {
   background: var(--lcv-surface, #ffffff);
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   margin: 8px 0 12px 0;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.06);
   outline: none;
   display: block;
+  border: 1px solid rgba(15, 23, 42, 0.04);
 }
 
 .detail-header {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .summary-left {
@@ -30,6 +31,8 @@
   color: #0f172a;
   white-space: normal;
   overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.25;
 }
 
 .meta-small {
@@ -44,6 +47,7 @@
   display: flex;
   gap: 8px;
   margin-top: 6px;
+  align-items: center;
 }
 
 .chip {
@@ -70,7 +74,7 @@
   color: #1e293b;
 }
 
-.summary-right {
+.summary-actions {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -83,6 +87,11 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  color: #0f172a;
+}
+
+.action-btn:hover {
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .action-btn:focus {
@@ -90,6 +99,13 @@
   outline-offset: 2px;
 }
 
+.copy-wrap {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Grid layout for detail panel sections */
 .detail-grid {
   display: grid;
   grid-template-columns: 1fr 320px;
@@ -163,8 +179,12 @@
   max-height: 40vh;
 }
 
-.panel-stack .stack-controls {
+.panel-stack .panel-toolbar,
+.panel .panel-toolbar {
+  display: flex;
+  gap: 8px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .detail-empty {
@@ -176,4 +196,26 @@
   .detail-grid {
     grid-template-columns: 1fr;
   }
+  .summary-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Small visual tweaks for better contrast and compactness */
+.panel-title {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.meta-key {
+  font-size: 13px;
+}
+
+.meta-value {
+  font-size: 13px;
+}
+
+/* ensure code block has enough contrast and focusability */
+.raw-json:focus {
+  outline: 2px solid rgba(99, 102, 241, 0.2);
 }

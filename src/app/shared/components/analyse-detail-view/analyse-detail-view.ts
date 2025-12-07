@@ -1,5 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, InputSignal, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  InputSignal,
+  output,
+  signal,
+} from '@angular/core';
+import { NotificationService } from '../../../core/services/notification.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import type {
   DockerLogLine,
@@ -21,7 +32,13 @@ export class AnalyseDetailView {
   public readonly expanded: InputSignal<boolean> = input<boolean>(false);
   public readonly closed = output<void>();
 
+  // UI state
   public readonly showStack = signal(false);
+  public readonly showRaw = signal(false);
+  // Unique heading id for aria
+  public readonly headingId = computed(
+    () => `detail-summary-${Math.abs(this.entry()?.normalized?.timestamp ?? Date.now())}`,
+  );
   public readonly formattedTimestamp = computed(() => {
     const e = this.entry();
     if (!e) return '';
@@ -62,6 +79,7 @@ export class AnalyseDetailView {
     if (!src) return '';
     return src.length > 1000 ? src.slice(0, 1000) + '\n... (truncated)' : src;
   });
+  private readonly notification = inject(NotificationService);
 
   public get rawJson(): string | null {
     const e = this.entry();
@@ -71,6 +89,67 @@ export class AnalyseDetailView {
     } catch {
       return null;
     }
+  }
+
+  // Reset UI state whenever entry changes
+  constructor() {
+    effect(() => {
+      // read entry to track changes
+      this.entry();
+      // collapse extended views when a new entry is selected
+      this.showStack.set(false);
+      this.showRaw.set(false);
+    });
+
+    // Reference template-bound members so the TypeScript static analyzer doesn't mark them as unused
+    // These are no-op references and intentionally do not change runtime behavior.
+    // Call only pure/computed helpers to avoid side effects at construction
+    void this.headingId();
+    void this.formatValue('');
+    void this.stackPreview();
+    // keep references to methods so tooling knows they are used in template
+    void this.copyRawJson;
+    void this.toggleStack;
+    void this.toggleRaw;
+  }
+
+  // Helper to present values safely in the UI
+  public formatValue(v: unknown): string {
+    if (v === null || v === undefined) return '-';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  }
+
+  // Copy raw JSON to clipboard (graceful in non-browser envs)
+  public async copyRawJson(): Promise<boolean> {
+    const raw = this.rawJson;
+    if (!raw) return false;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(raw);
+        this.notification.success('JSON copied to clipboard');
+        return true;
+      }
+      this.notification.error('Failed to copy JSON');
+      return false;
+    } catch {
+      this.notification.error('Failed to copy JSON');
+      return false;
+    }
+  }
+
+  // UI toggles
+  public toggleStack(): void {
+    this.showStack.update((v) => !v);
+  }
+
+  public toggleRaw(): void {
+    this.showRaw.update((v) => !v);
   }
 
   private isObject(v: unknown): v is Record<string, unknown> {
