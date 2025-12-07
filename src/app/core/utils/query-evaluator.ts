@@ -1,11 +1,5 @@
 import type { ParsedLogEntry } from '../types/file-parse.types';
-import type {
-  ASTNode,
-  BinaryExpression,
-  ComparisonExpression,
-  FunctionCall,
-  NotExpression,
-} from '../types/query-language.types';
+import type { ASTNode, BinaryExpression, ComparisonExpression, FunctionCall, NotExpression } from '../types/query-language.types';
 import { extractFieldValue as extractField } from './field-extractor';
 import type { FieldIndexer } from './field-indexer';
 
@@ -167,7 +161,36 @@ function compareValues(
   operator: string,
   targetValue: string | number | boolean,
 ): boolean {
-  // Type coercion for comparison
+  // If both values are numbers (or can be parsed as numbers), compare as numbers
+  const fieldNum =
+    typeof fieldValue === 'number'
+      ? fieldValue
+      : typeof fieldValue === 'string' && !isNaN(Number(fieldValue))
+        ? Number(fieldValue)
+        : null;
+  const targetNum =
+    typeof targetValue === 'number'
+      ? targetValue
+      : typeof targetValue === 'string' && !isNaN(Number(targetValue))
+        ? Number(targetValue)
+        : null;
+  if (fieldNum !== null && targetNum !== null) {
+    switch (operator) {
+      case '=':
+        return fieldNum === targetNum;
+      case '!=':
+        return fieldNum !== targetNum;
+      case '>':
+        return fieldNum > targetNum;
+      case '<':
+        return fieldNum < targetNum;
+      case '>=':
+        return fieldNum >= targetNum;
+      case '<=':
+        return fieldNum <= targetNum;
+    }
+  }
+  // Fallback: string comparison for non-numeric values
   if (typeof fieldValue === 'string' && typeof targetValue === 'string') {
     const fieldStr = fieldValue.toLowerCase();
     const targetStr = targetValue.toLowerCase();
@@ -194,24 +217,12 @@ function compareValues(
       case '!=':
         return fieldStr !== targetStr;
       case '>':
-        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-          return fieldValue > targetValue;
-        }
         return fieldStr > targetStr;
       case '<':
-        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-          return fieldValue < targetValue;
-        }
         return fieldStr < targetStr;
       case '>=':
-        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-          return fieldValue >= targetValue;
-        }
         return fieldStr >= targetStr;
       case '<=':
-        if (typeof fieldValue === 'number' && typeof targetValue === 'number') {
-          return fieldValue <= targetValue;
-        }
         return fieldStr <= targetStr;
     }
   }
