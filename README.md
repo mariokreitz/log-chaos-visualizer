@@ -5,7 +5,8 @@ multiple formats.
 
 ---
 
-Created for Mini Hackathon 3.0 (June 2024) by Kevin Chromik.
+Created for Mini Hackathon 3.0 (June 2024) by [Kevin Chromik](https://www.linkedin.com/in/kevinchromik/).
+Youtube: [@KevinChromik](https://www.youtube.com/@KevinChromik)
 
 ---
 
