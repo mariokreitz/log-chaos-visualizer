@@ -7,6 +7,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import { extractFieldValue } from '../../../core/utils/field-extractor';
+import { parseQuery } from '../../../core/utils/query-parser';
 import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
 import { SearchInput } from '../search-input/search-input';
 
@@ -97,6 +99,39 @@ export class AnalyseLogTable {
   public handlePageEvent(event: PageEvent): void {
     this.currentPage.set(event.pageIndex + 1);
     this.pageSize.set(event.pageSize);
+  }
+
+  /**
+   * Returns a list of field paths (dot notation) used in the current query, or empty if not structured
+   */
+  public getQueriedFields(): string[] {
+    const q = this.query();
+    const parsed = parseQuery(q);
+    if (!parsed.ast) return [];
+    const fields = new Set<string>();
+    function visit(node: any) {
+      if (!node) return;
+      if (node.type === 'ComparisonExpression' && node.field?.name) {
+        fields.add(node.field.name);
+      }
+      if (node.left) visit(node.left);
+      if (node.right) visit(node.right);
+      if (node.expression) visit(node.expression);
+    }
+    visit(parsed.ast);
+    return Array.from(fields);
+  }
+
+  /**
+   * Returns a map of queried field values for a given row
+   */
+  public getQueriedFieldValues(row: ParsedLogEntry): Record<string, string | number | boolean | null> {
+    const fields = this.getQueriedFields();
+    const result: Record<string, string | number | boolean | null> = {};
+    for (const field of fields) {
+      result[field] = extractFieldValue(row, field);
+    }
+    return result;
   }
 
   /**

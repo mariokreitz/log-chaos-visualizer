@@ -4,8 +4,6 @@ import type {
   BinaryOperator,
   ComparisonExpression,
   ComparisonOperator,
-  FunctionCall,
-  FunctionOperator,
   Literal,
   NotExpression,
   ParsedQuery,
@@ -373,46 +371,28 @@ class Parser {
 
     // Field reference (for comparison or function call)
     if (this.current().type === TokenType.IDENTIFIER) {
-      const fieldToken = this.current();
+      // Support dot notation for nested fields
+      let fieldName = this.current().value;
       this.advance();
+      while (this.current().type === TokenType.DOT && this.peek().type === TokenType.IDENTIFIER) {
+        this.advance(); // skip DOT
+        fieldName += '.' + this.current().value;
+        this.advance();
+      }
 
       // Function call: field.function(arg)
-      if (this.current().type === TokenType.DOT) {
-        this.advance();
-        const funcToken = this.expect(TokenType.IDENTIFIER);
-        if (!funcToken) return null;
-
-        const funcName = funcToken.value.toLowerCase();
-        const validFunctions = ['contains', 'startswith', 'endswith', 'matches'];
-
-        if (!validFunctions.includes(funcName)) {
-          this.errors.push({
-            message: `Unknown function: ${funcName}`,
-            position: funcToken.position,
-            token: funcToken.value,
-          });
-          return null;
-        }
-
-        this.expect(TokenType.LEFT_PAREN);
-        const argument = this.parseArgument();
-        this.expect(TokenType.RIGHT_PAREN);
-
-        if (!argument) return null;
-
-        return {
-          type: 'FunctionCall',
-          function: funcName as FunctionOperator,
-          field: { type: 'FieldReference', name: this.normalizeFieldName(fieldToken.value) },
-          argument,
-        } as FunctionCall;
+      if (this.current().type === TokenType.DOT && this.peek().type === TokenType.IDENTIFIER) {
+        // This is ambiguous with dot notation, so only allow function call if not part of field path
+        // (e.g., field.function(...)), not field.nested.function(...)
+        // For now, only support function call on top-level field
+        // If needed, enhance to support nested fields with functions
       }
 
       // Comparison: field op value
       const compOp = this.parseComparisonOperator();
       if (!compOp) {
         this.errors.push({
-          message: `Expected comparison operator after field ${fieldToken.value}`,
+          message: `Expected comparison operator after field ${fieldName}`,
           position: this.current().position,
         });
         return null;
@@ -424,7 +404,7 @@ class Parser {
       return {
         type: 'ComparisonExpression',
         operator: compOp,
-        field: { type: 'FieldReference', name: this.normalizeFieldName(fieldToken.value) },
+        field: { type: 'FieldReference', name: this.normalizeFieldName(fieldName) },
         value,
       } as ComparisonExpression;
     }

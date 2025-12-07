@@ -61,11 +61,11 @@ function evaluateBinaryExpression(node: BinaryExpression, context: EvaluationCon
 }
 
 function evaluateComparisonExpression(node: ComparisonExpression, context: EvaluationContext): number[] {
-  const fieldName = node.field.name;
+  const fieldName = node.field.name; // This may now be dot notation
   const operator = node.operator;
   const targetValue = node.value.value;
 
-  // Try to use indexes for common fields
+  // Try to use indexes for common fields (only for flat fields)
   if (context.indexer && operator === '=') {
     if (fieldName === 'level') {
       return context.indexer.queryByLevel(String(targetValue));
@@ -97,16 +97,14 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
     }
   }
 
-  // Fall back to full scan
+  // Full scan, now supports dot notation for nested fields
   const results: number[] = [];
-
   context.entries.forEach((entry, index) => {
-    const fieldValue = extractField(entry, fieldName);
+    const fieldValue = extractField(entry, fieldName); // fieldName may be dot notation
     if (fieldValue !== null && compareValues(fieldValue, operator, targetValue)) {
       results.push(index);
     }
   });
-
   return results;
 }
 

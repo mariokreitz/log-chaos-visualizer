@@ -3,10 +3,10 @@ import type { NormalizedLogEntry } from '../types/log-entries';
 
 /**
  * Extract a field value from a parsed log entry using its normalized structure.
- * This provides consistent field access regardless of the original log format.
+ * Supports dot notation for nested fields (e.g., 'res.statusCode').
  *
  * @param entry - The parsed log entry
- * @param fieldName - The field name to extract (as documented in HelpMe)
+ * @param fieldName - The field name to extract (dot notation supported)
  * @returns The field value or null if not found
  */
 export function extractFieldValue(entry: ParsedLogEntry, fieldName: string): string | number | boolean | null {
@@ -16,149 +16,41 @@ export function extractFieldValue(entry: ParsedLogEntry, fieldName: string): str
   }
 
   // Fallback to raw entry extraction (legacy support)
-  return extractFromRawEntry(entry, fieldName);
+  return extractFromRawEntryDot(entry, fieldName);
 }
 
 /**
- * Extract field value from raw entry (legacy support)
- * This is a temporary function until normalization is fully implemented
+ * Extract field value from raw entry (legacy support), supporting dot notation
  */
-function extractFromRawEntry(entry: ParsedLogEntry, fieldName: string): string | number | boolean | null {
-  try {
-    switch (entry.kind) {
-      case 'pino': {
-        const pino = entry.entry;
-        switch (fieldName) {
-          case 'message':
-          case 'msg':
-            return pino.msg;
-          case 'timestamp':
-          case 'time':
-            return pino.time;
-          case 'hostname':
-            return pino.hostname;
-          case 'pid':
-            return pino.pid;
-          case 'name':
-            return pino.name ?? null;
-          case 'method':
-            return pino.req?.method ?? null;
-          case 'url':
-            return pino.req?.url ?? null;
-          case 'statusCode':
-            return pino.res?.statusCode ?? null;
-          case 'responseTime':
-            return pino.res?.responseTimeMs ?? null;
-          case 'requestId':
-            return pino.req?.id ?? null;
-          default:
-            // Try dynamic field access
-            return (pino as Record<string, unknown>)[fieldName] as string | number | boolean | null;
-        }
-      }
-
-      case 'winston': {
-        const winston = entry.entry;
-        switch (fieldName) {
-          case 'message':
-            return winston.message;
-          case 'timestamp':
-            return Date.parse(winston.timestamp);
-          case 'requestId':
-            return (winston.meta?.requestId as string) ?? null;
-          case 'userId':
-            return (winston.meta?.userId as string | number) ?? null;
-          case 'traceId':
-            return (winston.meta?.traceId as string) ?? null;
-          default:
-            // Try dynamic field access
-            return (winston as Record<string, unknown>)[fieldName] as string | number | boolean | null;
-        }
-      }
-
-      case 'loki': {
-        const loki = entry.entry;
-        switch (fieldName) {
-          case 'message':
-          case 'line':
-            return loki.line;
-          case 'timestamp':
-          case 'ts':
-            return Date.parse(loki.ts);
-          case 'job':
-            return loki.labels?.job ?? null;
-          case 'instance':
-            return loki.labels?.instance ?? null;
-          case 'app':
-            return loki.labels?.app ?? null;
-          case 'environment':
-            return loki.labels?.environment ?? null;
-          default:
-            // Try labels
-            if (loki.labels && fieldName in loki.labels) {
-              return loki.labels[fieldName] ?? null;
-            }
-            return null;
-        }
-      }
-
-      case 'docker': {
-        const docker = entry.entry;
-        switch (fieldName) {
-          case 'message':
-          case 'log':
-            return docker.log;
-          case 'timestamp':
-          case 'time':
-            return Date.parse(docker.time);
-          case 'stream':
-            return docker.stream;
-          default:
-            return null;
-        }
-      }
-
-      case 'promtail': {
-        const promtail = entry.entry;
-        switch (fieldName) {
-          case 'message':
-            return promtail.message;
-          case 'timestamp':
-          case 'ts':
-            return Date.parse(promtail.ts);
-          case 'level':
-            return promtail.level;
-          default:
-            return null;
-        }
-      }
-
-      case 'text': {
-        const text = entry.entry;
-        switch (fieldName) {
-          case 'message':
-          case 'line':
-            return text.line;
-          default:
-            return null;
-        }
-      }
-
-      case 'unknown-json': {
-        const raw = entry.entry as Record<string, unknown>;
-        const value = raw[fieldName];
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-          return value;
-        }
-        return null;
-      }
-
-      default:
-        return null;
-    }
-  } catch {
-    return null;
+function extractFromRawEntryDot(entry: ParsedLogEntry, fieldName: string): string | number | boolean | null {
+  // Support dot notation for nested fields
+  const path = fieldName.split('.');
+  let value: unknown;
+  switch (entry.kind) {
+    case 'pino':
+      value = entry.entry;
+      break;
+    case 'winston':
+      value = entry.entry;
+      break;
+    case 'loki':
+      value = entry.entry;
+      break;
+    default:
+      value = entry.entry;
   }
+  for (const key of path) {
+    if (value && typeof value === 'object' && key in value) {
+      value = (value as Record<string, unknown>)[key];
+    } else {
+      return null;
+    }
+  }
+  // Only return primitive values
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  return null;
 }
 
 /**
