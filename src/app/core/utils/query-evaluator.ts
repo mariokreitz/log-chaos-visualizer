@@ -97,8 +97,7 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
           return context.indexer.queryTimestampRange(null, timestamp);
         case '=': {
           // Exact timestamp match (rare but supported)
-          const indices = context.indexer.queryTimestampRange(timestamp, timestamp);
-          return indices;
+          return context.indexer.queryTimestampRange(timestamp, timestamp);
         }
       }
     }
@@ -272,6 +271,16 @@ function applyFunction(
 
   switch (functionName) {
     case 'contains': {
+      // Support both literal string and regex patterns for contains().
+      if (argument.type === 'RegexPattern' && argument.pattern) {
+        try {
+          const regex = new RegExp(argument.pattern, argument.flags || '');
+          return regex.test(fieldValue);
+        } catch {
+          return false;
+        }
+      }
+
       const searchStr = String(argument.value || '').toLowerCase();
       return fieldLower.includes(searchStr);
     }

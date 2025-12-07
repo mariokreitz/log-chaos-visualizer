@@ -138,7 +138,7 @@
         <p>Match a field against a regular expression pattern.</p>
         <code>matches(message, /timeout/i)</code>
         <code>matches(message, /\d{{ '{' }}3{{ '}' }}\s+error/)</code>
-        <code>matches(message, /api|database|connection/)</code>
+        <code>contains(message, /api|database|connection/)</code>
       </div>
     </div>
   </section>
@@ -192,7 +192,7 @@
 
       <div class="example-card">
         <h3>Complex Filters</h3>
-        <code>(level=error OR level=fatal) AND matches(message, /database|connection/)</code>
+        <code>(level=error OR level=fatal) AND contains(message, /database|connection/)</code>
         <code>level=warn AND contains(message, "retry") AND NOT contains(message, "success")</code>
       </div>
 
