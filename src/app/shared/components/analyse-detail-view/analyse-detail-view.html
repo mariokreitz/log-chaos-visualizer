@@ -1,6 +1,6 @@
 @let e = entry();
 @if (e) {
-  <div class="detail-container">
+  <div class="detail-container" tabindex="-1">
     <div class="detail-header">
       <div class="summary">
         <div class="summary-left">
@@ -9,7 +9,9 @@
           <div class="environment">{{ e.normalized.environment }}</div>
         </div>
         <div class="summary-right">
-          <button (click)="onClose()" aria-label="Close details" class="action-btn" type="button">Close</button>
+          <button (click)="onClose()" aria-label="Close details" class="action-btn" data-focus-first type="button">
+            Close
+          </button>
           <button
             (click)="toggleRawJson()"
             [attr.aria-pressed]="showRawJson()"

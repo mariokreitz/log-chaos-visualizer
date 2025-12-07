@@ -33,7 +33,7 @@
   </div>
   @defer {
     <cdk-virtual-scroll-viewport
-      [itemSize]="itemSize"
+      [itemSize]="itemSize()"
       [maxBufferPx]="maxBufferPx"
       [minBufferPx]="minBufferPx"
       aria-label="Log entries viewport"
@@ -49,6 +49,7 @@
           (keydown.space)="selectEntry(row, $index); $event.preventDefault()"
           [attr.aria-controls]="selectedIndex() === $index ? 'detail-' + $index : null"
           [attr.aria-selected]="selectedIndex() === $index"
+          [attr.data-index]="$index"
           [class.env-dev]="env === 'dev'"
           [class.env-prod]="env === 'prod'"
           [class.env-staging]="env === 'staging'"
@@ -84,7 +85,13 @@
         </div>
 
         @if (selectedIndex() === $index) {
-          <div aria-labelledby="row-{{ $index }}" class="table-row-detail" id="detail-{{ $index }}" role="region">
+          <div
+            [attr.data-index]="$index"
+            aria-labelledby="row-{{ $index }}"
+            class="table-row-detail"
+            id="detail-{{ $index }}"
+            role="region"
+          >
             <app-analyse-detail-view
               (closed)="clearSelection()"
               [entry]="selectedEntry()"
