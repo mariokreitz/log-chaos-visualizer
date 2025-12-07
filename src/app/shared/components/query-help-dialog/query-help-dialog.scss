@@ -71,6 +71,13 @@
     overflow: auto;
 
     .sidebar-header {
+      /* make header sticky so insert-mode remains available while scrolling examples */
+      position: sticky;
+      top: 0;
+      background: transparent;
+      padding-bottom: var(--space-2);
+      z-index: 2;
+
       h3 {
         margin: 0 0 var(--space-1) 0;
         font-size: 1rem;
@@ -81,6 +88,11 @@
         margin: 0;
         color: var(--color-text-muted);
         font-size: var(--font-size-meta);
+      }
+
+      .merge-select {
+        width: 100%;
+        margin-top: var(--space-2);
       }
     }
 
@@ -100,9 +112,13 @@
         gap: var(--space-2);
         padding: calc(var(--space-1) - 2px);
         border-radius: var(--radius-sm);
+        transition:
+          background 120ms ease,
+          transform 100ms ease;
 
         &:hover {
-          background: var(--color-accent-bg, rgba(0, 150, 136, 0.03));
+          background: var(--color-accent-bg, rgba(0, 150, 136, 0.04));
+          transform: translateY(-1px);
         }
 
         .sidebar-item-main {
@@ -138,6 +154,11 @@
           button[mat-icon-button] {
             color: var(--color-text-secondary);
             background: transparent;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
 
             &:focus-visible {
               box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.12);
@@ -147,10 +168,11 @@
 
           button[mat-button] {
             font-weight: 600;
-            height: 32px;
-            line-height: 28px;
+            height: 36px;
+            line-height: 32px;
             padding: 0 var(--space-3);
             border-radius: var(--radius-sm);
+            min-width: 64px;
           }
         }
       }
@@ -163,13 +185,29 @@
     max-height: calc(80vh - 64px);
 
     .tab-content {
-      padding: 0 var(--space-2) var(--space-2) var(--space-2);
+      padding: var(--space-3);
+      background: transparent;
     }
 
     .intro {
       margin-top: 0;
       color: var(--color-accent);
       font-weight: 600;
+    }
+
+    /* make tables more readable */
+    .operators-table,
+    .fields-table,
+    .regex-table {
+      th {
+        color: var(--color-text-primary);
+        background: var(--color-surface-low);
+      }
+
+      td,
+      th {
+        padding: calc(var(--space-2) - 2px);
+      }
     }
   }
 
@@ -224,6 +262,17 @@
 
     .main {
       order: 1;
+    }
+
+    /* allow code examples to wrap on narrow screens for readability */
+    .sidebar .sidebar-item .sidebar-item-main code {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .sidebar .sidebar-item-actions button[mat-button] {
+      min-width: 56px;
+      height: 40px;
     }
   }
 
