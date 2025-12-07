@@ -87,11 +87,11 @@ export class SearchService {
           console.debug(
             `[SearchService] Entry[${idx}] statusCode:${String(v1)} http.statusCode:${String(v2)} res.statusCode:${String(v3)}`,
           );
-        } catch (e) {
+        } catch {
           // ignore
         }
       });
-    } catch (e) {
+    } catch {
       // ignore logging errors
     }
 

@@ -1,11 +1,5 @@
 import type { ParsedLogEntry } from '../types/file-parse.types';
-import type {
-  ASTNode,
-  BinaryExpression,
-  ComparisonExpression,
-  FunctionCall,
-  NotExpression,
-} from '../types/query-language.types';
+import type { ASTNode, BinaryExpression, ComparisonExpression, FunctionCall, NotExpression } from '../types/query-language.types';
 import { extractFieldValue as extractField } from './field-extractor';
 import type { FieldIndexer } from './field-indexer';
 
@@ -68,7 +62,9 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
   // Debug: log comparison intent
   try {
     console.debug(`[QueryEval] Comparing field '${fieldName}' ${operator} '${String(targetValue)}'`);
-  } catch {}
+  } catch {
+    /* ignore logging errors */
+  }
 
   // Try to use indexes for common fields (only for flat fields)
   if (context.indexer && operator === '=') {
@@ -111,17 +107,23 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
     if (fieldValue === null) {
       try {
         console.debug(`[QueryEval][Idx ${index}] field '${fieldName}' -> null`);
-      } catch {}
+      } catch {
+        /* ignore logging errors */
+      }
     } else {
       try {
         console.debug(`[QueryEval][Idx ${index}] field '${fieldName}' -> (${typeof fieldValue}) ${String(fieldValue)}`);
-      } catch {}
+      } catch {
+        /* ignore logging errors */
+      }
     }
 
     if (fieldValue !== null && compareValues(fieldValue, operator, targetValue)) {
       try {
         console.debug(`[QueryEval][Idx ${index}] MATCHED`);
-      } catch {}
+      } catch {
+        /* ignore logging errors */
+      }
       results.push(index);
     }
   });
@@ -281,6 +283,7 @@ function applyFunction(
           const regex = new RegExp(argument.pattern, argument.flags || '');
           return regex.test(fieldValue);
         } catch {
+          /* ignore regex errors */
           return false;
         }
       }
@@ -290,6 +293,7 @@ function applyFunction(
           const regex = new RegExp(String(argument.value));
           return regex.test(fieldValue);
         } catch {
+          /* ignore regex errors */
           return false;
         }
       }

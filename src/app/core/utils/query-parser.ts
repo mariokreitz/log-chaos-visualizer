@@ -227,7 +227,7 @@ class Lexer {
 
   private readIdentifier(): string {
     let result = '';
-    while (this.current !== null && /[a-zA-Z0-9_\-]/.test(this.current)) {
+    while (this.current !== null && /[a-zA-Z0-9_-]/.test(this.current)) {
       result += this.current;
       this.advance();
     }

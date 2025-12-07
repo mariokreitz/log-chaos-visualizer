@@ -7,6 +7,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
+import type {
+  ASTNode,
+  BinaryExpression,
+  ComparisonExpression,
+  FunctionCall,
+  NotExpression,
+} from '../../../core/types/query-language.types';
 import { extractFieldValue } from '../../../core/utils/field-extractor';
 import { parseQuery } from '../../../core/utils/query-parser';
 import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
@@ -109,14 +116,34 @@ export class AnalyseLogTable {
     const parsed = parseQuery(q);
     if (!parsed.ast) return [];
     const fields = new Set<string>();
-    function visit(node: any) {
+    function visit(node: ASTNode | null) {
       if (!node) return;
-      if (node.type === 'ComparisonExpression' && node.field?.name) {
-        fields.add(node.field.name);
+      switch (node.type) {
+        case 'ComparisonExpression': {
+          const cmp = node as ComparisonExpression;
+          if (cmp.field?.name) fields.add(cmp.field.name);
+          break;
+        }
+        case 'BinaryExpression': {
+          const b = node as BinaryExpression;
+          visit(b.left);
+          visit(b.right);
+          break;
+        }
+        case 'NotExpression': {
+          const n = node as NotExpression;
+          visit(n.expression);
+          break;
+        }
+        case 'FunctionCall': {
+          const f = node as FunctionCall;
+          // function call may reference a field
+          if (f.field?.name) fields.add(f.field.name);
+          break;
+        }
+        default:
+          break;
       }
-      if (node.left) visit(node.left);
-      if (node.right) visit(node.right);
-      if (node.expression) visit(node.expression);
     }
     visit(parsed.ast);
     return Array.from(fields);
