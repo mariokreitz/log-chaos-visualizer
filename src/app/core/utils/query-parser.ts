@@ -4,11 +4,12 @@ import type {
   BinaryOperator,
   ComparisonExpression,
   ComparisonOperator,
+  FunctionOperator,
   Literal,
   NotExpression,
   ParsedQuery,
   QueryValidationError,
-  RegexPattern,
+  RegexPattern
 } from '../types/query-language.types';
 import { FIELD_ALIASES } from '../types/query-language.types';
 
@@ -34,6 +35,7 @@ enum TokenType {
   LEFT_PAREN = 'LEFT_PAREN',
   RIGHT_PAREN = 'RIGHT_PAREN',
   DOT = 'DOT',
+  COMMA = 'COMMA',
 
   // Special
   EOF = 'EOF',
@@ -141,6 +143,12 @@ class Lexer {
 
       if (this.current === '.') {
         tokens.push({ type: TokenType.DOT, value: '.', position: startPos });
+        this.advance();
+        continue;
+      }
+
+      if (this.current === ',') {
+        tokens.push({ type: TokenType.COMMA, value: ',', position: startPos });
         this.advance();
         continue;
       }
@@ -367,6 +375,61 @@ class Parser {
       const expression = this.parseExpression();
       this.expect(TokenType.RIGHT_PAREN);
       return expression;
+    }
+
+    // Top-level function call: contains(message, "db")
+    if (this.current().type === TokenType.IDENTIFIER && this.peek().type === TokenType.LEFT_PAREN) {
+      const funcToken = this.current();
+      this.advance(); // function name
+      this.expect(TokenType.LEFT_PAREN);
+      // Parse first argument (field)
+      let fieldName = '';
+      if (this.current().type === TokenType.IDENTIFIER) {
+        fieldName = this.current().value;
+        this.advance();
+        // Support dot notation in field argument
+        while (this.current().type === TokenType.DOT && this.peek().type === TokenType.IDENTIFIER) {
+          this.advance();
+          fieldName += '.' + this.current().value;
+          this.advance();
+        }
+      } else {
+        this.errors.push({
+          message: `Expected field name as first argument to function ${funcToken.value}`,
+          position: this.current().position,
+          token: this.current().value,
+        });
+        return null;
+      }
+      // Expect comma
+      if (this.current().type !== TokenType.COMMA) {
+        if (this.current().type === TokenType.RIGHT_PAREN) {
+          this.errors.push({
+            message: `Function ${funcToken.value} expects two arguments`,
+            position: this.current().position,
+            token: this.current().value,
+          });
+          this.advance();
+          return null;
+        }
+        this.errors.push({
+          message: `Expected comma after field argument in function ${funcToken.value}`,
+          position: this.current().position,
+          token: this.current().value,
+        });
+        return null;
+      }
+      this.advance(); // skip comma
+      // Parse second argument (literal or regex)
+      const arg = this.parseArgument();
+      this.expect(TokenType.RIGHT_PAREN);
+      if (!arg) return null;
+      return {
+        type: 'FunctionCall',
+        function: funcToken.value.toLowerCase() as FunctionOperator,
+        field: { type: 'FieldReference', name: this.normalizeFieldName(fieldName) },
+        argument: arg,
+      };
     }
 
     // Field reference (for comparison or function call)
