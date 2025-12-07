@@ -15,13 +15,36 @@
       field-specific searches, boolean operators, and regular expressions to find exactly what you need.
     </p>
 
+    <div class="quick-filters">
+      <h3>Quick Filters</h3>
+      <p>
+        The toolbar includes Quick Filters for common tasks (Errors, Production, 5xx, Web hosts). Clicking a quick
+        filter inserts the corresponding field expression into the query bar. You can use them alone or combine them
+        with typed queries.
+      </p>
+      <div class="quick-examples">
+        <div class="example">
+          <code>level=error</code>
+          <p>Quick Filter: "Errors" — shows only error-level logs</p>
+        </div>
+        <div class="example">
+          <code>environment=prod</code>
+          <p>Quick Filter: "Production" — filter logs from production</p>
+        </div>
+        <div class="example">
+          <code>statusCode&gt;=500</code>
+          <p>Quick Filter: "5xx" — server error status codes</p>
+        </div>
+      </div>
+    </div>
+
     <div class="quick-examples">
       <div class="example">
         <code>level=error</code>
         <p>Find all error logs</p>
       </div>
       <div class="example">
-        <code>message.contains(timeout)</code>
+        <code>contains(message, "timeout")</code>
         <p>Search for "timeout" in messages</p>
       </div>
       <div class="example">
@@ -92,30 +115,30 @@
       <div class="function-item">
         <h3>contains(text)</h3>
         <p>Check if a field contains the specified text (case-insensitive).</p>
-        <code>message.contains(api)</code>
-        <code>message.contains("connection error")</code>
+        <code>contains(message, "api")</code>
+        <code>contains(message, "connection error")</code>
       </div>
 
       <div class="function-item">
         <h3>startsWith(text)</h3>
         <p>Check if a field starts with the specified text.</p>
-        <code>hostname.startsWith(web)</code>
-        <code>url.startsWith("/api")</code>
+        <code>startsWith(hostname, "web")</code>
+        <code>startsWith(url, "/api")</code>
       </div>
 
       <div class="function-item">
         <h3>endsWith(text)</h3>
         <p>Check if a field ends with the specified text.</p>
-        <code>message.endsWith(failed)</code>
-        <code>url.endsWith(".json")</code>
+        <code>endsWith(message, "failed")</code>
+        <code>endsWith(url, ".json")</code>
       </div>
 
       <div class="function-item">
         <h3>matches(regex)</h3>
         <p>Match a field against a regular expression pattern.</p>
-        <code>message.matches(/timeout/i)</code>
-        <code>message.matches(/\d{{ '{' }}3{{ '}' }}\s+error/)</code>
-        <code>message.matches(/api|database|connection/)</code>
+        <code>matches(message, /timeout/i)</code>
+        <code>matches(message, /\d{{ '{' }}3{{ '}' }}\s+error/)</code>
+        <code>matches(message, /api|database|connection/)</code>
       </div>
     </div>
   </section>
@@ -151,14 +174,14 @@
         <h3>Find Errors</h3>
         <code>level=error</code>
         <code>level=error AND environment=prod</code>
-        <code>message.contains(exception)</code>
+        <code>contains(message, "exception")</code>
       </div>
 
       <div class="example-card">
         <h3>API Issues</h3>
-        <code>message.contains(api) AND level=error</code>
+        <code>contains(message, "api") AND level=error</code>
         <code>statusCode&gt;=500</code>
-        <code>message.matches(/api.*timeout/i)</code>
+        <code>matches(message, /api.*timeout/i)</code>
       </div>
 
       <div class="example-card">
@@ -169,8 +192,8 @@
 
       <div class="example-card">
         <h3>Complex Filters</h3>
-        <code>(level=error OR level=fatal) AND environment=prod</code>
-        <code>level=warn AND message.contains(retry) AND NOT message.contains(success)</code>
+        <code>(level=error OR level=fatal) AND matches(message, /database|connection/)</code>
+        <code>level=warn AND contains(message, "retry") AND NOT contains(message, "success")</code>
       </div>
 
       <div class="example-card">
@@ -181,8 +204,8 @@
 
       <div class="example-card">
         <h3>Service-Specific</h3>
-        <code>hostname.startsWith(web) AND level!=debug</code>
-        <code>hostname.contains(api) AND message.matches(/timeout/i)</code>
+        <code>startsWith(hostname, "web") AND level!=debug</code>
+        <code>contains(hostname, "api") AND matches(message, /timeout/i)</code>
       </div>
     </div>
   </section>
@@ -200,7 +223,7 @@
         </p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code class="code-inline">level=error AND message.contains(api)</code>
+          <code class="code-inline">level=error AND contains(message, "api")</code>
         </div>
       </div>
 
@@ -209,7 +232,7 @@
         <p>Filter with simpler conditions before using regex patterns.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code class="code-inline">level=error AND message.matches(/timeout/i)</code>
+          <code class="code-inline">level=error AND matches(message, /timeout/i)</code>
         </div>
       </div>
 
@@ -221,11 +244,11 @@
         </p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code class="code-inline">message.contains(timeout)</code>
+          <code class="code-inline">contains(message, "timeout")</code>
         </div>
         <div class="tip-example">
           <span class="slower">⚠ Slower:</span>
-          <code class="code-inline">message.matches(/timeout/)</code>
+          <code class="code-inline">matches(message, /timeout/)</code>
         </div>
       </div>
 
@@ -234,7 +257,7 @@
         <p>Use quotes for phrases to ensure proper parsing.</p>
         <div class="tip-example">
           <span class="good">✓ Good:</span>
-          <code class="code-inline">message.contains("connection timeout")</code>
+          <code class="code-inline">contains(message, "connection timeout")</code>
         </div>
       </div>
     </div>

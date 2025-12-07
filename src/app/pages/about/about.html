@@ -116,8 +116,8 @@
     <ul>
       <li><code>level=error</code> - Find all error-level logs</li>
       <li><code>environment=prod AND level=error</code> - Production errors only</li>
-      <li><code>message.contains(timeout)</code> - Find timeout messages</li>
-      <li><code>statusCode>=500</code> - Server errors (Pino HTTP fields)</li>
+      <li><code>contains(message, "timeout")</code> - Find timeout messages</li>
+      <li><code>statusCode&gt;=500</code> - Server errors (Pino HTTP fields)</li>
       <li><code>(level=error OR level=fatal) AND environment=prod</code> - Critical production issues</li>
     </ul>
 
