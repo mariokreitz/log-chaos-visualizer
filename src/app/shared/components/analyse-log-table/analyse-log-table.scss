@@ -78,8 +78,8 @@
 
       .level-badge.level-error,
       .level-badge.level-fatal {
-        background: var(--color-error);
-        color: white;
+        background: var(--color-error-soft);
+        color: var(--color-error);
       }
     }
 
@@ -87,8 +87,8 @@
       border-left: 3px solid var(--color-warning);
 
       .level-badge.level-warn {
-        background: var(--color-warning);
-        color: var(--color-text-primary);
+        background: var(--color-warning-soft);
+        color: var(--color-warning);
       }
     }
 
