@@ -1,79 +1,60 @@
-# LogChaosVisualizer
+# Log Chaos Visualizer
 
-A small demo Angular application to visualize synthetic log files and explore different log formats and distributions.
+A compact, single-page Angular application for loading, inspecting, querying and visualizing synthetic log files from
+multiple formats.
 
-This repository contains a single-page Angular app that was created for the mini hackathon 3.0 by Kevin Chromik. It is a
-demo project and is not intended for production use.
+---
 
-Quick links
+Created for Mini Hackathon 3.0 (June 2024) by Kevin Chromik.
 
-- Project: log-chaos-visualizer
-- Author / Hackathon: Kevin Chromik (mini hackathon 3.0)
-- Demo / Not for production: This project is a demo only — do not use it in production.
+---
 
-What it does
+Table of contents
 
-- Visualizes log files (Pino, Winston, Loki/Promtail, Docker JSON, and plain text).
-- Provides charts and tables to explore log levels, kinds, and timelines.
-- **Powerful query language** for filtering logs with field-specific searches, boolean operators, and regex support.
-- Supports loading large sample logs (20k — 200k lines) located in `public/data`.
-- Comes with a Python helper (`generate_logs.py`) to generate synthetic logs for testing.
+- [Overview](#overview)
+- [Key features](#key-features)
+- [Demo and purpose](#demo-and-purpose)
+- [Prerequisites](#prerequisites)
+- [Quick start (development)](#quick-start-development)
+- [Build and run (production)](#build-and-run-production)
+- [Working with sample logs](#working-with-sample-logs)
+- [Query language (brief)](#query-language-brief)
+- [Repository layout](#repository-layout)
+- [Available scripts](#available-scripts)
+- [Notes, limitations and status](#notes-limitations-and-status)
+- [Author and contact](#author-and-contact)
+- [Acknowledgements](#acknowledgements)
 
-## Query Language
+Overview
 
-The application features a structured query language for advanced log filtering:
+Log Chaos Visualizer is a proof-of-concept Angular application intended to demonstrate client-side parsing, indexing and
+visualization of large, mixed-format log files. It was implemented as a one-week hackathon/demonstration project and is
+not intended for production use.
 
-### Basic Syntax
+Key features
 
-```
-level=error                           # Field comparison
-message.contains(timeout)             # String function
-level=error AND environment=prod      # Boolean logic
-message.matches(/api.*error/i)        # Regex matching
-```
+- Support for multiple log formats: Pino, Winston, Loki/Promtail, Docker JSON, and plain text.
+- Interactive charts and tables showing log level distribution, kinds, and timelines.
+- Structured query language with field-specific filters, boolean operators and regex support.
+- Designed to handle large sample files (20k up to 200k lines) using a Web Worker for parsing and indexing.
+- Convenience Python script (`generate_logs.py`) to generate synthetic log files for testing.
 
-### Key Features
+Demo and purpose
 
-- **Field-specific searches**: Query by level, message, timestamp, environment, and format-specific fields
-- **Comparison operators**: `=`, `!=`, `>`, `>=`, `<`, `<=`
-- **String functions**: `contains()`, `startsWith()`, `endsWith()`, `matches()`
-- **Boolean operators**: `AND`, `OR`, `NOT`, parentheses for grouping
-- **Performance optimized**: Indexed fields for O(1) lookups, queries run in Web Worker
-- **Real-time validation**: Syntax errors shown immediately with helpful messages
+This repository demonstrates approaches for:
 
-### Examples
-
-```
-# Find production errors
-level=error AND environment=prod
-
-# API timeout issues
-message.contains(api) AND message.matches(/timeout/i)
-
-# Failed HTTP requests
-(statusCode>=500 OR statusCode=404) AND method=GET
-
-# Time range filtering
-timestamp>="2024-12-01" AND timestamp<"2024-12-07"
-```
-
-For complete query syntax documentation, visit the **Help** page in the application.
+- Parsing heterogeneous log formats in the browser while keeping the UI responsive (parsing done in a Web Worker).
+- Building an indexed representation of logs to enable fast queries and interactive visualizations.
+- Providing a compact query language that allows targeted, fielded searches with real-time validation.
 
 Prerequisites
 
-- Node.js (recommended: a recent LTS; the project uses npm@11.6.1 via `packageManager` in package.json)
-- npm (comes with Node.js)
-- Python 3 (for the log generator script) if you want to generate sample logs
-- Docker & Docker Compose (optional, to run the app inside a container)
+- Node.js (recommended: current LTS)
+- npm (bundled with Node.js)
+- Python 3 (optional — for generating synthetic logs)
+- Docker & Docker Compose (optional — to run the built app behind nginx)
 
-Repository layout (high-level)
-
-- src/ — Angular application source
-- public/data/ — pre-generated example log files (generated-20k/50k/100k/200k)
-- generate_logs.py — script to create synthetic log files
-- Dockerfile, compose.yaml — container images and compose setup for running the built app behind nginx
-
-Quick development run
+Quick start (development)
 
 1. Install dependencies
 
@@ -81,7 +62,7 @@ Quick development run
 npm ci
 ```
 
-2. Start development server (live-reload)
+2. Start the development server (live-reload)
 
 ```bash
 npm start
@@ -89,82 +70,114 @@ npm start
 ng serve
 ```
 
-Open http://localhost:4200/ in your browser.
+3. Open the app in your browser
 
-Build for production
+Visit: http://localhost:4200/
+
+Build and run (production)
+
+1. Build
 
 ```bash
 npm run build
-# The built files are placed into dist/log-chaos-visualizer/browser
 ```
 
-Run in Docker (build + run)
-
-Note: `compose.yaml` references an external Docker network named `webproxy`. If you do not have this network locally,
-either create it or remove/adjust the network section in `compose.yaml` before using Docker Compose locally.
-
-Build the image locally with Docker (example):
+2. Serve the built files locally using the provided Dockerfile
 
 ```bash
-# build image (uses the Dockerfile and sets default BASE_HREF to '/')
 docker build -t log-chaos-visualizer:local .
-
-# run container exposing port 80 (adjust as needed)
 docker run --rm -p 8080:80 log-chaos-visualizer:local
 ```
 
-Using Docker Compose (may require an existing `webproxy` network):
+Alternatively run with Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
-If Compose fails because the external network `webproxy` doesn't exist, create it or remove the network stanza in
-`compose.yaml` for local testing:
+Note: `compose.yaml` references an external Docker network named `webproxy`. If that network is not available locally
+either create it with `docker network create webproxy` or remove/adjust the network section in `compose.yaml`.
+
+Working with sample logs
+
+The repository includes pre-generated sample files under `public/data/` (20k, 50k, 100k, 200k lines). These files are
+convenient for exploring performance and UI behaviour.
+
+Use the included Python generator to create files of custom size or format composition:
 
 ```bash
-# create the external network expected by compose.yaml
-docker network create webproxy
-```
-
-Log generation
-
-This project includes `generate_logs.py`, a Python 3 script that produces synthetic logs in several formats. The
-package.json exposes convenient npm scripts to create sample files:
-
-Available npm scripts (log generation)
-
-- npm run gen:logs:20k — generate 20k lines -> public/data/generated-20000.log
-- npm run gen:logs:50k — generate 50k lines -> public/data/generated-50000.log
-- npm run gen:logs:100k — generate 100k lines -> public/data/generated-100000.log
-- npm run gen:logs:200k — generate 200k lines -> public/data/generated-200000.log
-- npm run gen:logs:all — run all of the above sequentially
-
-Manually using the generator:
-
-```bash
-# generate 50k mixed logs
+# generate 50k mixed-format logs
 python3 generate_logs.py --lines 50000 --output public/data/generated-50000.log
 
-# specify a mix of formats and a reproducible seed
+# specify a mix of formats and a seed for reproducible output
 python3 generate_logs.py --lines 20000 --output public/data/generated-20000.log --mix pino,winston,text --seed 42
 ```
 
-Notes and caveats
+There are convenience npm scripts that invoke the generator for the standard sample sizes (
+see [Available scripts](#available-scripts)).
 
-- The app was developed as a hackathon demo and lacks production hardening (security, authentication, rate limiting,
-  rigorous tests, etc.).
-- `compose.yaml` expects an external Docker network `webproxy`; adapt it for your environment.
-- The project is private in package.json. There is no LICENSE file included — add a license if you plan to publish.
+Query language (brief)
 
-Contact / Author
+The application exposes a compact, structured query language for filtering and searching logs. Core capabilities
+include:
 
-- Kevin Chromik (author of the hackathon demo)
+- Field queries: e.g. `level=error`, `environment=prod`.
+- Comparison operators: `=`, `!=`, `>`, `>=`, `<`, `<=`.
+- String helpers: `contains()`, `startsWith()`, `endsWith()`, `matches()` (regex).
+- Boolean logic: `AND`, `OR`, `NOT` and parenthesis for grouping.
+- Real-time validation and fast execution (index-backed + Web Worker).
+
+Examples
+
+```
+level=error AND environment=prod
+message.contains(api) AND message.matches(/timeout/i)
+(statusCode>=500 OR statusCode=404) AND method=GET
+timestamp>="2024-12-01" AND timestamp<"2024-12-07"
+```
+
+Repository layout (high-level)
+
+- src/ — Angular application source
+  - app/ — application modules, pages and shared components
+  - core/ — services, workers and utilities used across the app
+- public/data/ — sample log files
+- generate_logs.py — Python script to produce synthetic logs
+- Dockerfile, compose.yaml — container setup for static serving via nginx
+
+Available scripts (high level)
+
+See `package.json` for the full list; notable scripts include:
+
+- `npm start` — start dev server (ng serve)
+- `npm run build` — production build
+- `npm run gen:logs:20k` — generate a 20k lines sample file
+- `npm run gen:logs:50k` — generate a 50k lines sample file
+- `npm run gen:logs:100k` — generate a 100k lines sample file
+- `npm run gen:logs:200k` — generate a 200k lines sample file
+- `npm run gen:logs:all` — generate all standard sample sizes sequentially
+
+Notes, limitations and status
+
+- This project was implemented in one week as a hackathon/demo entry and emphasizes exploration and UX over production
+  concerns.
+- Not production-ready: there is no authentication, limited security hardening, and minimal automated tests.
+- No contributions accepted and no license file is included by owner request. The repository is provided "as-is" for
+  demonstration purposes.
+
+Author and contact
+
+- Kevin Chromik — project author (Mini Hackathon 3.0)
 
 Acknowledgements
 
-- Built with Angular and ng2-charts / Chart.js
+- Built with Angular and Chart.js (via ng2-charts)
 
-Disclaimer (important)
-This repository was created as a demo for the mini hackathon 3.0 by Kevin Chromik. It is provided "as-is" for
-demonstration purposes only and is not intended for production use.
+License and contribution policy
+
+- No license is included. No external contributions are expected or accepted for this demo repository.
+
+Disclaimer
+
+This software is provided for demonstration and educational use only. Use at your own risk; it is not suitable for
+production deployment.
