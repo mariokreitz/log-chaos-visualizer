@@ -24,10 +24,9 @@
       <div class="col message" role="columnheader">Message</div>
     </div>
   </div>
-
   <div aria-live="polite" class="table-toolbar">
     <span class="count">
-      Showing {{ entries().length }} entries
+      Showing {{ paginatedEntries().length }} of {{ entries().length }} entries
       @if (lastSearchDurationMs() !== null && lastSearchResultCount() !== null) {
         <span class="search-meta">
           &mdash; last search: {{ lastSearchResultCount() }} results in
@@ -45,7 +44,7 @@
       class="viewport"
       role="rowgroup"
     >
-      @for (row of entries(); track $index) {
+      @for (row of paginatedEntries(); track $index) {
         @let env = row.normalized.environment;
         @let level = row.normalized.level;
         <div
@@ -111,4 +110,14 @@
       </div>
     </div>
   }
+
+  <mat-paginator
+    (page)="handlePageEvent($event)"
+    [length]="entries().length"
+    [pageSizeOptions]="pageSizeOptions"
+    [pageSize]="paginatedEntries().length"
+    [showFirstLastButtons]="showFirstLastButtons"
+    aria-label="Select page of log entries"
+    class="mat-paginator"
+  ></mat-paginator>
 </div>

@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FileParseService } from '../../../core/services/file-parse.service';
@@ -31,7 +32,14 @@ interface FormattedEntry {
 
 @Component({
   selector: 'app-analyse-log-table',
-  imports: [SearchInput, ScrollingModule, MatProgressSpinnerModule, MatProgressBarModule, DecimalPipe],
+  imports: [
+    SearchInput,
+    ScrollingModule,
+    MatProgressSpinnerModule,
+    MatProgressBarModule,
+    DecimalPipe,
+    MatPaginatorModule,
+  ],
   templateUrl: './analyse-log-table.html',
   styleUrls: ['./analyse-log-table.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,11 +56,27 @@ export class AnalyseLogTable {
 
   // Loading state management
   public shouldShowEmpty = computed(() => this.entries().length === 0 && !this.isSearching());
-
+  public readonly currentPage = signal<number>(1);
+  // Pagination state
+  public pageSize = signal<number>(2000);
+  public readonly totalPages = computed(() => {
+    const total = this.entries().length;
+    return total === 0 ? 1 : Math.ceil(total / this.pageSize());
+  });
+  // Paginated entries for current page
+  public readonly paginatedEntries = computed(() => {
+    const all = this.entries();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    const end = start + size;
+    return all.slice(start, end);
+  });
+  public readonly pageSizeOptions = [2000, 5000, 10000];
+  public readonly showFirstLastButtons = true;
   private readonly fileParse = inject(FileParseService);
   public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
   public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
-
   // Memoization cache for formatted values - use Map for better performance
   private formatCache = new Map<ParsedLogEntry, FormattedEntry>();
   private readonly MAX_CACHE_SIZE = 10000; // Limit cache to prevent memory issues
@@ -131,6 +155,27 @@ export class AnalyseLogTable {
 
   public formatSource(row: ParsedLogEntry): string {
     return this.getFormattedEntry(row).source;
+  }
+
+  // Pagination controls
+  public goToPage(page: number): void {
+    const max = this.totalPages();
+    if (page < 1) this.currentPage.set(1);
+    else if (page > max) this.currentPage.set(max);
+    else this.currentPage.set(page);
+  }
+
+  public nextPage(): void {
+    this.goToPage(this.currentPage() + 1);
+  }
+
+  public prevPage(): void {
+    this.goToPage(this.currentPage() - 1);
+  }
+
+  public handlePageEvent(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex + 1);
+    this.pageSize.set(event.pageSize);
   }
 
   /**
