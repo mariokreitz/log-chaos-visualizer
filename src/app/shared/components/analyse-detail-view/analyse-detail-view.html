@@ -48,7 +48,6 @@
     </header>
     <section aria-label="Log details" class="detail-grid">
       <div class="panel panel-main">
-        <!-- Main log details go here -->
         <dl>
           <dt>Message</dt>
           <dd>{{ messageText() }}</dd>
@@ -60,13 +59,23 @@
           <dd>{{ e.normalized.environment }}</dd>
           <dt>Source</dt>
           <dd>{{ e.normalized.kind }}</dd>
+          @for (entry of detailEntries(); track entry.key) {
+            <dt>{{ entry.key | titlecase }}</dt>
+            <dd>
+              @if (entry.subEntries) {
+                <ul>
+                  @for (subEntry of entry.subEntries; track subEntry.key) {
+                    <li>
+                      <strong>{{ subEntry.key }}:</strong> {{ subEntry.value }}
+                    </li>
+                  }
+                </ul>
+              } @else {
+                {{ entry.value }}
+              }
+            </dd>
+          }
         </dl>
-        @if (showStack()) {
-          <pre class="stack-full" id="stack-panel" tabindex="0">{{ stackFull() }}</pre>
-        }
-        @if (showRaw()) {
-          <pre class="raw-json" tabindex="0">{{ rawJson() }}</pre>
-        }
       </div>
     </section>
   </article>

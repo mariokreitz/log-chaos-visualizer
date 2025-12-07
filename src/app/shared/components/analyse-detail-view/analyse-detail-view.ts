@@ -1,26 +1,8 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  InputSignal,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, InputSignal, output, signal } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { NotificationService } from '../../../core/services/notification.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
-import type {
-  DockerLogLine,
-  LokiEntry,
-  PinoEntry,
-  PromtailTextLine,
-  WinstonEntry,
-} from '../../../core/types/log-entries';
 
 @Component({
   selector: 'app-analyse-detail-view',
@@ -47,22 +29,23 @@ export class AnalyseDetailView {
     const ts = e.normalized?.timestamp;
     return ts ? new Date(ts).toLocaleString() : '';
   });
-  public readonly normalizedEntries = computed(() => {
+  public readonly detailEntries = computed(() => {
     const e = this.entry();
-    if (!e || !e.normalized) return [] as [string, unknown][];
-    return Object.entries(e.normalized) as [string, unknown][];
+    if (!e || !e.normalized) return [];
+    const exclude = ['message', 'timestamp', 'level', 'environment', 'kind'];
+    return Object.entries(e.normalized)
+      .filter(([key]) => !exclude.includes(key))
+      .map(([key, value]) => {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          return {
+            key,
+            value,
+            subEntries: Object.entries(value).map(([subKey, subValue]) => ({ key: subKey, value: subValue })),
+          };
+        }
+        return { key, value, subEntries: null };
+      });
   });
-  public readonly metaEntries = computed(() => {
-    const e = this.entry();
-    if (!e || !e.normalized?.meta) return [] as [string, unknown][];
-    return Object.entries(e.normalized.meta) as [string, unknown][];
-  });
-  // Effect: reset UI state on entry change
-  private readonly resetEffect = effect(() => {
-    this.showStack.set(false);
-    this.showRaw.set(false);
-  });
-  private readonly notification = inject(NotificationService);
 
   // Stack preview logic
   public hasStack(): boolean {
@@ -77,16 +60,6 @@ export class AnalyseDetailView {
     return stack.split('\n').slice(0, 3).join('\n');
   }
 
-  public stackFull(): string {
-    const e = this.entry();
-    return this.extractStackFromEntry(e) ?? '';
-  }
-
-  public rawJson(): string {
-    const e = this.entry();
-    return e ? JSON.stringify(e, null, 2) : '';
-  }
-
   public messageText(): string {
     const e = this.entry();
     return e?.normalized?.message ?? '';
@@ -98,73 +71,12 @@ export class AnalyseDetailView {
   }
 
   // Helper to present values safely in the UI
-  public formatValue(v: unknown): string {
-    if (v === null || v === undefined) return '-';
-    if (typeof v === 'string') return v;
-    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-    try {
-      return JSON.stringify(v);
-    } catch {
-      return String(v);
-    }
-  }
-
-  // Copy raw JSON to clipboard (graceful in non-browser envs)
-  public async copyRawJson(): Promise<boolean> {
-    const raw = this.rawJson();
-    if (!raw) return false;
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(raw);
-        this.notification.success('JSON copied to clipboard');
-        return true;
-      }
-      this.notification.error('Failed to copy JSON');
-      return false;
-    } catch {
-      this.notification.error('Failed to copy JSON');
-      return false;
-    }
-  }
-
   private isObject(v: unknown): v is Record<string, unknown> {
     return v !== null && typeof v === 'object';
   }
 
   private safeGet(obj: Record<string, unknown> | undefined, key: string): unknown {
     return obj && Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
-  }
-
-  private extractMessageFromEntry(e: ParsedLogEntry): string {
-    const nm = e.normalized?.message;
-    if (typeof nm === 'string' && nm.length > 0) return nm;
-
-    switch (e.kind) {
-      case 'pino': {
-        const p = e.entry as PinoEntry;
-        if (p.msg && p.msg.length > 0) return p.msg;
-        // try common fields
-        return JSON.stringify(p);
-      }
-      case 'winston': {
-        const w = e.entry as WinstonEntry;
-        return w.message ?? '';
-      }
-      case 'loki': {
-        const l = e.entry as LokiEntry;
-        return l.line ?? '';
-      }
-      case 'docker': {
-        const d = e.entry as DockerLogLine;
-        return d.log ?? '';
-      }
-      case 'promtail': {
-        const p = e.entry as PromtailTextLine;
-        return p.message ?? '';
-      }
-      default:
-        return (e.entry as { line?: string }).line ?? '';
-    }
   }
 
   private extractStackFromEntry(e: ParsedLogEntry | null): string | null {
@@ -196,16 +108,5 @@ export class AnalyseDetailView {
     }
 
     return null;
-  }
-
-  private extractHttpInfo(e: ParsedLogEntry) {
-    const h = e.normalized?.http;
-    if (!h) return null;
-    return {
-      method: h.method ?? null,
-      url: h.url ?? null,
-      statusCode: h.statusCode ?? null,
-      responseTime: h.responseTime ?? null,
-    } as { method: string | null; url: string | null; statusCode: number | null; responseTime: number | null };
   }
 }
