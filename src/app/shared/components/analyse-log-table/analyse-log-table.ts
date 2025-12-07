@@ -7,15 +7,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
-import type {
-  ASTNode,
-  BinaryExpression,
-  ComparisonExpression,
-  FunctionCall,
-  NotExpression,
-} from '../../../core/types/query-language.types';
-import { extractFieldValue } from '../../../core/utils/field-extractor';
-import { parseQuery } from '../../../core/utils/query-parser';
 import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
 import { SearchInput } from '../search-input/search-input';
 
@@ -102,63 +93,9 @@ export class AnalyseLogTable {
     return this.getFormattedEntry(row).source;
   }
 
-  // Pagination controls
   public handlePageEvent(event: PageEvent): void {
     this.currentPage.set(event.pageIndex + 1);
     this.pageSize.set(event.pageSize);
-  }
-
-  /**
-   * Returns a list of field paths (dot notation) used in the current query, or empty if not structured
-   */
-  public getQueriedFields(): string[] {
-    const q = this.query();
-    const parsed = parseQuery(q);
-    if (!parsed.ast) return [];
-    const fields = new Set<string>();
-    function visit(node: ASTNode | null) {
-      if (!node) return;
-      switch (node.type) {
-        case 'ComparisonExpression': {
-          const cmp = node as ComparisonExpression;
-          if (cmp.field?.name) fields.add(cmp.field.name);
-          break;
-        }
-        case 'BinaryExpression': {
-          const b = node as BinaryExpression;
-          visit(b.left);
-          visit(b.right);
-          break;
-        }
-        case 'NotExpression': {
-          const n = node as NotExpression;
-          visit(n.expression);
-          break;
-        }
-        case 'FunctionCall': {
-          const f = node as FunctionCall;
-          // function call may reference a field
-          if (f.field?.name) fields.add(f.field.name);
-          break;
-        }
-        default:
-          break;
-      }
-    }
-    visit(parsed.ast);
-    return Array.from(fields);
-  }
-
-  /**
-   * Returns a map of queried field values for a given row
-   */
-  public getQueriedFieldValues(row: ParsedLogEntry): Record<string, string | number | boolean | null> {
-    const fields = this.getQueriedFields();
-    const result: Record<string, string | number | boolean | null> = {};
-    for (const field of fields) {
-      result[field] = extractFieldValue(row, field);
-    }
-    return result;
   }
 
   /**
