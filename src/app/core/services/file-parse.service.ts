@@ -13,18 +13,12 @@ import type {
   ParsedLogEntry,
   ParseProgress,
   WorkerMessage,
-  WorkerSearchMessage,
   WorkerStartMessage,
 } from '../types/file-parse.types';
-import { FieldIndexer } from '../utils/field-indexer';
-import { evaluateQuery } from '../utils/query-evaluator';
-import { parseQuery } from '../utils/query-parser';
-import { computeSearchText } from '../utils/search-utils';
 import { NotificationService } from './notification.service';
 import { SettingsService } from './settings.service';
 
-// Extended type for entries with computed searchText
-type ParsedLogEntryWithSearch = ParsedLogEntry & { searchText?: string };
+// Removed unused type ParsedLogEntryWithSearch
 
 const DEFAULT_TIMELINE_BUCKET_MS = 60_000; // 1 minute
 const DEFAULT_TOP_N_PEAKS = 5;
@@ -38,19 +32,12 @@ export class FileParseService {
   readonly isParsing = signal(false);
   readonly latestBatch = signal<ParsedBatch | null>(null);
   readonly allEntries = signal<ParsedLogEntry[]>([]);
-  readonly filterQuery = signal<string>('');
-  readonly filteredEntries = signal<ParsedLogEntry[] | null>(null);
-  readonly isSearching = signal(false);
-  readonly lastSearchDurationMs = signal<number | null>(null);
-  readonly lastSearchResultCount = signal<number | null>(null);
 
-  private lastSearchStartedAt: number | null = null;
   private worker: Worker | null = null;
   private readonly notifications = inject(NotificationService);
   private readonly settings = inject(SettingsService);
 
   private readonly searchCache = new Map<string, ParsedLogEntry[]>();
-  private readonly fallbackIndexer = new FieldIndexer();
 
   setFile(file: File | null): void {
     this.reset();
@@ -123,11 +110,6 @@ export class FileParseService {
     });
     this.latestBatch.set(null);
     this.allEntries.set([]);
-    this.filterQuery.set('');
-    this.filteredEntries.set(null);
-    this.isSearching.set(false);
-    this.lastSearchDurationMs.set(null);
-    this.lastSearchResultCount.set(null);
 
     const speed = this.settings.parsingSpeed();
     const { chunkSize, delayMs } = getParsingParameters(speed);
@@ -145,12 +127,6 @@ export class FileParseService {
         if (msg.batch.entries && msg.batch.entries.length) {
           this.allEntries.update((prev) => prev.concat(msg.batch.entries));
           // If there is no active filter, keep filteredEntries in sync with allEntries
-          if (!this.filterQuery()) {
-            this.filteredEntries.update((prev) => {
-              const base = prev ?? [];
-              return base.concat(msg.batch.entries);
-            });
-          }
         }
         const current = this.summary();
         if (current) {
@@ -210,32 +186,10 @@ export class FileParseService {
         this.isParsing.set(false);
         this.notifications.success('Log file parsed successfully.');
         // Ensure filteredEntries is defined when parsing completes and no filter is applied
-        if (!this.filterQuery() && this.filteredEntries() === null) {
-          this.filteredEntries.set(this.allEntries());
-        }
       } else if (msg.type === 'error') {
         this.error.set(msg.error);
         this.isParsing.set(false);
         this.notifications.error('Failed to parse log file.');
-      } else if (msg.type === 'search-start') {
-        this.isSearching.set(true);
-        this.lastSearchStartedAt = performance.now();
-      } else if (msg.type === 'search-result') {
-        // Only apply the result if it matches the current filter query
-        if (msg.query === this.filterQuery().trim().toLowerCase()) {
-          this.filteredEntries.set(msg.entries);
-          if (this.lastSearchStartedAt !== null) {
-            const duration = performance.now() - this.lastSearchStartedAt;
-            this.lastSearchDurationMs.set(duration);
-          }
-          this.lastSearchResultCount.set(msg.entries.length);
-          this.searchCache.set(msg.query, msg.entries);
-          this.isSearching.set(false);
-        }
-      } else if (msg.type === 'search-error') {
-        this.error.set(msg.error);
-        this.isSearching.set(false);
-        this.lastSearchStartedAt = null;
       }
     };
 
@@ -258,134 +212,6 @@ export class FileParseService {
     this.isParsing.set(false);
     this.latestBatch.set(null);
     this.allEntries.set([]);
-    this.filterQuery.set('');
-    this.filteredEntries.set(null);
-    this.isSearching.set(false);
-    this.lastSearchDurationMs.set(null);
-    this.lastSearchResultCount.set(null);
-    this.lastSearchStartedAt = null;
-  }
-
-  setFilterQuery(query: string): void {
-    const normalized = query.trim();
-    this.filterQuery.set(normalized.toLowerCase());
-    this.lastSearchDurationMs.set(null);
-    this.lastSearchResultCount.set(null);
-
-    const cachedResult = this.searchCache.get(normalized.toLowerCase());
-    if (cachedResult !== undefined) {
-      this.filteredEntries.set(cachedResult);
-      this.lastSearchResultCount.set(cachedResult.length);
-      this.lastSearchDurationMs.set(0.5);
-      return;
-    }
-
-    if (!this.worker) {
-      const startTime = performance.now();
-
-      if (!normalized) {
-        this.filteredEntries.set(this.allEntries());
-        this.lastSearchResultCount.set(this.allEntries().length);
-        this.lastSearchDurationMs.set(performance.now() - startTime);
-        return;
-      }
-
-      const parsedQuery = parseQuery(normalized);
-
-      if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
-        if (parsedQuery.errors.length > 0) {
-          const error = parsedQuery.errors.map((e) => e.message).join('; ');
-          this.error.set(error);
-          this.filteredEntries.set([]);
-          this.lastSearchResultCount.set(0);
-          return;
-        }
-
-        if (this.fallbackIndexer.getStats().totalEntries !== this.allEntries().length) {
-          this.fallbackIndexer.buildIndexes(this.allEntries());
-        }
-
-        const result = evaluateQuery(parsedQuery.ast, {
-          entries: this.allEntries(),
-          indexer: this.fallbackIndexer,
-        });
-
-        const filtered = result.matchedIndices.map((idx) => this.allEntries()[idx]);
-        this.filteredEntries.set(filtered);
-        this.lastSearchResultCount.set(filtered.length);
-        this.lastSearchDurationMs.set(performance.now() - startTime);
-        this.searchCache.set(normalized.toLowerCase(), filtered);
-        return;
-      }
-
-      const lowerQuery = normalized.toLowerCase();
-      const { tokens, phrases } = tokenizeQueryFallback(lowerQuery);
-
-      let _tokens = tokens.slice();
-      let unknownRequested = false;
-      if (_tokens.includes('unknown')) {
-        unknownRequested = true;
-        _tokens = _tokens.filter((t) => t !== 'unknown');
-      }
-
-      if (tokens.length === 0 && phrases.length === 0 && !unknownRequested) {
-        this.filteredEntries.set(this.allEntries());
-        this.lastSearchResultCount.set(this.allEntries().length);
-        this.lastSearchDurationMs.set(performance.now() - startTime);
-      } else {
-        // Ensure entries have a computed searchText when worker isn't available
-        for (const ent of this.allEntries()) {
-          const entryWithSearch = ent as ParsedLogEntryWithSearch;
-          if (typeof entryWithSearch.searchText !== 'string') {
-            try {
-              entryWithSearch.searchText = computeSearchTextForEntry(ent);
-            } catch {
-              entryWithSearch.searchText = '';
-            }
-          }
-
-          const scoredResults = this.allEntries()
-            .map((entry) => {
-              const entryWithSearch = entry as ParsedLogEntryWithSearch;
-              if (typeof entryWithSearch.searchText !== 'string') return null;
-
-              if (matchesQueryFallback(entryWithSearch.searchText, _tokens, phrases)) {
-                const score = calculateRelevanceFallback(entryWithSearch.searchText, _tokens, phrases);
-                return { entry, score };
-              }
-
-              if (unknownRequested) {
-                try {
-                  const lvl = normalizeLogLevel(entry);
-                  const env = normalizeEnvironment(entry);
-                  if (lvl === 'unknown' || env === 'unknown' || entryWithSearch.searchText.includes('unknown')) {
-                    let score = 30;
-                    if (lvl === 'unknown') score += 10;
-                    if (env === 'unknown') score += 10;
-                    return { entry, score };
-                  }
-                } catch {
-                  // ignore
-                }
-              }
-              return null;
-            })
-            .filter((result): result is { entry: ParsedLogEntry; score: number } => result !== null)
-            .sort((a, b) => b.score - a.score);
-
-          const filtered = scoredResults.map((result) => result.entry);
-          this.filteredEntries.set(filtered);
-          this.lastSearchResultCount.set(filtered.length);
-        }
-        this.searchCache.set(normalized, this.filteredEntries() ?? []);
-      }
-      return;
-    }
-
-    const msg: WorkerSearchMessage = { type: 'search', query: normalized };
-    this.isSearching.set(true);
-    this.lastSearchStartedAt = performance.now();
-    this.worker.postMessage(msg);
   }
 }
 
@@ -652,215 +478,4 @@ function computeTopPeaks(buckets: ErrorFatalTimelineBucket[], topN: number): num
   });
 
   return indexed.slice(0, topN).map((item) => item.index);
-}
-
-/**
- * Enhanced tokenization for full-text search (fallback implementation)
- */
-function tokenizeQueryFallback(query: string): { tokens: string[]; phrases: string[] } {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return { tokens: [], phrases: [] };
-
-  const tokens: string[] = [];
-  const phrases: string[] = [];
-
-  // Extract quoted phrases first
-  const phraseRegex = /"([^"]*)"/g;
-  let match;
-  let remainingQuery = trimmed;
-
-  while ((match = phraseRegex.exec(trimmed)) !== null) {
-    phrases.push(match[1].trim());
-    remainingQuery = remainingQuery.replace(match[0], '');
-  }
-
-  // Tokenize remaining text — match worker behaviour (no minimum length filter)
-  const rawTokens = remainingQuery.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/).filter((token) => token.length > 0);
-
-  // Apply same stemming as worker
-  const stemmedTokens = rawTokens.map(stemWordFallback);
-
-  tokens.push(...stemmedTokens);
-
-  return { tokens, phrases };
-}
-
-function stemWordFallback(word: string): string {
-  const suffixes = ['ing', 'ly', 'ed', 'ies', 'ied', 'ies', 'ied', 's', 'es'];
-  for (const suffix of suffixes) {
-    if (word.endsWith(suffix) && word.length > suffix.length + 1) {
-      return word.slice(0, -suffix.length);
-    }
-  }
-  return word;
-}
-
-// Compute a lightweight searchText for an entry (mirrors worker computeSearchText)
-function computeSearchTextForEntry(entry: ParsedLogEntry): string {
-  try {
-    return computeSearchText(entry);
-  } catch {
-    // Fallback to previous local fallback implementation if util fails
-    const parts: string[] = [];
-    parts.push(entry.kind ?? '');
-
-    switch (entry.kind) {
-      case 'pino': {
-        const e = entry.entry;
-        parts.push(safeString(e.msg));
-        parts.push(safeString(e.hostname));
-        parts.push(safeString(e.pid));
-        parts.push(safeString(e.name));
-        parts.push(safeString(e.time));
-        break;
-      }
-      case 'winston': {
-        const e = entry.entry;
-        const meta = e.meta as unknown as Record<string, unknown> | undefined;
-        parts.push(safeString(e.message));
-        parts.push(safeString(e.level));
-        parts.push(safeString(meta?.['requestId']));
-        parts.push(safeString(meta?.['userId']));
-        break;
-      }
-      case 'loki': {
-        const e = entry.entry as unknown as { line?: string; labels?: Record<string, unknown>; ts?: string };
-        parts.push(safeString(e.line));
-        parts.push(safeString(e.labels?.['job']));
-        parts.push(safeString(e.labels?.['level']));
-        parts.push(safeString(e.ts));
-        break;
-      }
-      case 'promtail': {
-        const e = entry.entry as unknown as { message?: string; level?: string; ts?: string };
-        parts.push(safeString(e.message));
-        parts.push(safeString(e.level));
-        parts.push(safeString(e.ts));
-        break;
-      }
-      case 'docker': {
-        const e = entry.entry as unknown as { log?: string; stream?: string; time?: string };
-        parts.push(safeString(e.log));
-        parts.push(safeString(e.stream));
-        parts.push(safeString(e.time));
-        break;
-      }
-      case 'text': {
-        const textEntry = entry.entry as unknown as { line?: string };
-        parts.push(safeString(textEntry.line));
-        break;
-      }
-      case 'unknown-json':
-      default: {
-        try {
-          parts.push(JSON.stringify(entry.entry));
-        } catch {
-          parts.push(safeString(entry.entry));
-        }
-        break;
-      }
-    }
-
-    try {
-      const lvl = normalizeLogLevel(entry);
-      const env = normalizeEnvironment(entry);
-      if (lvl && lvl !== 'unknown') {
-        parts.push(lvl);
-        parts.push(`level:${lvl}`);
-      }
-      if (env && env !== 'unknown') {
-        parts.push(env);
-        parts.push(`env:${env}`);
-      }
-    } catch {
-      // ignore
-    }
-
-    return parts.join(' | ').toLowerCase();
-  }
-}
-
-// Small helper to safely stringify values for the fallback search index
-function safeString(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'string') return value;
-  return String(value);
-}
-
-function calculateRelevanceFallback(searchText: string, tokens: string[], phrases: string[]): number {
-  let score = 0;
-
-  for (const phrase of phrases) {
-    if (searchText.includes(phrase)) {
-      score += 100;
-    }
-  }
-
-  for (const token of tokens) {
-    const lowerSearch = searchText.toLowerCase();
-    let tokenScore = 0;
-
-    const occurrences = (lowerSearch.match(new RegExp(token, 'g')) || []).length;
-    tokenScore += occurrences * 10;
-
-    if (new RegExp(`\\b${token}\\b`).test(lowerSearch)) {
-      tokenScore += 20;
-    }
-
-    if (lowerSearch.startsWith(token)) {
-      tokenScore += 15;
-    }
-
-    score += tokenScore;
-  }
-
-  return score;
-}
-
-function fuzzyMatchFallback(text: string, query: string, maxDistance = 2): boolean {
-  if (Math.abs(text.length - query.length) > maxDistance) return false;
-
-  let distance = 0;
-  const maxLen = Math.max(text.length, query.length);
-
-  for (let i = 0; i < maxLen; i++) {
-    if (text[i] !== query[i]) {
-      distance++;
-      if (distance > maxDistance) return false;
-    }
-  }
-
-  return distance <= maxDistance;
-}
-
-function matchesQueryFallback(searchText: string, tokens: string[], phrases: string[]): boolean {
-  const lowerSearch = searchText.toLowerCase();
-
-  for (const phrase of phrases) {
-    if (!lowerSearch.includes(phrase)) {
-      return false;
-    }
-  }
-
-  for (const token of tokens) {
-    let found = false;
-
-    if (lowerSearch.includes(token)) {
-      found = true;
-    } else {
-      const words = lowerSearch.split(/[\s\-_.,;:/\\|()[\]{}<>"']+/);
-      for (const word of words) {
-        if (word.length >= 3 && fuzzyMatchFallback(word, token, 1)) {
-          found = true;
-          break;
-        }
-      }
-    }
-
-    if (!found) {
-      return false;
-    }
-  }
-
-  return true;
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { Router } from '@angular/router';
 import { FeatureFlagsService } from '../../core/services/feature-flags.service';
 import { FileParseService } from '../../core/services/file-parse.service';
+import { SearchService } from '../../core/services/search.service';
 import { AnalyseLogTable } from '../../shared/components/analyse-log-table/analyse-log-table';
 import { QuickFilters } from '../../shared/components/quick-filters/quick-filters';
 import { WarningBanner } from '../../shared/components/warning-banner/warning-banner';
@@ -20,19 +21,24 @@ export default class Analyse {
   protected readonly isFullyRendered = signal(false);
   protected readonly filterQuery = signal<string>('');
   protected readonly filterSource = signal<'quick-filter' | 'user-input' | null>(null);
-  private readonly fileParse = inject(FileParseService);
-  protected readonly allEntries = this.fileParse.allEntries;
   // Check if any data is available
   protected readonly hasData = computed(() => this.allEntries().length > 0);
-  protected readonly filteredEntries = this.fileParse.filteredEntries;
   // Total count for display (always show full count)
   protected readonly totalEntryCount = computed(() => {
     const filtered = this.filteredEntries();
     const all = filtered !== null ? filtered : this.allEntries();
     return all.length;
   });
-  protected readonly isSearching = this.fileParse.isSearching;
+  // Loading state for better UX (used in template)
+  protected readonly isLoading = computed(() => {
+    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
+  });
+  private readonly fileParse = inject(FileParseService);
+  protected readonly allEntries = this.fileParse.allEntries;
   protected readonly isParsing = this.fileParse.isParsing;
+  private readonly search = inject(SearchService);
+  protected readonly filteredEntries = this.search.filteredEntries;
+  protected readonly isSearching = this.search.isSearching;
   private readonly router = inject(Router);
   private readonly featureFlags = inject(FeatureFlagsService);
   readonly experimentalAnalysisEnabled = this.featureFlags.experimentalAnalysis;
@@ -51,10 +57,6 @@ export default class Analyse {
     }
 
     return all;
-  });
-  // Loading state for better UX (used in template)
-  protected readonly isLoading = computed(() => {
-    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
   });
 
   constructor() {
@@ -87,8 +89,8 @@ export default class Analyse {
     });
 
     effect(() => {
-      // Sync filterQuery signal with FileParseService
-      const currentFilterQuery = this.fileParse.filterQuery();
+      // Sync filterQuery signal with SearchService
+      const currentFilterQuery = this.search.query();
       if (currentFilterQuery !== this.filterQuery()) {
         this.filterQuery.set(currentFilterQuery);
       }
@@ -124,7 +126,7 @@ export default class Analyse {
     if (this.filterSource() !== 'user-input') {
       this.filterSource.set('quick-filter');
       this.filterQuery.set(query);
-      this.fileParse.setFilterQuery(query);
+      this.search.setQuery(query);
     }
   }
 
@@ -148,7 +150,7 @@ export default class Analyse {
     const trimmedQuery = query.trim();
     this.filterQuery.set(trimmedQuery);
     this.filterSource.set(trimmedQuery.length > 0 ? 'user-input' : null);
-    this.fileParse.setFilterQuery(trimmedQuery);
+    this.search.setQuery(trimmedQuery);
   }
 
   /**
@@ -157,7 +159,7 @@ export default class Analyse {
   protected onSearchClear(): void {
     this.filterQuery.set('');
     this.filterSource.set(null);
-    this.fileParse.setFilterQuery('');
+    this.search.setQuery('');
   }
 
   /**

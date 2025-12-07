@@ -5,7 +5,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { FileParseService } from '../../../core/services/file-parse.service';
 import { SearchService } from '../../../core/services/search.service';
 import { ParsedLogEntry } from '../../../core/types/file-parse.types';
 import { QueryHelpDialog } from '../query-help-dialog/query-help-dialog';
@@ -56,11 +55,10 @@ export class AnalyseLogTable {
     const end = start + size;
     return all.slice(start, end);
   });
-  private readonly searchService = inject(SearchService);
-  protected readonly query = this.searchService.query;
-  private readonly fileParse = inject(FileParseService);
-  public readonly lastSearchDurationMs = this.fileParse.lastSearchDurationMs;
-  public readonly lastSearchResultCount = this.fileParse.lastSearchResultCount;
+  private readonly search = inject(SearchService);
+  protected readonly query = this.search.query;
+  public readonly lastSearchDurationMs = this.search.lastSearchDurationMs;
+  public readonly lastSearchResultCount = this.search.lastSearchResultCount;
   private readonly dialog = inject(MatDialog);
 
   public onOpenHelp(): void {
