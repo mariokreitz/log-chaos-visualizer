@@ -1,5 +1,11 @@
 import type { ParsedLogEntry } from '../types/file-parse.types';
-import type { ASTNode, BinaryExpression, ComparisonExpression, FunctionCall, NotExpression } from '../types/query-language.types';
+import type {
+  ASTNode,
+  BinaryExpression,
+  ComparisonExpression,
+  FunctionCall,
+  NotExpression,
+} from '../types/query-language.types';
 import { extractFieldValue as extractField } from './field-extractor';
 import type { FieldIndexer } from './field-indexer';
 
@@ -59,6 +65,11 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
   const operator = node.operator;
   const targetValue = node.value.value;
 
+  // Debug: log comparison intent
+  try {
+    console.debug(`[QueryEval] Comparing field '${fieldName}' ${operator} '${String(targetValue)}'`);
+  } catch {}
+
   // Try to use indexes for common fields (only for flat fields)
   if (context.indexer && operator === '=') {
     if (fieldName === 'level') {
@@ -95,7 +106,22 @@ function evaluateComparisonExpression(node: ComparisonExpression, context: Evalu
   const results: number[] = [];
   context.entries.forEach((entry, index) => {
     const fieldValue = extractField(entry, fieldName); // fieldName may be dot notation
+
+    // Debug log per-entry when in dev to trace failures
+    if (fieldValue === null) {
+      try {
+        console.debug(`[QueryEval][Idx ${index}] field '${fieldName}' -> null`);
+      } catch {}
+    } else {
+      try {
+        console.debug(`[QueryEval][Idx ${index}] field '${fieldName}' -> (${typeof fieldValue}) ${String(fieldValue)}`);
+      } catch {}
+    }
+
     if (fieldValue !== null && compareValues(fieldValue, operator, targetValue)) {
+      try {
+        console.debug(`[QueryEval][Idx ${index}] MATCHED`);
+      } catch {}
       results.push(index);
     }
   });

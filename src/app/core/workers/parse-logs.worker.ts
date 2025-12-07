@@ -5,10 +5,9 @@ import type {
   ParsedBatch,
   ParsedKind,
   ParsedLogEntry,
-  ParseProgress,
   WorkerMessage,
   WorkerSearchMessage,
-  WorkerStartMessage,
+  WorkerStartMessage
 } from '../types/file-parse.types';
 import type { DockerLogLine, LokiEntry, PinoEntry, PromtailTextLine, WinstonEntry } from '../types/log-entries';
 import { FieldIndexer } from '../utils/field-indexer';
@@ -258,6 +257,9 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
       `[Worker] Parsed - isLegacy: ${parsedQuery.isLegacyTextSearch}, hasAST: ${!!parsedQuery.ast}, errors: ${parsedQuery.errors.length}`,
     );
 
+    // Debug: show sample extractions
+    // (removed temporary debug helper to avoid build errors)
+
     if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
       if (parsedQuery.errors.length > 0) {
         const error = parsedQuery.errors.map((e) => e.message).join('; ');
@@ -390,6 +392,21 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
 
   let remainder = '';
 
+  // Helper to read a Blob slice as text in worker
+  async function readSliceAsText(slice: Blob): Promise<string> {
+    // In modern browsers Blob.text() is available
+    if (typeof slice.text === 'function') {
+      return await slice.text();
+    }
+    // Fallback: use FileReader (shouldn't be needed in modern workers)
+    return await new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result ?? ''));
+      fr.onerror = () => reject(fr.error);
+      fr.readAsText(slice as Blob);
+    });
+  }
+
   try {
     for (let offset = 0; offset < total; offset += chunkSize) {
       const slice = file.slice(offset, Math.min(offset + chunkSize, total));
@@ -404,9 +421,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
       for (const line of parts) {
         totalLines += 1;
         const trimmed = line.trim();
-        if (!trimmed) {
-          continue;
-        }
+        if (!trimmed) continue;
 
         let parsed: ParsedLogEntry;
 
@@ -431,77 +446,52 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
         batchRawCount += 1;
         counts[parsed.kind] += 1;
 
+        // When batch is full, post it and clear
         if (batchEntries.length >= BATCH_SIZE) {
-          const startIndex = allEntries.length - batchEntries.length;
-          fieldIndexer.addBatch(batchEntries, startIndex);
-
           const batch: ParsedBatch = {
-            entries: batchEntries.slice(),
+            entries: batchEntries.splice(0, batchEntries.length),
             rawCount: batchRawCount,
             malformedCount: batchMalformed,
-            chunkStartOffset: offset,
-            chunkEndOffset: Math.min(offset + chunkSize, total),
+            chunkStartOffset: Math.max(0, offset - chunkSize),
+            chunkEndOffset: offset + chunkSize,
           };
           postMessage({ type: 'batch', batch } satisfies WorkerMessage);
-          batchEntries.length = 0;
+          // reset batch counters
           batchRawCount = 0;
           batchMalformed = 0;
         }
       }
-
-      processed = Math.min(offset + chunkSize, total);
-      const progress: ParseProgress = {
-        processedBytes: processed,
-        totalBytes: total,
-        percent: total === 0 ? 100 : Math.round((processed / total) * 100),
-      };
-      postMessage({ type: 'progress', progress } satisfies WorkerMessage);
-
-      if (delayMs > 0) {
-        await sleep(delayMs);
-      }
     }
 
+    // After reading all slices, if there's remainder text that forms a final line, parse it
     if (remainder.trim()) {
-      totalLines += 1;
-      const trimmed = remainder.trim();
-      let parsed: ParsedLogEntry;
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        try {
-          const obj = JSON.parse(trimmed) as unknown;
-          parsed = mapJsonObjectToParsed(obj);
-        } catch {
-          malformedCount += 1;
-          batchMalformed += 1;
-          parsed = mapTextLine(trimmed);
-        }
-      } else {
-        parsed = mapTextLine(trimmed);
+      try {
+        const obj = JSON.parse(remainder) as unknown;
+        const parsed = mapJsonObjectToParsed(obj);
+        (parsed as ParsedLogEntry & { searchText?: string }).searchText = computeSearchText(parsed);
+        allEntries.push(parsed);
+        batchEntries.push(parsed);
+      } catch {
+        const parsed = mapTextLine(remainder);
+        (parsed as ParsedLogEntry & { searchText?: string }).searchText = computeSearchText(parsed);
+        allEntries.push(parsed);
+        batchEntries.push(parsed);
       }
-      (parsed as ParsedLogEntry & { searchText?: string }).searchText = computeSearchText(parsed);
-      allEntries.push(parsed);
-      batchEntries.push(parsed);
-      batchRawCount += 1;
-      counts[parsed.kind] += 1;
     }
 
+    // Post any remaining entries as a final batch
     if (batchEntries.length > 0) {
-      const startIndex = allEntries.length - batchEntries.length;
-      fieldIndexer.addBatch(batchEntries, startIndex);
-
-      const finalBatch: ParsedBatch = {
-        entries: batchEntries.slice(),
+      const batch: ParsedBatch = {
+        entries: batchEntries.splice(0, batchEntries.length),
         rawCount: batchRawCount,
         malformedCount: batchMalformed,
-        chunkStartOffset: total - (total % chunkSize),
+        chunkStartOffset: 0,
         chunkEndOffset: total,
       };
-      postMessage({ type: 'batch', batch: finalBatch } satisfies WorkerMessage);
+      postMessage({ type: 'batch', batch } satisfies WorkerMessage);
     }
 
-    const indexStats = fieldIndexer.getStats();
-    console.debug('[Worker] Field indexes built:', indexStats);
-
+    // Build a simple summary
     const summary: ExtendedParseSummary = {
       totalLines,
       malformedCount,
@@ -528,18 +518,11 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
         },
       },
     };
+
     postMessage({ type: 'summary', summary } satisfies WorkerMessage);
     postMessage({ type: 'done' } satisfies WorkerMessage);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : 'Unknown error';
-    postMessage({ type: 'error', error: message } satisfies WorkerMessage);
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    postMessage({ type: 'error', error } satisfies WorkerMessage);
   }
 });
-
-async function readSliceAsText(blob: Blob): Promise<string> {
-  return await blob.text();
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

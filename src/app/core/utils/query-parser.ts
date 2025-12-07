@@ -227,7 +227,7 @@ class Lexer {
 
   private readIdentifier(): string {
     let result = '';
-    while (this.current !== null && /[a-zA-Z0-9_]/.test(this.current)) {
+    while (this.current !== null && /[a-zA-Z0-9_\-]/.test(this.current)) {
       result += this.current;
       this.advance();
     }
@@ -608,7 +608,8 @@ export function parseQuery(query: string): ParsedQuery {
   const hasStructuredSyntax =
     /[=<>!]/.test(trimmed) ||
     /\b(AND|OR|NOT)\b/i.test(trimmed) ||
-    /\.\s*(contains|startsWith|endsWith|matches)\s*\(/.test(trimmed);
+    /\.\s*(contains|startsWith|endsWith|matches)\s*\(/i.test(trimmed) ||
+    /\b(contains|startsWith|endsWith|matches)\s*\(/i.test(trimmed);
 
   if (!hasStructuredSyntax) {
     // Fall back to legacy text search

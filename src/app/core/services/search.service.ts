@@ -1,6 +1,7 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { ParsedLogEntry } from '../types/file-parse.types';
+import { extractFieldValue } from '../utils/field-extractor';
 import { evaluateQuery } from '../utils/query-evaluator';
 import { parseQuery } from '../utils/query-parser';
 import { FileParseService } from './file-parse.service';
@@ -58,15 +59,42 @@ export class SearchService {
     const startTime = performance.now();
     this._isSearching.set(true);
     const allEntries = this.fileParse.allEntries();
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       this._filteredEntries.set(allEntries);
       this._lastSearchResultCount.set(allEntries.length);
       this._lastSearchDurationMs.set(performance.now() - startTime);
       this._isSearching.set(false);
       return;
     }
-    const parsedQuery = parseQuery(normalized);
+
+    const parsedQuery = parseQuery(trimmed);
+
+    // Debug: log parsed query and errors
+    try {
+      console.debug('[SearchService] Parsed query AST:', parsedQuery.ast);
+      if (parsedQuery.errors && parsedQuery.errors.length > 0) {
+        console.debug('[SearchService] Query parse errors:', parsedQuery.errors);
+      }
+
+      // Log sample of first few entries for statusCode
+      const sample = allEntries.slice(0, 5);
+      sample.forEach((entry, idx) => {
+        try {
+          const v1 = extractFieldValue(entry, 'statusCode');
+          const v2 = extractFieldValue(entry, 'http.statusCode');
+          const v3 = extractFieldValue(entry, 'res.statusCode');
+          console.debug(
+            `[SearchService] Entry[${idx}] statusCode:${String(v1)} http.statusCode:${String(v2)} res.statusCode:${String(v3)}`,
+          );
+        } catch (e) {
+          // ignore
+        }
+      });
+    } catch (e) {
+      // ignore logging errors
+    }
+
     if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
       if (parsedQuery.errors.length > 0) {
         this._filteredEntries.set([]);
@@ -88,9 +116,10 @@ export class SearchService {
       return;
     }
     // Legacy text search fallback
+    const normalizedLower = trimmed.toLowerCase();
     const filtered = allEntries.filter((entry: ParsedLogEntry) => {
       // Simple string match on entry (customize as needed)
-      return JSON.stringify(entry).toLowerCase().includes(normalized);
+      return JSON.stringify(entry).toLowerCase().includes(normalizedLower);
     });
     this._filteredEntries.set(filtered);
     this._lastSearchResultCount.set(filtered.length);
