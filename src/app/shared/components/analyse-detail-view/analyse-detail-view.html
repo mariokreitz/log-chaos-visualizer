@@ -3,42 +3,53 @@
   <article [attr.aria-labelledby]="headingId()" class="detail-container" role="region" tabindex="-1">
     <header class="detail-header">
       <div class="summary-left">
-        <div [id]="headingId()" class="summary-title">
-          <div class="message" title="{{ messageText() || 'No message' }}">
+        <h3 [id]="headingId()" class="summary-title">
+          <span class="message" title="{{ messageText() || 'No message' }}">
             {{ (messageText() || 'No message').slice(0, 200) }}{{ (messageText() || '').length > 200 ? '\u2026' : '' }}
-          </div>
+          </span>
           <div class="meta-small">
-            <span class="ts" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() }}</span>
+            <span class="ts" title="{{ formattedTimestamp() }}">{{ formattedTimestamp() || '—' }}</span>
             <span aria-hidden="true" class="divider">\u2022</span>
-            <span class="kind">{{ e.kind }}</span>
+            <span class="kind">{{ e.kind || '—' }}</span>
           </div>
-        </div>
-        <div aria-label="Entry metadata" class="summary-chips" role="list">
-          <span aria-label="Level {{ e.normalized.level }}" class="mat-chip level" role="listitem">{{
-            e.normalized.level
-          }}</span>
-          <span aria-label="Environment {{ e.normalized.environment }}" class="mat-chip env" role="listitem">{{
-            e.normalized.environment
-          }}</span>
-          <span aria-label="Source {{ e.normalized.kind }}" class="mat-chip source" role="listitem">{{
-            e.normalized.kind
-          }}</span>
-        </div>
+        </h3>
+
+        <ul aria-label="Entry metadata" class="summary-chips" role="list">
+          <li aria-label="Level {{ e.normalized?.level || 'unknown' }}" class="mat-chip level" role="listitem">
+            {{ e.normalized?.level || '—' }}
+          </li>
+          <li
+            aria-label="Environment {{ e.normalized?.environment || 'unknown' }}"
+            class="mat-chip env"
+            role="listitem"
+          >
+            {{ e.normalized?.environment || '—' }}
+          </li>
+          <li aria-label="Source {{ e.normalized?.kind || 'unknown' }}" class="mat-chip source" role="listitem">
+            {{ e.normalized?.kind || '—' }}
+          </li>
+        </ul>
       </div>
     </header>
+
     <section aria-label="Log details" class="detail-grid">
       <div class="panel panel-main">
         <dl>
           <dt>Message</dt>
-          <dd>{{ messageText() }}</dd>
+          <dd>{{ messageText() || '—' }}</dd>
+
           <dt>Timestamp</dt>
-          <dd>{{ formattedTimestamp() }}</dd>
+          <dd>{{ formattedTimestamp() || '—' }}</dd>
+
           <dt>Level</dt>
-          <dd>{{ e.normalized.level }}</dd>
+          <dd>{{ e.normalized?.level || '—' }}</dd>
+
           <dt>Environment</dt>
-          <dd>{{ e.normalized.environment }}</dd>
+          <dd>{{ e.normalized?.environment || '—' }}</dd>
+
           <dt>Source</dt>
-          <dd>{{ e.normalized.kind }}</dd>
+          <dd>{{ e.normalized?.kind || '—' }}</dd>
+
           @for (entry of detailEntries(); track entry.key) {
             <dt>{{ entry.key | titlecase }}</dt>
             <dd>
@@ -46,12 +57,21 @@
                 <ul>
                   @for (subEntry of entry.subEntries; track subEntry.key) {
                     <li>
-                      <strong>{{ subEntry.key }}:</strong> {{ subEntry.value }}
+                      <strong>{{ subEntry.key }}:</strong>
+                      @if (subEntry.value && typeof subEntry.value === 'object') {
+                        {{ subEntry.value | json }}
+                      } @else {
+                        {{ subEntry.value || '—' }}
+                      }
                     </li>
                   }
                 </ul>
               } @else {
-                {{ entry.value }}
+                @if (entry.value && typeof entry.value === 'object') {
+                  {{ entry.value | json }}
+                } @else {
+                  {{ entry.value || '—' }}
+                }
               }
             </dd>
           }
