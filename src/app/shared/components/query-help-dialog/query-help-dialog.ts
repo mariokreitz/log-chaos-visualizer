@@ -107,12 +107,6 @@ export class QueryHelpDialog {
     this.dialogRef.close();
   }
 
-  // Human readable label for current merge mode (used by template as a function)
-  protected mergeModeLabel(): string {
-    const m = this.mergeMode();
-    return m === 'replace' ? 'Replace' : m === 'append-and' ? 'Append AND' : 'Append';
-  }
-
   protected copyExample(query: string): void {
     const text = query;
     if (navigator.clipboard?.writeText) {
