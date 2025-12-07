@@ -253,15 +253,15 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
   try {
     const parsedQuery = parseQuery(query);
 
-    console.log(`[Worker] Query: "${query}"`);
-    console.log(
+    console.debug(`[Worker] Query: "${query}"`);
+    console.debug(
       `[Worker] Parsed - isLegacy: ${parsedQuery.isLegacyTextSearch}, hasAST: ${!!parsedQuery.ast}, errors: ${parsedQuery.errors.length}`,
     );
 
     if (!parsedQuery.isLegacyTextSearch && parsedQuery.ast) {
       if (parsedQuery.errors.length > 0) {
         const error = parsedQuery.errors.map((e) => e.message).join('; ');
-        console.log(`[Worker] Query errors: ${error}`);
+        console.debug(`[Worker] Query errors: ${error}`);
         postMessage({ type: 'search-error', query: query.toLowerCase(), error } satisfies WorkerMessage);
         return;
       }
@@ -273,7 +273,7 @@ function handleSearchMessage(msg: WorkerSearchMessage): void {
 
       const filtered = result.matchedIndices.map((idx) => allEntries[idx]);
 
-      console.log(
+      console.debug(
         `[Worker] Query evaluated in ${result.evaluationTimeMs.toFixed(2)}ms, found ${filtered.length} matches (indexed: ${result.usedIndexes})`,
       );
 
@@ -500,7 +500,7 @@ addEventListener('message', async ({ data }: MessageEvent<WorkerStartMessage | W
     }
 
     const indexStats = fieldIndexer.getStats();
-    console.log('[Worker] Field indexes built:', indexStats);
+    console.debug('[Worker] Field indexes built:', indexStats);
 
     const summary: ExtendedParseSummary = {
       totalLines,

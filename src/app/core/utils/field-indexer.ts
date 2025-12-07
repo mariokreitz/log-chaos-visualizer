@@ -37,8 +37,8 @@ export class FieldIndexer {
     this.indexes.memoryEstimateBytes = this.estimateMemoryUsage();
 
     const duration = performance.now() - startTime;
-    console.log(`[FieldIndexer] Built indexes for ${entries.length} entries in ${duration.toFixed(2)}ms`);
-    console.log(`[FieldIndexer] Estimated memory: ${(this.indexes.memoryEstimateBytes / 1024 / 1024).toFixed(2)}MB`);
+    console.debug(`[FieldIndexer] Built indexes for ${entries.length} entries in ${duration.toFixed(2)}ms`);
+    console.debug(`[FieldIndexer] Estimated memory: ${(this.indexes.memoryEstimateBytes / 1024 / 1024).toFixed(2)}MB`);
   }
 
   addEntry(entry: ParsedLogEntry, index: number): void {

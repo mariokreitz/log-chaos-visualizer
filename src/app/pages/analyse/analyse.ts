@@ -18,17 +18,21 @@ export default class Analyse {
   protected readonly showExperimentalWarning = signal(true);
   protected readonly renderProgress = signal(0);
   protected readonly isFullyRendered = signal(false);
-  private readonly fileParse = inject(FileParseService);
-  protected readonly allEntries = this.fileParse.allEntries;
   // Check if any data is available
   protected readonly hasData = computed(() => this.allEntries().length > 0);
-  protected readonly filteredEntries = this.fileParse.filteredEntries;
   // Total count for display (always show full count)
   protected readonly totalEntryCount = computed(() => {
     const filtered = this.filteredEntries();
     const all = filtered !== null ? filtered : this.allEntries();
     return all.length;
   });
+  // Loading state for better UX (used in template)
+  protected readonly isLoading = computed(() => {
+    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
+  });
+  private readonly fileParse = inject(FileParseService);
+  protected readonly allEntries = this.fileParse.allEntries;
+  protected readonly filteredEntries = this.fileParse.filteredEntries;
   protected readonly isSearching = this.fileParse.isSearching;
   protected readonly isParsing = this.fileParse.isParsing;
   private readonly router = inject(Router);
@@ -49,10 +53,6 @@ export default class Analyse {
     }
 
     return all;
-  });
-  // Loading state for better UX (used in template)
-  protected readonly isLoading = computed(() => {
-    return this.isParsing() || (this.isSearching() && this.tableEntries().length === 0);
   });
 
   constructor() {
@@ -78,7 +78,9 @@ export default class Analyse {
       const entries = this.tableEntries();
       if (entries.length > 0) {
         const now = performance.now();
-        console.log(`[Analyse] Rendered ${entries.length} of ${this.totalEntryCount()} entries at ${now.toFixed(2)}ms`);
+        console.debug(
+          `[Analyse] Rendered ${entries.length} of ${this.totalEntryCount()} entries at ${now.toFixed(2)}ms`,
+        );
       }
     });
   }
@@ -125,7 +127,7 @@ export default class Analyse {
       } else {
         // All data loaded
         this.isFullyRendered.set(true);
-        console.log(`[Analyse] Fully rendered ${totalSize} entries`);
+        console.debug(`[Analyse] Fully rendered ${totalSize} entries`);
       }
     };
 
