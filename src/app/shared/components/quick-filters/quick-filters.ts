@@ -77,28 +77,28 @@ export class QuickFilters {
     // Common issue patterns
     {
       label: 'Timeouts',
-      query: 'message.contains(timeout)',
+      query: 'contains(message, "timeout")',
       description: 'Find timeout-related issues',
       icon: 'schedule',
       category: 'common',
     },
     {
       label: 'API Errors',
-      query: 'message.contains(api) AND level=error',
+      query: 'contains(message, "api") AND level=error',
       description: 'API-related errors',
       icon: 'api',
       category: 'common',
     },
     {
       label: 'Database Issues',
-      query: 'message.contains(database) OR message.contains(db) OR message.contains(sql)',
+      query: 'contains(message, "database") OR contains(message, "db") OR contains(message, "sql")',
       description: 'Database connection or query issues',
       icon: 'storage',
       category: 'common',
     },
     {
       label: 'Exceptions',
-      query: 'message.contains(exception) OR message.contains(error)',
+      query: 'contains(message, "exception") OR contains(message, "error")',
       description: 'Find exception traces',
       icon: 'bug_report',
       category: 'common',
@@ -114,21 +114,21 @@ export class QuickFilters {
     // Advanced filters
     {
       label: 'Failed Requests',
-      query: '(statusCode>=400 AND statusCode<600) OR message.contains(failed)',
+      query: '(statusCode>=400 AND statusCode<600) OR contains(message, "failed")',
       description: 'HTTP errors or failed operations',
       icon: 'close',
       category: 'advanced',
     },
     {
       label: 'Authentication',
-      query: 'message.contains(auth) OR message.contains(login) OR message.contains(unauthorized)',
+      query: 'contains(message, "auth") OR contains(message, "login") OR contains(message, "unauthorized")',
       description: 'Authentication-related logs',
       icon: 'lock',
       category: 'advanced',
     },
     {
       label: 'Retries',
-      query: 'message.contains(retry) OR message.contains(attempt)',
+      query: 'contains(message, "retry") OR contains(message, "attempt")',
       description: 'Operations being retried',
       icon: 'refresh',
       category: 'advanced',
